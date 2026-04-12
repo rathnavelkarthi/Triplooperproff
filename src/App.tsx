@@ -4,6 +4,9 @@ import { HelmetProvider } from 'react-helmet-async';
 import { ClerkProvider } from '@clerk/react';
 import SaaSNavbar from './components/saas/SaaSNavbar';
 import SaaSFooter from './components/saas/SaaSFooter';
+
+// New Apple-inspired landing page
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 import { AuthProvider } from './context/AuthContext';
 import { CRMProvider } from './context/CRMDataContext';
 import ScrollToTop from './components/ScrollToTop';
@@ -76,16 +79,8 @@ export default function App() {
 
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-                  {/* SaaS landing page */}
-                  <Route path="/" element={
-                    <div className="min-h-screen flex flex-col font-sans text-foreground bg-background">
-                      <SaaSNavbar />
-                      <main id="main-content" className="flex-grow">
-                        <SaaSHome />
-                      </main>
-                      <SaaSFooter />
-                    </div>
-                  } />
+                  {/* New Apple-inspired landing page */}
+                  <Route path="/" element={<LandingPage />} />
 
                   {/* Pricing page */}
                   <Route path="/pricing" element={

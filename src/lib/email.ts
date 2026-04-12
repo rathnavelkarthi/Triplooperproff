@@ -126,45 +126,39 @@ function fmtCurrency(n: number): string {
 
 // ─── Design Tokens ──────────────────────────────────────────────
 
-const ff = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif";
+const ff = "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', Arial, sans-serif";
 const mono = "'SF Mono', 'Roboto Mono', 'IBM Plex Mono', Menlo, Consolas, monospace";
 
 const T = {
-  // Layout
-  bgOuter: '#ffffff',
+  bgOuter: '#FAF9F6', // very subtle warm off-white for premium feel
   bgCard: '#ffffff',
-  bgMuted: '#f9fafb',
-  bgAccentSoft: '#f0fdf4',
-  bgWarnSoft: '#fef3c7',
+  bgMuted: '#f4f4f5',
+  bgAccentSoft: '#f4f4f5',
+  bgWarnSoft: '#fff8f1',
   bgDangerSoft: '#fef2f2',
-  bgInfoSoft: '#eff6ff',
+  bgInfoSoft: '#f0fdf4',
 
-  // Text
-  textPrimary: '#111827',
-  textSecondary: '#4b5563',
-  textTertiary: '#9ca3af',
+  textPrimary: '#18181b',
+  textSecondary: '#52525b',
+  textTertiary: '#a1a1aa',
   textOnAccent: '#ffffff',
 
-  // Accent
-  accent: '#059669',       // emerald-600 — fresh, modern, trustworthy
-  accentDark: '#047857',   // emerald-700
-  accentLight: '#d1fae5',  // emerald-100
-  gold: '#b45309',         // amber-700
+  accent: '#000000', // sophisticated black button
+  accentLight: '#e4e4e7',
+  gold: '#b45309',
 
-  // Borders & Dividers
-  border: '#e5e7eb',       // gray-200
-  borderLight: '#f3f4f6',  // gray-100
-  borderAccent: '#a7f3d0', // emerald-200
+  border: '#e4e4e7',
+  borderLight: '#f4f4f5',
+  borderAccent: '#d4d4d8',
 
-  // Status
   green: '#059669',
-  red: '#dc2626',
+  red: '#e11d48',
   blue: '#2563eb',
-  orange: '#d97706',
-  gray: '#6b7280',
+  orange: '#ea580c',
+  gray: '#71717a',
 };
 
-// ─── Base Template (Notion/Linear inspired) ─────────────────────
+// ─── Base Template ─────────────────────────────────────────────
 
 function baseTemplate(opts: {
   preheader: string;
@@ -177,26 +171,20 @@ function baseTemplate(opts: {
 }): string {
   const accent = opts.accentColor || T.accent;
   const cta = opts.ctaText && opts.ctaUrl ? `
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:32px">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:40px; margin-bottom:20px;">
       <tr><td align="center">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-          <tr><td style="background:${accent};border-radius:8px;mso-padding-alt:14px 32px">
-            <a href="${opts.ctaUrl}" target="_blank" style="color:${T.textOnAccent};font-family:${ff};font-size:14px;font-weight:600;text-decoration:none;display:inline-block;padding:14px 32px;border-radius:8px;mso-text-raise:3px">${opts.ctaText}</a>
-          </td></tr>
-        </table>
+        <a href="${opts.ctaUrl}" target="_blank" style="background:${accent};color:${T.textOnAccent};font-family:${ff};font-size:14px;font-weight:500;text-decoration:none;display:inline-block;padding:16px 36px;border-radius:4px;letter-spacing:0.5px;">${opts.ctaText}</a>
       </td></tr>
     </table>` : '';
 
-  return `<!DOCTYPE html><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="x-apple-disable-message-reformatting"><meta name="format-detection" content="telephone=no,address=no,email=no,date=no"><!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><style>td,th,div,p,a,h1,h2,h3,h4,h5,h6{font-family:Arial,sans-serif!important}</style><![endif]-->
+  return `<!DOCTYPE html><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="format-detection" content="telephone=no,address=no,email=no,date=no">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-  body { margin:0; padding:0; }
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; box-sizing: border-box; }
+  body { margin:0; padding:0; background-color: ${T.bgOuter}; }
   @media only screen and (max-width:600px) {
-    .outer { padding: 16px 12px !important; }
-    .card { border-radius: 12px !important; }
-    .card-inner { padding: 28px 20px !important; }
-    .detail-label, .detail-value { font-size: 13px !important; }
+    .outer { padding: 20px 10px !important; }
+    .card { border-radius: 0 !important; border: none !important; border-top: 1px solid ${T.borderLight} !important; border-bottom: 1px solid ${T.borderLight} !important; }
+    .card-inner { padding: 40px 20px !important; }
   }
 </style>
 </head>
@@ -204,27 +192,18 @@ function baseTemplate(opts: {
   <span style="display:none;font-size:1px;color:${T.bgOuter};max-height:0;overflow:hidden;mso-hide:all">${opts.preheader}${'&nbsp;'.repeat(40)}</span>
 
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${T.bgOuter}">
-    <tr><td align="center" class="outer" style="padding:48px 24px">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="560" style="max-width:560px;width:100%">
+    <tr><td align="center" class="outer" style="padding:60px 20px">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="540" style="max-width:540px;width:100%">
 
-        <!-- LOGO -->
+        <!-- HEADER -->
         <tr><td style="padding-bottom:32px;text-align:center">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto">
-            <tr>
-              <td style="width:32px;height:32px;background:${accent};border-radius:8px;text-align:center;vertical-align:middle">
-                <span style="font-family:${ff};font-size:16px;font-weight:700;color:${T.textOnAccent};line-height:32px">E</span>
-              </td>
-              <td style="padding-left:10px;vertical-align:middle">
-                <span style="font-family:${ff};font-size:17px;font-weight:700;color:${T.textPrimary};letter-spacing:-0.3px">EasyStay</span>
-              </td>
-            </tr>
-          </table>
+          <span style="font-family:${ff};font-size:22px;font-weight:300;color:${T.textPrimary};letter-spacing:3px;text-transform:uppercase;">EASY<strong style="font-weight:700">STAY</strong></span>
         </td></tr>
 
         <!-- MAIN CARD -->
-        <tr><td class="card" style="background:${T.bgCard};border-radius:16px;border:1px solid ${T.border};box-shadow:0 1px 3px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.02)">
+        <tr><td class="card" style="background:${T.bgCard};border-radius:8px;border:1px solid ${T.border};box-shadow:0 4px 20px rgba(0,0,0,0.03);">
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-            <tr><td class="card-inner" style="padding:40px 36px">
+            <tr><td class="card-inner" style="padding:48px 40px">
               ${opts.bodyContent}
               ${cta}
             </td></tr>
@@ -232,10 +211,11 @@ function baseTemplate(opts: {
         </td></tr>
 
         <!-- FOOTER -->
-        <tr><td style="padding:28px 0 0;text-align:center">
-          ${opts.footerNote ? `<p style="margin:0 0 12px;font-family:${ff};font-size:13px;color:${T.textTertiary};line-height:1.6">${opts.footerNote}</p>` : ''}
-          <p style="margin:0 0 4px;font-family:${ff};font-size:12px;color:${T.textTertiary}">Sent by <span style="color:${T.textSecondary};font-weight:500">EasyStay</span> on behalf of <span style="color:${T.textSecondary};font-weight:500">${opts.businessName}</span></p>
-          <p style="margin:0;font-family:${ff};font-size:12px;color:${T.textTertiary}">&copy; ${new Date().getFullYear()} EasyStay &middot; Hospitality, simplified.</p>
+        <tr><td style="padding:40px 20px 0;text-align:center">
+          ${opts.footerNote ? `<p style="margin:0 0 16px;font-family:${ff};font-size:13px;color:${T.textTertiary};line-height:1.6">${opts.footerNote}</p>` : ''}
+          <div style="height:1px;background:${T.border};width:30px;margin:20px auto;"></div>
+          <p style="margin:0 0 8px;font-family:${ff};font-size:12px;color:${T.textTertiary}">Sent beautifully by <span style="font-weight:500;color:${T.textSecondary}">EasyStay</span> for <span style="font-weight:500;color:${T.textSecondary}">${opts.businessName}</span></p>
+          <p style="margin:0;font-family:${ff};font-size:11px;color:${T.textTertiary};letter-spacing:1px;text-transform:uppercase;">&copy; ${new Date().getFullYear()} EasyStay &middot; Premium Management</p>
         </td></tr>
 
       </table>
@@ -247,74 +227,75 @@ function baseTemplate(opts: {
 // ─── Component Helpers ──────────────────────────────────────────
 
 function heading(text: string, size: 'lg' | 'md' = 'lg'): string {
-  const s = size === 'lg' ? '26px' : '20px';
-  return `<h1 style="margin:0 0 6px;font-family:${ff};font-size:${s};font-weight:700;color:${T.textPrimary};letter-spacing:-0.4px;line-height:1.25">${text}</h1>`;
+  const s = size === 'lg' ? '24px' : '20px';
+  return `<h1 style="margin:0 0 16px;font-family:${ff};font-size:${s};font-weight:600;color:${T.textPrimary};letter-spacing:-0.4px;line-height:1.4">${text}</h1>`;
 }
 
 function subtitle(text: string): string {
-  return `<p style="margin:0 0 24px;font-family:${ff};font-size:15px;color:${T.textSecondary};line-height:1.65">${text}</p>`;
+  return `<p style="margin:0 0 36px;font-family:${ff};font-size:15px;color:${T.textSecondary};line-height:1.7;font-weight:400;">${text}</p>`;
 }
 
 function divider(): string {
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:20px 0"><div style="height:1px;background:${T.borderLight}"></div></td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="padding:32px 0"><div style="height:1px;background:${T.border}"></div></td></tr></table>`;
 }
 
 function sectionLabel(text: string): string {
-  return `<p style="margin:0 0 14px;font-family:${ff};font-size:11px;font-weight:600;color:${T.textTertiary};text-transform:uppercase;letter-spacing:0.8px">${text}</p>`;
+  return `<p style="margin:0 0 16px;font-family:${ff};font-size:11px;font-weight:600;color:${T.textTertiary};text-transform:uppercase;letter-spacing:1.5px">${text}</p>`;
 }
 
 function detailRow(label: string, value: string, bold = false): string {
   return `<tr>
-    <td class="detail-label" style="padding:8px 0;font-family:${ff};font-size:14px;color:${T.textTertiary};vertical-align:top;width:40%">${label}</td>
-    <td class="detail-value" style="padding:8px 0;font-family:${ff};font-size:14px;color:${bold ? T.textPrimary : T.textSecondary};font-weight:${bold ? '600' : '400'};text-align:right;vertical-align:top">${value}</td>
+    <td class="detail-label" style="padding:12px 0;font-family:${ff};font-size:14px;color:${T.textSecondary};vertical-align:top;width:35%">${label}</td>
+    <td class="detail-value" style="padding:12px 0;font-family:${ff};font-size:14px;color:${bold ? T.textPrimary : T.textSecondary};font-weight:${bold ? '500' : '400'};text-align:right;vertical-align:top">${value}</td>
   </tr>`;
 }
 
 function detailCard(rows: [string, string, boolean?][], borderLeft?: string): string {
-  const bl = borderLeft ? `border-left:3px solid ${borderLeft};` : '';
   const inner = rows.map(([l, v, b]) => detailRow(l, v, !!b)).join('');
-  return `<div style="background:${T.bgMuted};border-radius:12px;padding:20px 24px;margin:16px 0;${bl}">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">${inner}</table>
+  return `<div style="padding:8px 0;margin:24px 0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;border-top:1px solid ${T.border};border-bottom:1px solid ${T.border};">
+      ${inner}
+    </table>
   </div>`;
 }
 
 function amountBlock(rows: [string, string][], totalLabel: string, totalValue: string): string {
   const items = rows.map(([l, v]) =>
     `<tr>
-      <td style="padding:6px 0;font-family:${ff};font-size:14px;color:${T.textTertiary}">${l}</td>
-      <td style="padding:6px 0;font-family:${ff};font-size:14px;color:${T.textSecondary};text-align:right">${v}</td>
+      <td style="padding:10px 0;font-family:${ff};font-size:14px;color:${T.textSecondary}">${l}</td>
+      <td style="padding:10px 0;font-family:${ff};font-size:14px;color:${T.textSecondary};text-align:right">${v}</td>
     </tr>`
   ).join('');
-  return `<div style="background:${T.bgMuted};border-radius:12px;padding:20px 24px;margin:16px 0">
+  return `<div style="background:${T.bgOuter};padding:32px;margin:32px 0;border:1px solid ${T.border};border-radius:4px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
       ${items}
-      <tr><td colspan="2" style="padding:10px 0 0"><div style="height:1px;background:${T.border}"></div></td></tr>
+      <tr><td colspan="2" style="padding:16px 0 0"><div style="height:1px;background:${T.border}"></div></td></tr>
       <tr>
-        <td style="padding:12px 0 0;font-family:${ff};font-size:16px;font-weight:700;color:${T.textPrimary}">${totalLabel}</td>
-        <td style="padding:12px 0 0;font-family:${ff};font-size:16px;font-weight:700;color:${T.textPrimary};text-align:right">${totalValue}</td>
+        <td style="padding:20px 0 0;font-family:${ff};font-size:16px;font-weight:500;color:${T.textPrimary}">${totalLabel}</td>
+        <td style="padding:20px 0 0;font-family:${ff};font-size:20px;font-weight:600;color:${T.textPrimary};text-align:right;letter-spacing:-0.5px;">${totalValue}</td>
       </tr>
     </table>
   </div>`;
 }
 
 function statusPill(label: string, color: string, bgColor: string): string {
-  return `<span style="display:inline-block;padding:4px 12px;border-radius:20px;font-family:${ff};font-size:12px;font-weight:600;color:${color};background:${bgColor}">${label}</span>`;
+  return `<span style="display:inline-block;padding:6px 12px;border-radius:4px;font-family:${mono};font-size:11px;font-weight:500;color:${color};background:${bgColor};letter-spacing:0.5px;text-transform:uppercase;">${label}</span>`;
 }
 
 function getStatusPill(status: string): string {
   const m: Record<string, [string, string, string]> = {
-    'Confirmed': ['Confirmed', T.green, T.bgAccentSoft],
-    'CONFIRMED': ['Confirmed', T.green, T.bgAccentSoft],
+    'Confirmed': ['Confirmed', T.green, T.bgInfoSoft],
+    'CONFIRMED': ['Confirmed', T.green, T.bgInfoSoft],
     'Cancelled': ['Cancelled', T.red, T.bgDangerSoft],
     'CANCELLED': ['Cancelled', T.red, T.bgDangerSoft],
-    'Checked In': ['Checked In', T.blue, T.bgInfoSoft],
-    'CHECKED_IN': ['Checked In', T.blue, T.bgInfoSoft],
-    'Checked Out': ['Checked Out', T.green, T.bgAccentSoft],
-    'CHECKED_OUT': ['Checked Out', T.green, T.bgAccentSoft],
+    'Checked In': ['Checked In', T.blue, '#eff6ff'],
+    'CHECKED_IN': ['Checked In', T.blue, '#eff6ff'],
+    'Checked Out': ['Checked Out', T.green, T.bgInfoSoft],
+    'CHECKED_OUT': ['Checked Out', T.green, T.bgInfoSoft],
     'Pending': ['Pending', T.orange, T.bgWarnSoft],
     'PENDING': ['Pending', T.orange, T.bgWarnSoft],
-    'Paid': ['Paid', T.green, T.bgAccentSoft],
-    'PAID': ['Paid', T.green, T.bgAccentSoft],
+    'Paid': ['Paid', T.green, T.bgInfoSoft],
+    'PAID': ['Paid', T.green, T.bgInfoSoft],
     'Unpaid': ['Unpaid', T.orange, T.bgWarnSoft],
     'UNPAID': ['Unpaid', T.orange, T.bgWarnSoft],
   };
@@ -322,9 +303,6 @@ function getStatusPill(status: string): string {
   return statusPill(l, c, bg);
 }
 
-function iconCircle(emoji: string, bgColor = T.bgAccentSoft): string {
-  return `<div style="width:48px;height:48px;border-radius:50%;background:${bgColor};text-align:center;line-height:48px;font-size:22px;margin:0 0 20px">${emoji}</div>`;
-}
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -333,7 +311,6 @@ function iconCircle(emoji: string, bgColor = T.bgAccentSoft): string {
 
 function welcomeEmailHtml(data: WelcomeEmailData): string {
   const body = `
-    ${iconCircle('&#127919;')}
     ${heading('Welcome to EasyStay')}
     ${subtitle(`Your property <strong style="color:${T.textPrimary}">${data.businessName}</strong> is set up and ready. Start managing your ${data.businessType || 'property'} in minutes.`)}
 
@@ -390,7 +367,6 @@ function welcomeEmailHtml(data: WelcomeEmailData): string {
 function bookingConfirmationHtml(data: BookingConfirmationData): string {
   const refId = `#${data.reservationId.slice(0, 8).toUpperCase()}`;
   const body = `
-    ${iconCircle('&#9989;', T.bgAccentSoft)}
     ${heading('Booking Confirmed')}
     ${subtitle(`Great news! A reservation at <strong style="color:${T.textPrimary}">${data.businessName}</strong> has been confirmed.`)}
 
@@ -431,7 +407,6 @@ function bookingConfirmationHtml(data: BookingConfirmationData): string {
 function bookingCancelledHtml(data: BookingCancelledData): string {
   const refId = `#${data.reservationId.slice(0, 8).toUpperCase()}`;
   const body = `
-    ${iconCircle('&#10060;', T.bgDangerSoft)}
     ${heading('Booking Cancelled')}
     ${subtitle(`A reservation at <strong style="color:${T.textPrimary}">${data.businessName}</strong> has been cancelled.`)}
 
@@ -466,7 +441,6 @@ function bookingCancelledHtml(data: BookingCancelledData): string {
 
 function checkInConfirmationHtml(data: CheckInEmailData): string {
   const body = `
-    ${iconCircle('&#128274;', T.bgInfoSoft)}
     ${heading(`Welcome to ${data.businessName}`)}
     ${subtitle(`You're all checked in! We hope you have a wonderful stay.`)}
 
@@ -503,7 +477,6 @@ function checkOutReceiptHtml(data: CheckOutEmailData): string {
   const roomCharges = data.totalAmount - data.gstAmount;
 
   const body = `
-    ${iconCircle('&#128522;')}
     ${heading('Thank you for your stay')}
     ${subtitle(`Here's your receipt from <strong style="color:${T.textPrimary}">${data.businessName}</strong>. We hope to see you again soon.`)}
 
@@ -557,7 +530,6 @@ function staffCredentialsHtml(data: StaffCredentialsData): string {
   const roleName = data.role.replace(/_/g, ' ');
 
   const body = `
-    ${iconCircle('&#128100;', T.bgInfoSoft)}
     ${heading(`Welcome to ${data.businessName}`)}
     ${subtitle(`You've been added as <strong style="color:${T.textPrimary}">${roleName}</strong> staff. Your account is ready to use.`)}
 
@@ -611,7 +583,6 @@ function staffCredentialsHtml(data: StaffCredentialsData): string {
 function bookingStatusChangeHtml(data: BookingStatusChangeData): string {
   const refId = `#${data.reservationId.slice(0, 8).toUpperCase()}`;
   const body = `
-    ${iconCircle('&#128260;', T.bgWarnSoft)}
     ${heading('Booking Updated')}
     ${subtitle(`A reservation at <strong style="color:${T.textPrimary}">${data.businessName}</strong> has been updated.`)}
 

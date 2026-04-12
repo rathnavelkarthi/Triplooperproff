@@ -24,7 +24,13 @@
       "Bash(mv:*)",
       "WebFetch(domain:www.hotelogix.com)",
       "WebFetch(domain:www.ezeeoptimus.com)",
-      "mcp__plugin_playwright_playwright__browser_snapshot"
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_execute_file",
+      "mcp__plugin_context-mode_context-mode__ctx_search",
+      "Bash(npx getdesign@latest add apple)",
+      "mcp__plugin_context-mode_context-mode__ctx_index",
+      "mcp__plugin_context-mode_context-mode__ctx_execute"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -1,0 +1,245 @@
+import { lazy, Suspense, useEffect, useRef } from 'react';
+import { motion, useMotionValue, useSpring } from 'motion/react';
+import Navbar from '../components/landing/Navbar';
+import Hero from '../components/landing/Hero';
+import Footer from '../components/landing/Footer';
+import { useReducedMotion } from '../hooks/useReducedMotion';
+
+/* Apple font stacks from DESIGN.md */
+const FONT_DISPLAY = '"SF Pro Display", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
+const FONT_BODY = '"SF Pro Text", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
+
+/* Scoped styles injected once for the landing page */
+const landingStyles = `
+.landing-root { font-family: ${FONT_BODY}; }
+.landing-root h1,
+.landing-root h2,
+.landing-root h3,
+.landing-root h4,
+.landing-root h5,
+.landing-root h6 {
+    font-family: ${FONT_DISPLAY};
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+/* Accessible focus rings */
+.landing-root :focus-visible {
+    outline: 2px solid #0071e3;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+.landing-root a:focus-visible,
+.landing-root button:focus-visible {
+    outline: 2px solid #0071e3;
+    outline-offset: 2px;
+}
+/* Skip link */
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 16px;
+    z-index: 9999;
+    padding: 12px 24px;
+    background: #0071e3;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: top 0.2s ease;
+}
+.skip-link:focus {
+    top: 16px;
+}
+`;
+
+// Lazy load below-the-fold sections
+const ProblemSolution = lazy(() => import('../components/landing/ProblemSolution'));
+const ModuleSection = lazy(() => import('../components/landing/ModuleSection').then(m => ({ default: m.default })));
+const BookingMockup = lazy(() => import('../components/landing/ModuleSection').then(m => ({ default: m.BookingMockup })));
+const CRMMockup = lazy(() => import('../components/landing/ModuleSection').then(m => ({ default: m.CRMMockup })));
+const POSMockup = lazy(() => import('../components/landing/ModuleSection').then(m => ({ default: m.POSMockup })));
+const AnalyticsMockup = lazy(() => import('../components/landing/ModuleSection').then(m => ({ default: m.AnalyticsMockup })));
+const Testimonials = lazy(() => import('../components/landing/Testimonials'));
+const Pricing = lazy(() => import('../components/landing/Pricing'));
+const CTA = lazy(() => import('../components/landing/CTA'));
+
+function SectionLoader() {
+    return <div className="min-h-[500px]" aria-hidden="true" />;
+}
+
+/* ── Module section wrapper that resolves lazy mockups ── */
+function ModuleSections() {
+    return (
+        <div id="modules">
+            <Suspense fallback={<SectionLoader />}>
+                <ModuleSectionWithMockup
+                    label="DIRECT BOOKINGS"
+                    headline="Zero-commission direct bookings."
+                    bullets={[
+                        '4-step booking flow with real-time availability',
+                        'Occupancy-based dynamic pricing',
+                        'WhatsApp confirmation on autopilot',
+                    ]}
+                    dark
+                    bgClass="bg-black"
+                    MockupComponent={BookingMockup}
+                />
+            </Suspense>
+
+            <Suspense fallback={<SectionLoader />}>
+                <ModuleSectionWithMockup
+                    label="GUEST MANAGEMENT"
+                    headline="Every guest, every detail."
+                    bullets={[
+                        'Guest profiles with booking history and preferences',
+                        'Visual calendar with drag-and-drop reservations',
+                        'GST-compliant invoices generated in one click',
+                    ]}
+                    reversed
+                    MockupComponent={CRMMockup}
+                />
+            </Suspense>
+
+            <Suspense fallback={<SectionLoader />}>
+                <ModuleSectionWithMockup
+                    label="RESTAURANT"
+                    headline="Front desk to kitchen, connected."
+                    bullets={[
+                        'Dine-in, takeaway, and room service in one POS',
+                        'QR-based table ordering for guests',
+                        'Real-time kitchen order tracking (KOT)',
+                    ]}
+                    dark
+                    bgClass="bg-[#0a0a0a]"
+                    MockupComponent={POSMockup}
+                />
+            </Suspense>
+
+            <Suspense fallback={<SectionLoader />}>
+                <ModuleSectionWithMockup
+                    label="INSIGHTS"
+                    headline="Revenue clarity, not guesswork."
+                    bullets={[
+                        'Revenue, occupancy, and channel mix dashboards',
+                        'Profit & Loss tracking with expense categories',
+                        'Exportable reports for accountants',
+                    ]}
+                    reversed
+                    MockupComponent={AnalyticsMockup}
+                />
+            </Suspense>
+        </div>
+    );
+}
+
+/* Helper to pass lazy-loaded mockup as ReactNode */
+function ModuleSectionWithMockup({
+    label, headline, bullets, dark, reversed, bgClass, MockupComponent,
+}: {
+    label: string;
+    headline: string;
+    bullets: string[];
+    dark?: boolean;
+    reversed?: boolean;
+    bgClass?: string;
+    MockupComponent: React.LazyExoticComponent<React.ComponentType>;
+}) {
+    return (
+        <ModuleSection
+            label={label}
+            headline={headline}
+            bullets={bullets}
+            dark={dark}
+            reversed={reversed}
+            bgClass={bgClass}
+            mockup={
+                <Suspense fallback={<div className="h-[300px]" />}>
+                    <MockupComponent />
+                </Suspense>
+            }
+        />
+    );
+}
+
+/* ── Cursor glow (desktop only, perf-optimized with useMotionValue) ── */
+function CursorGlow() {
+    const x = useMotionValue(-500);
+    const y = useMotionValue(-500);
+    const smoothX = useSpring(x, { stiffness: 200, damping: 30 });
+    const smoothY = useSpring(y, { stiffness: 200, damping: 30 });
+    const isTouchRef = useRef(false);
+
+    useEffect(() => {
+        isTouchRef.current = 'ontouchstart' in window;
+        if (isTouchRef.current) return;
+
+        const onMove = (e: MouseEvent) => {
+            x.set(e.clientX - 192);
+            y.set(e.clientY - 192);
+        };
+        const onLeave = () => {
+            x.set(-500);
+            y.set(-500);
+        };
+
+        window.addEventListener('mousemove', onMove, { passive: true });
+        document.addEventListener('mouseleave', onLeave);
+        return () => {
+            window.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseleave', onLeave);
+        };
+    }, [x, y]);
+
+    if (typeof window !== 'undefined' && 'ontouchstart' in window) return null;
+
+    return (
+        <motion.div
+            className="pointer-events-none fixed w-96 h-96 bg-blue-500/10 blur-[120px] rounded-full z-40"
+            style={{ left: smoothX, top: smoothY }}
+            aria-hidden="true"
+        />
+    );
+}
+
+export default function LandingPage() {
+    const reduced = useReducedMotion();
+
+    return (
+        <div className="landing-root min-h-screen antialiased" style={{ scrollBehavior: 'smooth' }}>
+            <style dangerouslySetInnerHTML={{ __html: landingStyles }} />
+
+            {/* Skip link for keyboard navigation */}
+            <a href="#main-content" className="skip-link">
+                Skip to main content
+            </a>
+
+            {!reduced && <CursorGlow />}
+            <Navbar />
+            <main id="main-content">
+                <Hero />
+
+                <Suspense fallback={<SectionLoader />}>
+                    <ProblemSolution />
+                </Suspense>
+
+                <div id="features">
+                    <ModuleSections />
+                </div>
+
+                <Suspense fallback={<SectionLoader />}>
+                    <Testimonials />
+                </Suspense>
+
+                <Suspense fallback={<SectionLoader />}>
+                    <Pricing />
+                </Suspense>
+
+                <Suspense fallback={<SectionLoader />}>
+                    <CTA />
+                </Suspense>
+            </main>
+            <Footer />
+        </div>
+    );
+}
