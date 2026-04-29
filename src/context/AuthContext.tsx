@@ -296,13 +296,12 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
                 .single();
               if (bData) setBusiness(bData as Business);
             } else if (role === 'SUPER_ADMIN' || role === 'BUSINESS_ADMIN') {
-               // Fallback: search by owner_id using any of their linked IDs
                const { data: bData } = await supabaseAdmin
                 .from('businesses')
                 .select('*')
                 .in('owner_id', lookupIds)
                 .limit(1)
-                .single();
+                .maybeSingle();
               if (bData) setBusiness(bData as Business);
             }
 

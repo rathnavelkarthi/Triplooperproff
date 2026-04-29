@@ -123,13 +123,14 @@ export default function BusinessPropertyCreate() {
           .from('businesses')
           .select('*')
           .eq('owner_id', user.id)
-          .single();
-        
+          .limit(1)
+          .maybeSingle();
+
         if (bData) {
           currentBusiness = bData;
         } else if (bError) {
           console.error('[BusinessPropertyCreate] Fallback business lookup failed:', bError);
-          setError(`Business lookup failed: ${bError.message}. Please restart your development server.`);
+          setError(`Business lookup failed: ${bError.message}. Please refresh the page.`);
           setCreating(false);
           return;
         }
