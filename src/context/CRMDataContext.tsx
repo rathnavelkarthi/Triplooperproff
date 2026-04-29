@@ -234,6 +234,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
         const loadInitialData = async () => {
             const tenantId = tenant.id;
+            console.log('[CRMDataContext] Loading initial data for tenant:', {
+                id: tenantId,
+                name: tenant.business_name,
+                type: tenant.business_type,
+                subdomain: tenant.subdomain
+            });
 
             // Clear state from previous tenant to stop data bleed
             setStaff([]); setReservations([]); setRooms([]); setPageContent([]);

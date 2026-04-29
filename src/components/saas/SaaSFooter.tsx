@@ -9,7 +9,7 @@ const footerLinks: Record<string, FooterLink[]> = {
         { label: 'How It Works', href: '/#how-it-works' },
     ],
     Company: [
-        { label: 'Contact', href: 'mailto:hello@easystay.com' },
+        { label: 'Contact', href: 'mailto:hello@esaystay.com' },
     ],
     Legal: [
         { label: 'Privacy Policy', href: '/privacy' },

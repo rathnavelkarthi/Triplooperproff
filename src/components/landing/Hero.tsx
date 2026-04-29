@@ -12,7 +12,7 @@ function FloatingBadge({ icon: Icon, text, delay }: { icon: React.ElementType; t
             transition={{ type: 'spring', stiffness: 100, damping: 18, delay }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
         >
-            <Icon size={14} className="text-[#0071e3]" />
+            <Icon size={14} className="text-[var(--color-primary)]" />
             <span className="text-[13px] text-white/80 font-medium">{text}</span>
         </motion.div>
     );
@@ -21,16 +21,16 @@ function FloatingBadge({ icon: Icon, text, delay }: { icon: React.ElementType; t
 /* ── CSS dashboard mockup ── */
 function DashboardMockup() {
     const items = [
-        { label: 'Today\'s Revenue', value: '₹48,250', change: '+12%', color: '#34C759' },
-        { label: 'Occupancy', value: '87%', change: '+5%', color: '#0071e3' },
-        { label: 'Check-ins', value: '14', change: '', color: '#FF9500' },
-        { label: 'Pending', value: '3', change: '', color: '#FF3B30' },
+        { label: 'Today\'s Revenue', value: '₹48,250', change: '+12%', color: 'var(--color-success)' },
+        { label: 'Occupancy', value: '87%', change: '+5%', color: 'var(--color-primary)' },
+        { label: 'Check-ins', value: '14', change: '', color: 'var(--color-warning)' },
+        { label: 'Pending', value: '3', change: '', color: 'var(--color-error)' },
     ];
 
     const bookings = [
-        { guest: 'Raj Mehta', room: 'Deluxe 204', status: 'Checked In', statusColor: '#34C759' },
-        { guest: 'Priya Singh', room: 'Suite 301', status: 'Arriving', statusColor: '#FF9500' },
-        { guest: 'John Davis', room: 'Standard 102', status: 'Confirmed', statusColor: '#0071e3' },
+        { guest: 'Raj Mehta', room: 'Deluxe 204', status: 'Checked In', statusColor: 'var(--color-success)' },
+        { guest: 'Priya Singh', room: 'Suite 301', status: 'Arriving', statusColor: 'var(--color-warning)' },
+        { guest: 'John Davis', room: 'Standard 102', status: 'Confirmed', statusColor: 'var(--color-primary)' },
     ];
 
     return (
@@ -74,7 +74,7 @@ function DashboardMockup() {
                 <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4 mb-4">
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-[11px] text-white/40 font-medium">Revenue (7 days)</span>
-                        <span className="text-[11px] text-[#34C759]">+18%</span>
+                        <span className="text-[11px] text-[var(--color-success)]">+18%</span>
                     </div>
                     <div className="flex items-end gap-1.5 h-10">
                         {[40, 55, 38, 62, 48, 72, 85].map((h, i) => (
@@ -229,14 +229,14 @@ export default function Hero() {
                         >
                             <Link
                                 to="/admin/login"
-                                className="inline-flex items-center gap-2 text-[15px] font-medium text-white bg-[#0071e3] hover:bg-[#0077ed] hover:scale-[1.02] active:scale-[0.98] px-7 py-3.5 rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(0,113,227,0.5)] hover:shadow-[0_0_40px_rgba(0,113,227,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black cursor-pointer"
+                                className="inline-flex items-center gap-2 text-[15px] font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] hover:scale-[1.02] active:scale-[0.98] px-7 py-3.5 rounded-full transition-all duration-300 shadow-[0_0_30px_rgba(0,113,227,0.5)] hover:shadow-[0_0_40px_rgba(0,113,227,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black cursor-pointer"
                             >
                                 Start Free Trial
                                 <ArrowRight size={16} />
                             </Link>
                             <button
                                 aria-label="Watch product demo video"
-                                className="inline-flex items-center gap-2 text-[15px] font-medium text-white/80 hover:text-white hover:scale-[1.02] active:scale-[0.98] border border-white/20 hover:border-white/40 px-6 py-3.5 rounded-full transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                                className="inline-flex items-center gap-2 text-[15px] font-medium text-white/80 hover:text-white hover:scale-[1.02] active:scale-[0.98] border border-white/20 hover:border-white/40 px-6 py-3.5 rounded-full transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                             >
                                 <Play size={14} fill="currentColor" />
                                 Watch Demo

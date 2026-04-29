@@ -44,7 +44,7 @@ export default function Testimonials() {
                     <p className="text-[12px] font-semibold text-black/30 uppercase tracking-[0.2em] mb-3">
                         Trusted by hoteliers
                     </p>
-                    <h2 className="text-[32px] md:text-[38px] lg:text-[42px] font-bold text-[#1d1d1f] tracking-[-0.03em] leading-tight">
+                    <h2 className="text-[32px] md:text-[38px] lg:text-[42px] font-bold text-[var(--color-text-primary-light)] tracking-[-0.03em] leading-tight">
                         Hotels that switched<br className="hidden md:block" /> never looked back.
                     </h2>
                 </motion.div>
@@ -61,7 +61,7 @@ export default function Testimonials() {
                             whileTap={{ scale: 0.98 }}
                             className="bg-white rounded-2xl p-8 border border-black/[0.06] shadow-[0_8px_40px_rgba(0,0,0,0.06)] hover:shadow-[0_16px_60px_rgba(0,0,0,0.1)] transition-all duration-300"
                         >
-                            <p className="text-[15px] text-[#1d1d1f]/80 leading-relaxed italic mb-5">
+                            <p className="text-[15px] text-[var(--color-text-primary-light)]/80 leading-relaxed italic mb-5">
                                 &ldquo;{t.quote}&rdquo;
                             </p>
                             <div className="flex items-center gap-3">
@@ -69,7 +69,7 @@ export default function Testimonials() {
                                     <span className="text-[13px] font-bold text-white">{t.name[0]}</span>
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[13px] font-semibold text-[#1d1d1f] truncate">{t.name}</p>
+                                    <p className="text-[13px] font-semibold text-[var(--color-text-primary-light)] truncate">{t.name}</p>
                                     <p className="text-[11px] text-black/40 truncate">{t.hotel}, {t.location}</p>
                                 </div>
                             </div>

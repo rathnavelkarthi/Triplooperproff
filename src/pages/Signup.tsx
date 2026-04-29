@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import { sendWelcomeEmail } from '../lib/email';
+import { supabase } from '../lib/supabaseClient';
 import { useClerk } from '@clerk/react';
 import { motion } from 'motion/react';
 import { Building, UtensilsCrossed, Layers, ArrowRight, Check, Mail } from 'lucide-react';
@@ -37,9 +38,37 @@ export default function Signup() {
     const [verifyCode, setVerifyCode] = useState('');
     const [googleLoading, setGoogleLoading] = useState(false);
 
+    // Invite flow
+    const [searchParams] = useSearchParams();
+    const inviteToken = searchParams.get('invite');
+    const [inviteData, setInviteData] = useState<{ email: string; business_name: string; max_properties: number } | null>(null);
+    const [inviteLoading, setInviteLoading] = useState(!!inviteToken);
+
     const { signup, verifyEmail } = useAuth();
     const clerk = useClerk();
     const navigate = useNavigate();
+
+    // Load invite data if token present
+    useEffect(() => {
+        if (!inviteToken) return;
+        (async () => {
+            const { data } = await supabase
+                .from('business_invites')
+                .select('email, business_name, max_properties, status')
+                .eq('token', inviteToken)
+                .single();
+
+            if (data && data.status === 'pending') {
+                setInviteData(data);
+                setEmail(data.email);
+                setBusinessName(data.business_name);
+                setStep(2); // skip business info step, go straight to account creation
+            } else {
+                setError(data ? 'This invite has already been used.' : 'Invalid invite link.');
+            }
+            setInviteLoading(false);
+        })();
+    }, [inviteToken]);
 
     const handleStep1 = (e: React.FormEvent) => {
         e.preventDefault();
@@ -72,6 +101,10 @@ export default function Signup() {
             setIsLoading(false);
         } else {
             sendWelcomeEmail({ email, businessName, businessType });
+            // Mark invite as accepted
+            if (inviteToken) {
+                await supabase.from('business_invites').update({ status: 'accepted' }).eq('token', inviteToken);
+            }
             setSignupComplete(true);
             setIsLoading(false);
         }
@@ -94,7 +127,10 @@ export default function Signup() {
             setError(result.error);
             setIsLoading(false);
         } else {
+            // Success - AuthContext.verifyEmail already handled property linkage 
+            // and the unified onboarding logic will follow after the redirect reloads state.
             sendWelcomeEmail({ email, businessName, businessType });
+            
             // Hard redirect so the page reloads and picks up the new Clerk session
             window.location.href = '/admin/dashboard';
         }
@@ -110,6 +146,10 @@ export default function Signup() {
                 // Save business info so AuthContext can create the tenant after Google callback
                 localStorage.setItem('pending_business_name', businessName);
                 localStorage.setItem('pending_business_type', businessType);
+                if (inviteToken) {
+                    localStorage.setItem('pending_invite_token', inviteToken);
+                }
+                
                 await signInResource.authenticateWithRedirect({
                     strategy: 'oauth_google',
                     redirectUrl: `${window.location.origin}/sso-callback`,
@@ -149,7 +189,7 @@ export default function Signup() {
                         Email verified. Your workspace is set up.
                     </p>
                     <p className="text-[#AAB8C5]/60 text-xs mb-8">
-                        Your subdomain: <span className="text-[#C9A646] font-medium">{subdomain}.easystay.com</span>
+                        Your subdomain: <span className="text-[#C9A646] font-medium">{subdomain}.esaystay.com</span>
                     </p>
                     <button
                         onClick={() => navigate('/admin/login')}
@@ -233,10 +273,10 @@ export default function Signup() {
             <Helmet>
                 <title>Sign Up Free - EasyStay | Hotel & Restaurant Management</title>
                 <meta name="description" content="Create your free EasyStay account. Set up your hotel or restaurant in minutes with bookings, POS, website, and analytics — all in one platform." />
-                <link rel="canonical" href="https://easystay.com/signup" />
+                <link rel="canonical" href="https://esaystay.com/signup" />
                 <meta property="og:title" content="Sign Up Free - EasyStay" />
                 <meta property="og:description" content="Create your free account. Set up your hotel or restaurant in minutes." />
-                <meta property="og:url" content="https://easystay.com/signup" />
+                <meta property="og:url" content="https://esaystay.com/signup" />
                 <meta property="og:type" content="website" />
                 <meta name="twitter:card" content="summary" />
             </Helmet>
@@ -280,7 +320,7 @@ export default function Signup() {
                         {businessName && (
                             <div className="mt-5 pt-4 border-t border-[#AAB8C5]/10">
                                 <p className="text-[10px] text-[#AAB8C5]/50 uppercase tracking-widest font-semibold mb-1">Your subdomain</p>
-                                <p className="text-sm text-[#C9A646] font-medium">{subdomain || '...'}.easystay.com</p>
+                                <p className="text-sm text-[#C9A646] font-medium">{subdomain || '...'}.esaystay.com</p>
                             </div>
                         )}
                     </div>
@@ -379,10 +419,17 @@ export default function Signup() {
                     ) : (
                         <>
                             <div className="mb-8">
-                                <button onClick={() => setStep(1)} className="text-[12px] text-[#AAB8C5]/60 hover:text-[#AAB8C5] transition-colors mb-3 block">&larr; Back</button>
-                                <h2 className="text-[24px] font-bold text-[#F7F4EF] tracking-tight">Create your account</h2>
+                                {!inviteData && (
+                                    <button onClick={() => setStep(1)} className="text-[12px] text-[#AAB8C5]/60 hover:text-[#AAB8C5] transition-colors mb-3 block">&larr; Back</button>
+                                )}
+                                <h2 className="text-[24px] font-bold text-[#F7F4EF] tracking-tight">
+                                    {inviteData ? 'Accept your invitation' : 'Create your account'}
+                                </h2>
                                 <p className="text-[#AAB8C5] mt-2 text-[13px] font-light">
-                                    Setting up <span className="text-[#C9A646] font-medium">{businessName}</span> as a {businessType === 'combined' ? 'hotel + restaurant' : businessType}.
+                                    {inviteData
+                                        ? <>You've been invited to manage <span className="text-[#C9A646] font-medium">{businessName}</span>. Choose a password to get started.</>
+                                        : <>Setting up <span className="text-[#C9A646] font-medium">{businessName}</span> as a {businessType === 'combined' ? 'hotel + restaurant' : businessType}.</>
+                                    }
                                 </p>
                             </div>
 
@@ -399,9 +446,10 @@ export default function Signup() {
                                         type="email"
                                         required
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) => !inviteData && setEmail(e.target.value)}
+                                        readOnly={!!inviteData}
                                         placeholder="you@example.com"
-                                        className="w-full bg-[#0E2A38]/30 border border-[#AAB8C5]/20 rounded-lg px-4 py-3 text-[#F7F4EF] placeholder-[#AAB8C5]/30 outline-none focus:border-[#C9A646]/50 focus:ring-1 focus:ring-[#C9A646]/20 transition-all text-sm"
+                                        className={`w-full bg-[#0E2A38]/30 border border-[#AAB8C5]/20 rounded-lg px-4 py-3 text-[#F7F4EF] placeholder-[#AAB8C5]/30 outline-none focus:border-[#C9A646]/50 focus:ring-1 focus:ring-[#C9A646]/20 transition-all text-sm ${inviteData ? 'opacity-60 cursor-not-allowed' : ''}`}
                                     />
                                 </div>
 
@@ -420,7 +468,7 @@ export default function Signup() {
                                 {/* Subdomain preview */}
                                 <div className="bg-[#0E2A38]/30 border border-[#AAB8C5]/10 rounded-lg px-4 py-3">
                                     <p className="text-[10px] text-[#AAB8C5]/50 uppercase tracking-widest font-semibold mb-1">Your subdomain</p>
-                                    <p className="text-sm text-[#C9A646] font-mono">{subdomain}.easystay.com</p>
+                                    <p className="text-sm text-[#C9A646] font-mono">{subdomain}.esaystay.com</p>
                                 </div>
 
                                 <motion.button

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router-dom';
-import { useAuth, Role } from '../../context/AuthContext';
+import { useAuth, Role, PLATFORM_ADMIN_EMAIL } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import UpgradeModal from './UpgradeModal';
 import {
@@ -34,10 +34,12 @@ import {
   Calculator,
   Receipt,
   TrendingUp,
+  Shield,
+  Briefcase,
 } from 'lucide-react';
 
 type BusinessType = 'hotel' | 'restaurant' | 'combined';
-type NavGroup = 'Overview' | 'Hotel' | 'Restaurant' | 'Finance' | 'Settings';
+type NavGroup = 'Overview' | 'Hotel' | 'Restaurant' | 'Finance' | 'Settings' | 'Business' | 'Platform';
 
 interface NavItem {
   name: string;
@@ -46,42 +48,46 @@ interface NavItem {
   roles: Role[];
   businessTypes: BusinessType[];
   group: NavGroup;
+  featureKey?: string;
 }
 
 const navItems: NavItem[] = [
   // Overview
-  { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING', 'ACCOUNTANT'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Overview' },
-  { name: 'Guests', path: '/admin/guests', icon: Users, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Overview' },
+  { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING', 'ACCOUNTANT', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Overview', featureKey: 'dashboard' },
+  { name: 'Guests', path: '/admin/guests', icon: Users, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Overview', featureKey: 'guests' },
 
   // Hotel
-  { name: 'Channel Manager', path: '/admin/channels', icon: Waypoints, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'combined'], group: 'Hotel' },
-  { name: 'Reservations', path: '/admin/reservations', icon: ListTodo, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION'], businessTypes: ['hotel', 'combined'], group: 'Hotel' },
-  { name: 'Calendar View', path: '/admin/calendar', icon: CalendarDays, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION'], businessTypes: ['hotel', 'combined'], group: 'Hotel' },
-  { name: 'Rooms', path: '/admin/rooms', icon: BedDouble, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING'], businessTypes: ['hotel', 'combined'], group: 'Hotel' },
+  { name: 'Channel Manager', path: '/admin/channels', icon: Waypoints, roles: ['SUPER_ADMIN', 'MANAGER', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'combined'], group: 'Hotel', featureKey: 'channel_manager' },
+  { name: 'Reservations', path: '/admin/reservations', icon: ListTodo, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'combined'], group: 'Hotel', featureKey: 'reservations' },
+  { name: 'Calendar View', path: '/admin/calendar', icon: CalendarDays, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'combined'], group: 'Hotel', featureKey: 'calendar' },
+  { name: 'Rooms', path: '/admin/rooms', icon: BedDouble, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'combined'], group: 'Hotel', featureKey: 'rooms' },
 
   // Restaurant
-  { name: 'Server Orders', path: '/admin/server-orders', icon: ListTodo, roles: ['SUPER_ADMIN', 'MANAGER', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant' },
-  { name: 'Point of Sale', path: '/admin/pos', icon: Calculator, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant' },
-  { name: 'Menu Manager', path: '/admin/menu', icon: UtensilsCrossed, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant' },
-  { name: 'Food Orders', path: '/admin/food-orders', icon: ClipboardList, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant' },
-  { name: 'Tables', path: '/admin/tables', icon: Armchair, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant' },
-  { name: 'Inventory', path: '/admin/inventory', icon: Package, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant' },
+  { name: 'Server Orders', path: '/admin/server-orders', icon: ListTodo, roles: ['SUPER_ADMIN', 'MANAGER', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'server_orders' },
+  { name: 'Point of Sale', path: '/admin/pos', icon: Calculator, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'pos' },
+  { name: 'Menu Manager', path: '/admin/menu', icon: UtensilsCrossed, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'menu_manager' },
+  { name: 'Food Orders', path: '/admin/food-orders', icon: ClipboardList, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'food_orders' },
+  { name: 'Tables', path: '/admin/tables', icon: Armchair, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'tables' },
+  { name: 'Inventory', path: '/admin/inventory', icon: Package, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'inventory' },
 
-  // Finance
-  { name: 'Payments', path: '/admin/payments', icon: CreditCard, roles: ['SUPER_ADMIN', 'ACCOUNTANT'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance' },
-  { name: 'Invoices', path: '/admin/invoices', icon: FileText, roles: ['SUPER_ADMIN', 'RECEPTION', 'ACCOUNTANT'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance' },
-  { name: 'Expenses', path: '/admin/expenses', icon: Receipt, roles: ['SUPER_ADMIN', 'MANAGER', 'ACCOUNTANT'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance' },
-  { name: 'Profit & Loss', path: '/admin/profit-loss', icon: TrendingUp, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance' },
-  { name: 'Reports', path: '/admin/reports', icon: BarChart3, roles: ['SUPER_ADMIN', 'ACCOUNTANT'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance' },
+  // Finance (removed: Payments, Invoices, Expenses, Profit & Loss)
+  { name: 'Reports', path: '/admin/reports', icon: BarChart3, roles: ['SUPER_ADMIN', 'ACCOUNTANT'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance', featureKey: 'reports' },
 
   // Settings
-  { name: 'Website Editor', path: '/admin/website-editor', icon: Globe, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Settings' },
-  { name: 'Rooms CMS', path: '/admin/rooms-cms', icon: Layers, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'combined'], group: 'Settings' },
-  { name: 'Pricing Rules', path: '/admin/pricing', icon: Tag, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'combined'], group: 'Settings' },
-  { name: 'Booking Settings', path: '/admin/booking-settings', icon: CalendarCheck, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'combined'], group: 'Settings' },
-  { name: 'WhatsApp', path: '/admin/whatsapp', icon: MessageSquare, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Settings' },
-  { name: 'Staff Management', path: '/admin/staff', icon: UserCog, roles: ['SUPER_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Settings' },
-  { name: 'Billing', path: '/admin/billing', icon: CreditCard, roles: ['SUPER_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Settings' },
+  { name: 'Website Editor', path: '/admin/website-editor', icon: Globe, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Settings', featureKey: 'website_editor' },
+  { name: 'Rooms CMS', path: '/admin/rooms-cms', icon: Layers, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'combined'], group: 'Settings', featureKey: 'rooms_cms' },
+  { name: 'Pricing Rules', path: '/admin/pricing', icon: Tag, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'combined'], group: 'Settings', featureKey: 'pricing_rules' },
+  { name: 'Booking Settings', path: '/admin/booking-settings', icon: CalendarCheck, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'combined'], group: 'Settings', featureKey: 'booking_settings' },
+  { name: 'WhatsApp', path: '/admin/whatsapp', icon: MessageSquare, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Settings', featureKey: 'whatsapp' },
+  { name: 'Staff Management', path: '/admin/staff', icon: UserCog, roles: ['SUPER_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Settings', featureKey: 'staff' },
+  { name: 'Billing', path: '/admin/billing', icon: CreditCard, roles: ['SUPER_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Settings', featureKey: 'billing' },
+
+  // Business (only for BUSINESS_ADMIN)
+  { name: 'My Properties', path: '/admin/business', icon: Briefcase, roles: ['BUSINESS_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Business' },
+  { name: 'Create Property', path: '/admin/business/create', icon: Plus, roles: ['BUSINESS_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Business' },
+
+  // Platform (only for platform admin)
+  { name: 'Platform Admin', path: '/admin/platform', icon: Shield, roles: ['PLATFORM_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Platform' },
 ];
 
 interface SidebarProps {
@@ -95,7 +101,7 @@ const typeLabel: Record<BusinessType, string> = {
 };
 
 export default function Sidebar({ onClose }: SidebarProps) {
-  const { user, tenant, properties, logout, hasPermission, switchProperty, addProperty } = useAuth();
+  const { user, tenant, properties, isPlatformAdmin, logout, hasPermission, switchProperty, addProperty } = useAuth();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [newName, setNewName] = useState('');
@@ -109,7 +115,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
     Hotel: true,
     Restaurant: true,
     Finance: true,
-    Settings: false
+    Settings: false,
+    Business: true,
+    Platform: true
   });
 
   const toggleGroup = (group: string) => {
@@ -134,9 +142,22 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
   const businessType = tenant?.business_type || 'hotel';
 
-  const filteredNavItems = navItems.filter(item =>
-    hasPermission(item.roles) && item.businessTypes.includes(businessType as BusinessType)
-  );
+  const filteredNavItems = navItems.filter(item => {
+    // Role check
+    if (item.roles.includes('PLATFORM_ADMIN')) {
+      if (!isPlatformAdmin) return false;
+    } else if (item.roles.includes('BUSINESS_ADMIN')) {
+      if (user?.role !== 'BUSINESS_ADMIN' && !isPlatformAdmin) return false;
+    } else {
+      if (!hasPermission(item.roles)) return false;
+    }
+    // Business type check
+    if (!item.businessTypes.includes(businessType as BusinessType)) return false;
+    // Feature toggle check — if the tenant has toggles and this item has a featureKey,
+    // hide it when the toggle is explicitly false
+    if (item.featureKey && tenant?.feature_toggles && tenant.feature_toggles[item.featureKey] === false) return false;
+    return true;
+  });
 
   // Group filtered items
   const groupedItems = filteredNavItems.reduce((acc, item) => {
@@ -146,7 +167,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   }, {} as Record<string, NavItem[]>);
 
   // Define group order
-  const groupOrder: NavGroup[] = ['Overview', 'Hotel', 'Restaurant', 'Finance', 'Settings'];
+  const groupOrder: NavGroup[] = ['Platform', 'Business', 'Overview', 'Hotel', 'Restaurant', 'Finance', 'Settings'];
 
   const handleAddProperty = async () => {
     if (!newName.trim()) return;

@@ -51,16 +51,16 @@ export default function PricingPage() {
             <Helmet>
                 <title>Pricing - EasyStay | Free to Start, Plans from ₹2,499/mo</title>
                 <meta name="description" content="Simple, transparent pricing for hotel and restaurant management. Start free with up to 5 rooms. Growth, Pro, and Enterprise plans for every property size." />
-                <link rel="canonical" href="https://easystay.com/pricing" />
+                <link rel="canonical" href="https://esaystay.com/pricing" />
                 <meta property="og:title" content="EasyStay Pricing - Free to Start, Plans from ₹2,499/mo" />
                 <meta property="og:description" content="Simple, transparent pricing. Start free with up to 5 rooms. Growth, Pro, and Enterprise plans for every property size." />
-                <meta property="og:url" content="https://easystay.com/pricing" />
+                <meta property="og:url" content="https://esaystay.com/pricing" />
                 <meta property="og:type" content="website" />
-                <meta property="og:image" content="https://easystay.com/og-image.png" />
+                <meta property="og:image" content="https://esaystay.com/og-image.png" />
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="EasyStay Pricing - Free to Start" />
                 <meta name="twitter:description" content="Hotel & restaurant management from ₹2,499/mo. Free starter plan available." />
-                <meta name="twitter:image" content="https://easystay.com/og-image.png" />
+                <meta name="twitter:image" content="https://esaystay.com/og-image.png" />
                 <script type="application/ld+json">{JSON.stringify({
                     "@context": "https://schema.org",
                     "@type": "FAQPage",

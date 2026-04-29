@@ -1,10 +1,24 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useUser, useClerk } from '@clerk/react';
 import { supabase } from '../lib/supabaseClient';
+import { supabaseAdmin } from '../lib/supabaseAdmin';
 import { generateSubdomain, hasPermission as checkPermission, DEMO_EMAIL } from '../lib/booking';
 import { Session } from '@supabase/supabase-js';
 
-export type Role = 'SUPER_ADMIN' | 'MANAGER' | 'RECEPTION' | 'HOUSEKEEPING' | 'ACCOUNTANT' | 'SERVER';
+export type Role = 'SUPER_ADMIN' | 'MANAGER' | 'RECEPTION' | 'HOUSEKEEPING' | 'ACCOUNTANT' | 'SERVER' | 'BUSINESS_ADMIN' | 'PLATFORM_ADMIN';
+
+export const PLATFORM_ADMIN_EMAIL = 'rathnavelkarthi1@gmail.com';
+
+export interface Business {
+  id: string;
+  name: string;
+  owner_id: string;
+  contact_email: string | null;
+  max_properties: number;
+  max_rooms_per_property: number;
+  is_active: boolean;
+  created_at: string;
+}
 
 export type Tenant = {
   id: string;
@@ -16,6 +30,9 @@ export type Tenant = {
   custom_email: string | null;
   logo_url: string | null;
   is_active: boolean;
+  feature_toggles: Record<string, boolean> | null;
+  business_id: string | null;
+  managed_by_business: boolean;
 };
 
 export interface User {
@@ -31,6 +48,8 @@ interface AuthContextType {
   user: User | null;
   tenant: Tenant | null;
   properties: Tenant[];
+  business: Business | null;
+  isPlatformAdmin: boolean;
   session: { access_token: string } | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -55,9 +74,12 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [properties, setProperties] = useState<Tenant[]>([]);
+  const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [supabaseSession, setSupabaseSession] = useState<Session | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(() => localStorage.getItem('is_demo_mode') === 'true');
+
+  const isPlatformAdmin = user?.email?.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase();
 
   const buildUser = (id: string, email: string, name: string, role: Role, type: 'CLERK' | 'SUPABASE', avatarUrl?: string): User => ({
     id,
@@ -71,6 +93,97 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   const loadProperties = async (userId: string, email: string, name: string, type: 'CLERK' | 'SUPABASE', avatarUrl?: string) => {
     console.log(`[AuthContext] Loading properties for ${type} user: ${userId}`);
     
+    // 0. Handle Pending Signups (Invitation flow)
+    if (type === 'CLERK') {
+      let inviteToken = localStorage.getItem('pending_invite_token');
+      const pendingName = localStorage.getItem('pending_business_name');
+      const pendingType = localStorage.getItem('pending_business_type') as Tenant['business_type'] | null;
+
+      try {
+        // Automatically recover lost invite token if the user has a pending invite for their email
+        if (!inviteToken && email) {
+          const { data: lostInvite } = await supabaseAdmin
+            .from('business_invites')
+            .select('token')
+            .eq('email', email)
+            .eq('status', 'pending')
+            .maybeSingle();
+            
+          if (lostInvite) {
+            inviteToken = lostInvite.token;
+            localStorage.setItem('pending_invite_token', inviteToken);
+          }
+        }
+
+        if (inviteToken) {
+          console.log('[AuthContext] Unified onboarding for token:', inviteToken);
+          const { data: invite, error: inviteReadError } = await supabaseAdmin
+            .from('business_invites')
+            .select('*')
+            .eq('token', inviteToken)
+            .single();
+
+          if (!inviteReadError && invite && invite.status === 'pending') {
+            const bName = invite.business_name;
+            const bType = pendingType || 'hotel';
+            const subdomain = generateSubdomain(bName);
+
+            // 1. Create Business Record (using Admin client to bypass RLS)
+            const { data: newBusiness, error: bError } = await supabaseAdmin
+              .from('businesses')
+              .insert({
+                name: bName,
+                owner_id: userId,
+                contact_email: email,
+                max_properties: invite.max_properties || 5,
+                max_rooms_per_property: invite.max_rooms_per_property || 15
+              })
+              .select('*')
+              .single();
+
+            if (bError) console.error('[AuthContext] Failed to create business:', bError);
+
+            if (!bError && newBusiness) {
+                // 2. Create First Tenant (Property)
+                const { data: newTenantId, error: tError } = await supabaseAdmin.rpc('create_tenant', {
+                  p_owner_id: userId,
+                  p_business_name: bName,
+                  p_business_type: bType,
+                  p_subdomain: subdomain
+                });
+
+                if (tError) console.error('[AuthContext] Failed to create tenant:', tError);
+
+                if (!tError && newTenantId) {
+                    await supabaseAdmin.from('tenants').update({ 
+                        business_id: newBusiness.id,
+                        managed_by_business: true 
+                    }).eq('id', newTenantId);
+                    
+                    await supabaseAdmin.from('user_properties').insert({
+                        user_id: userId,
+                        tenant_id: newTenantId,
+                        role: 'BUSINESS_ADMIN',
+                        is_owner: true
+                    });
+                    
+                    await supabaseAdmin.from('business_invites').update({ status: 'accepted' }).eq('token', inviteToken);
+                    localStorage.removeItem('pending_invite_token');
+                    localStorage.removeItem('pending_business_name');
+                    localStorage.removeItem('pending_business_type');
+                    
+                    // Restart load sequence now that they are fully onboarded
+                    await loadProperties(userId, email, name, 'CLERK', avatarUrl);
+                    return;
+                }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[AuthContext] Onboarding critical failure:', err);
+      }
+    }
+
     try {
       // 1. Try to find the tenant link in user_properties
       const { data: links, error: linkError } = await supabase
@@ -89,7 +202,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
         if (tError) {
           console.error('[AuthContext] Error fetching tenants sequentially:', tError);
-          // If sequence fails too, we might have a broader schema issue
         }
 
         if (tenantData && tenantData.length > 0) {
@@ -103,6 +215,26 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
             const link = links.find(l => l.tenant_id === active.id);
             const role = (link?.role as Role) || 'RECEPTION';
             setUser(buildUser(userId, email, name, role, type, avatarUrl));
+
+            const businessId = (active as Tenant).business_id;
+            if (businessId) {
+              const { data: bData } = await supabaseAdmin
+                .from('businesses')
+                .select('*')
+                .eq('id', businessId)
+                .single();
+              if (bData) setBusiness(bData as Business);
+            } else if (role === 'SUPER_ADMIN' || role === 'BUSINESS_ADMIN') {
+               // Fallback: search by owner_id
+               const { data: bData } = await supabaseAdmin
+                .from('businesses')
+                .select('*')
+                .eq('owner_id', userId)
+                .limit(1)
+                .single();
+              if (bData) setBusiness(bData as Business);
+            }
+
             setLoading(false);
             return;
           }
@@ -111,17 +243,34 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
       // 2. Fallback for Owners (mostly Clerk users)
       if (type === 'CLERK') {
-        const { data: fallback, error: fbError } = await supabase
-          .from('tenants').select('*').eq('owner_id', userId).limit(1).single();
+        const { data: fallback, error: fbError } = await supabaseAdmin
+          .from('tenants').select('*').eq('owner_id', userId);
 
-        if (fbError && fbError.code !== 'PGRST116') {
+        if (fbError) {
           console.error('[AuthContext] Clerk fallback error:', fbError);
         }
 
-        if (fallback) {
-          setProperties([fallback as Tenant]);
-          setTenant(fallback as Tenant);
-          setUser(buildUser(userId, email, name, 'SUPER_ADMIN', 'CLERK', avatarUrl));
+        if (fallback && fallback.length > 0) {
+          const tenants = fallback as Tenant[];
+          setProperties(tenants);
+          const active = tenants[0];
+          setTenant(active);
+
+          // Check if this Clerk user owns a Business record.
+          // If yes → BUSINESS_ADMIN (invited business owner).
+          // If no  → SUPER_ADMIN (standalone hotel owner who signed up directly).
+          const { data: bData } = await supabaseAdmin
+            .from('businesses')
+            .select('*')
+            .eq('owner_id', userId)
+            .limit(1)
+            .maybeSingle();
+
+          const assignedRole: Role = bData ? 'BUSINESS_ADMIN' : 'SUPER_ADMIN';
+          console.log(`[AuthContext] Clerk fallback – role assigned: ${assignedRole}`);
+          setUser(buildUser(userId, email, name, assignedRole, 'CLERK', avatarUrl));
+          if (bData) setBusiness(bData as Business);
+
           setLoading(false);
           return;
         }
@@ -164,37 +313,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       }
     } catch (err: any) {
       console.error('[AuthContext] Critical failure in loadProperties:', err);
-      if (err.message && err.message.includes('schema')) {
-        console.error('[AuthContext] Possible schema mismatch or PostgREST cache issue detected.');
-      }
-    }
-
-    // 4. Handle Pending Signups (only for owners)
-    if (type === 'CLERK') {
-      const pendingName = localStorage.getItem('pending_business_name');
-      const pendingType = localStorage.getItem('pending_business_type') as Tenant['business_type'] | null;
-
-      if (pendingName && pendingType) {
-        localStorage.removeItem('pending_business_name');
-        localStorage.removeItem('pending_business_type');
-        const subdomain = generateSubdomain(pendingName);
-        const { error } = await supabase.rpc('create_tenant', {
-          p_owner_id: userId,
-          p_business_name: pendingName,
-          p_business_type: pendingType,
-          p_subdomain: subdomain,
-        });
-        if (!error) {
-          await loadProperties(userId, email, name, 'CLERK', avatarUrl);
-          return;
-        }
-      }
-      
-      setUser(buildUser(userId, email, name, 'SUPER_ADMIN', 'CLERK', avatarUrl));
-    } else {
-      setUser(null);
-      setTenant(null);
-      setProperties([]);
     }
     
     setLoading(false);
@@ -238,6 +356,9 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         custom_email: DEMO_EMAIL,
         logo_url: null,
         is_active: true,
+        feature_toggles: null,
+        business_id: null,
+        managed_by_business: false,
       };
       setTenant(demoTenant);
       setUser(buildUser('demo-user-123', DEMO_EMAIL, 'Demo Manager', 'SUPER_ADMIN', 'SUPABASE'));
@@ -324,7 +445,11 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       const client = clerkInstance?.client;
       if (!client) return { error: 'Auth not ready. Try again.' };
 
-      const result = await client.signUp.create({ emailAddress: email, password, firstName: businessName });
+      const result = await client.signUp.create({
+        emailAddress: email,
+        password,
+        unsafeMetadata: { businessName },
+      });
 
       if (result?.status === 'complete') {
         const clerkId = result?.createdUserId;
@@ -370,10 +495,9 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         await clerkInstance.setActive({ session: result.createdSessionId });
 
         if (clerkId) {
-          const subdomain = generateSubdomain(businessName);
-          await supabase.rpc('create_tenant', {
-            p_owner_id: clerkId, p_business_name: businessName, p_business_type: businessType, p_subdomain: subdomain,
-          });
+          // Simply trigger loadProperties which now handles the unified onboarding
+          // using the data stored in localStorage during Signup phase.
+          await loadProperties(clerkId, email, businessName, 'CLERK');
         }
         return { error: null };
       }
@@ -443,7 +567,11 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     return { error: null };
   };
 
-  const hasPermission = (allowedRoles: Role[]) => checkPermission(user?.role ?? null, allowedRoles);
+  const hasPermission = (allowedRoles: Role[]) => {
+    // Platform admin can access everything
+    if (isPlatformAdmin && allowedRoles.includes('PLATFORM_ADMIN')) return true;
+    return checkPermission(user?.role ?? null, allowedRoles);
+  };
   const session = user ? { access_token: isDemoMode ? 'demo-token' : 'active-session' } : null;
 
   const loginAsDemo = () => {
@@ -453,7 +581,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{
-      user, tenant, properties, session, loading,
+      user, tenant, properties, business, isPlatformAdmin, session, loading,
       login, signup, verifyEmail, logout, switchProperty, addProperty, hasPermission, refreshTenant,
       loginAsDemo,
     }}>

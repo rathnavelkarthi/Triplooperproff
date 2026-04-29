@@ -29,11 +29,24 @@ interface ChannelMeta {
 }
 
 const OTA_CHANNELS: ChannelMeta[] = [
-    { id: 'booking_com', name: 'Booking.com', logo: '🏨', description: "The world's leading digital travel company.", defaultCommission: '15%' },
-    { id: 'agoda', name: 'Agoda', logo: '🏖️', description: 'Fast-growing online travel booking platform.', defaultCommission: '15-20%' },
-    { id: 'makemytrip', name: 'MakeMyTrip', logo: '🇮🇳', description: "India's leading online travel company.", defaultCommission: '15-25%' },
-    { id: 'goibibo', name: 'Goibibo', logo: '✈️', description: 'Popular Indian travel aggregator.', defaultCommission: '15%' },
-    { id: 'expedia', name: 'Expedia', logo: '🌍', description: 'Global travel technology company.', defaultCommission: '18-22%' },
+    { id: 'booking_com', name: 'Booking.com', logo: 'booking.com', description: "The world's leading digital travel company.", defaultCommission: '15%' },
+    { id: 'agoda', name: 'Agoda', logo: 'agoda.com', description: 'Fast-growing online travel booking platform.', defaultCommission: '15-20%' },
+    { id: 'expedia', name: 'Expedia', logo: 'expedia.com', description: 'Global travel technology company.', defaultCommission: '18-22%' },
+    { id: 'happyeasygo', name: 'HappyEasyGo', logo: 'happyeasygo.com', description: 'Online travel platform for flights and hotels.', defaultCommission: '15%' },
+    { id: 'cleartrip', name: 'Cleartrip', logo: 'cleartrip.com', description: 'Global online travel company headquartered in Mumbai.', defaultCommission: '15-20%' },
+    { id: 'goibibo', name: 'Goibibo', logo: 'goibibo.com', description: 'Popular Indian travel aggregator.', defaultCommission: '15%' },
+    { id: 'paytm', name: 'Paytm', logo: 'paytm.com', description: 'Digital payment and e-commerce platform offering travel bookings.', defaultCommission: '15%' },
+    { id: 'yatra', name: 'Yatra', logo: 'yatra.com', description: 'Indian online travel agency and corporate travel service provider.', defaultCommission: '15-20%' },
+    { id: 'airbnb', name: 'Airbnb', logo: 'airbnb.com', description: 'Online marketplace for short-term homestays and experiences.', defaultCommission: '3-15%' },
+    { id: 'tripadvisor', name: 'Tripadvisor', logo: 'tripadvisor.com', description: 'Travel guidance company providing reviews and booking deals.', defaultCommission: '12-15%' },
+    { id: 'google', name: 'Google', logo: 'google.com', description: 'Google Hotel Ads for direct distribution and metasearch.', defaultCommission: '10-15%' },
+    { id: 'hotels_com', name: 'Hotels.com', logo: 'hotels.com', description: 'Website for booking hotel rooms online and by telephone.', defaultCommission: '15-20%' },
+    { id: 'kayak', name: 'Kayak', logo: 'kayak.com', description: 'Travel metasearch engine and booking platform.', defaultCommission: '15%' },
+    { id: 'brevistay', name: 'Brevistay', logo: 'brevistay.com', description: 'Hotel booking app for short-stay rooms on hourly basis.', defaultCommission: '15-25%' },
+    { id: 'akbartravels', name: 'Akbar Travels', logo: 'akbartravels.com', description: 'Leading travel agency offering comprehensive travel solutions.', defaultCommission: '15%' },
+    { id: 'makemytrip', name: 'MakeMyTrip', logo: 'makemytrip.com', description: "India's leading online travel company.", defaultCommission: '15-25%' },
+    { id: 'ixigo', name: 'Ixigo', logo: 'ixigo.com', description: 'AI-based travel app for flights, trains, and hotels.', defaultCommission: '12-15%' },
+    { id: 'trivago', name: 'Trivago', logo: 'trivago.com', description: 'Global hotel search and price comparison meta search engine.', defaultCommission: '15%' },
 ];
 
 /* ── Types ── */
@@ -282,8 +295,17 @@ export default function ChannelManager() {
 
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-2xl border border-gray-100 shadow-sm">
-                                                        {ch.logo}
+                                                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center border border-gray-100 shadow-sm overflow-hidden">
+                                                        <img 
+                                                            src={`https://logo.clearbit.com/${ch.logo}`} 
+                                                            alt={ch.name}
+                                                            className="w-full h-full object-contain p-2"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement;
+                                                                target.style.display = 'none';
+                                                                target.parentElement!.innerHTML = `<span class="text-lg font-bold text-[#0E2A38]">${ch.name.charAt(0)}</span>`;
+                                                            }}
+                                                        />
                                                     </div>
                                                     <div>
                                                         <h3 className="font-bold text-gray-900">{ch.name}</h3>
@@ -435,7 +457,9 @@ export default function ChannelManager() {
                             {/* Header */}
                             <div className="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-xl shadow-sm border border-gray-100">{selectedMeta.logo}</div>
+                                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm border border-gray-100 overflow-hidden">
+                                        <img src={`https://logo.clearbit.com/${selectedMeta.logo}`} alt="" className="w-full h-full object-contain p-1" />
+                                    </div>
                                     <h3 className="font-bold text-gray-900">Connect to {selectedMeta.name}</h3>
                                 </div>
                                 {connectionStep === 1 && (

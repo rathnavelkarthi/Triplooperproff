@@ -5,7 +5,7 @@
 
 const RESEND_API_KEY = import.meta.env.VITE_RESENDAPIKEY as string;
 const RESEND_URL = 'https://api.resend.com/emails';
-const FROM = 'EasyStay <onboarding@resend.dev>';
+const FROM = import.meta.env.VITE_RESEND_FROM || 'EasyStay <onboarding@resend.dev>';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -13,6 +13,8 @@ export interface WelcomeEmailData {
   email: string;
   businessName: string;
   businessType: string;
+  password?: string;
+  subdomain?: string;
 }
 
 export interface BookingConfirmationData {
@@ -85,14 +87,38 @@ export interface BookingStatusChangeData {
   businessName: string;
 }
 
+export interface BusinessInviteData {
+  email: string;
+  businessName: string;
+  maxProperties: number;
+  inviteUrl: string;
+}
+
 // ─── Core sender ────────────────────────────────────────────────
 
-async function sendResendEmail(to: string, subject: string, html: string): Promise<void> {
+async function sendResendEmail(to: string, subject: string, html: string): Promise<boolean> {
   try {
-    if (!RESEND_API_KEY) {
-      console.warn('[EasyStay Email] No API key configured');
-      return;
+    // 1. Try local express proxy first (best for CORS)
+    try {
+      const serverRes = await fetch('http://localhost:3001/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, html, from: FROM })
+      });
+      if (serverRes.ok) {
+        console.log('[EasyStay Email] Sent via local server');
+        return true;
+      }
+    } catch (e) {
+      // Server likely not running, continue to direct fetch
     }
+
+    // 2. Direct fetch fallback
+    if (!RESEND_API_KEY) {
+      console.warn('[EasyStay Email] No API key for direct fetch');
+      return false;
+    }
+
     const res = await fetch(RESEND_URL, {
       method: 'POST',
       headers: {
@@ -101,12 +127,18 @@ async function sendResendEmail(to: string, subject: string, html: string): Promi
       },
       body: JSON.stringify({ from: FROM, to: [to], subject, html }),
     });
+
     if (!res.ok) {
-      const err = await res.json();
-      console.error('[EasyStay Email] Failed:', err);
+      const err = await res.json().catch(() => ({}));
+      console.error('[EasyStay Email] Direct Resend failed:', err);
+      return false;
     }
+
+    console.log('[EasyStay Email] Sent directly from browser');
+    return true;
   } catch (err) {
-    console.error('[EasyStay Email] Error:', err);
+    console.error('[EasyStay Email] Unexpected error:', err);
+    return false;
   }
 }
 
@@ -318,8 +350,38 @@ function welcomeEmailHtml(data: WelcomeEmailData): string {
     ${detailCard([
       ['Property', data.businessName, true],
       ['Type', (data.businessType || 'Hotel').charAt(0).toUpperCase() + (data.businessType || 'hotel').slice(1)],
+      ['Email', data.email],
       ['Account', getStatusPill('Confirmed')],
     ], T.accent)}
+
+    ${data.password ? `
+    ${sectionLabel('Login credentials')}
+    <div style="background:${T.bgMuted};border-radius:12px;padding:20px 24px;margin:16px 0;border:1px solid ${T.borderAccent}">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+        <tr>
+          <td style="padding:8px 0;font-family:${ff};font-size:13px;color:${T.textTertiary}">Login URL</td>
+          <td style="padding:8px 0;font-family:${ff};font-size:13px;color:${T.accent};font-weight:500;text-align:right;word-break:break-all">
+            <a href="https://${data.subdomain ? `${data.subdomain}.` : ''}esaystay.com/admin/login" style="color:${T.accent};text-decoration:none">
+              ${data.subdomain ? `${data.subdomain}.` : ''}esaystay.com
+            </a>
+          </td>
+        </tr>
+        <tr><td colspan="2" style="padding:4px 0"><div style="height:1px;background:${T.border}"></div></td></tr>
+        <tr>
+          <td style="padding:8px 0;font-family:${ff};font-size:13px;color:${T.textTertiary}">Email</td>
+          <td style="padding:8px 0;font-family:${mono};font-size:14px;color:${T.textPrimary};font-weight:600;text-align:right">${data.email}</td>
+        </tr>
+        <tr><td colspan="2" style="padding:4px 0"><div style="height:1px;background:${T.border}"></div></td></tr>
+        <tr>
+          <td style="padding:8px 0;font-family:${ff};font-size:13px;color:${T.textTertiary}">Password</td>
+          <td style="padding:8px 0;font-family:${mono};font-size:14px;color:${T.textPrimary};font-weight:600;text-align:right;letter-spacing:0.5px">${data.password}</td>
+        </tr>
+      </table>
+    </div>
+    <div style="background:${T.bgWarnSoft};border-radius:10px;padding:14px 20px;margin-bottom:24px">
+      <p style="margin:0;font-family:${ff};font-size:13px;color:${T.orange};line-height:1.6;font-weight:500">&#9888;&#65039; Please change your password after your first login.</p>
+    </div>
+    ` : ''}
 
     ${divider()}
 
@@ -607,40 +669,80 @@ function bookingStatusChangeHtml(data: BookingStatusChangeData): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// 8. BUSINESS INVITE
+// ═══════════════════════════════════════════════════════════════════
+
+function businessInviteHtml(data: BusinessInviteData): string {
+  const body = `
+    ${heading('You Have Been Invited to EasyStay')}
+    ${subtitle(`You have been invited to manage <strong style="color:${T.textPrimary}">${data.businessName}</strong> on EasyStay, the premium property management platform.`)}
+
+    ${sectionLabel('Invite details')}
+    ${detailCard([
+      ['Role', 'Business Operator', true],
+      ['Package', `Up to ${data.maxProperties} propert${data.maxProperties > 1 ? 'ies' : 'y'}`],
+    ], T.accent)}
+
+    <div style="margin-top: 16px;">
+      <p style="margin:0 0 16px;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7;">Click the secure link below to accept your invitation and create your operator account:</p>
+    </div>
+  `;
+
+  return baseTemplate({
+    preheader: `You have been invited to manage ${data.businessName} on EasyStay`,
+    businessName: data.businessName,
+    bodyContent: body,
+    accentColor: T.accent,
+    ctaText: 'Accept Invitation &rarr;',
+    ctaUrl: data.inviteUrl,
+    footerNote: 'This invitation is exclusive to your email. If you did not expect this, simply ignore it.',
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // EXPORTED TRIGGERS (fire-and-forget)
 // ═══════════════════════════════════════════════════════════════════
 
-export function sendWelcomeEmail(data: WelcomeEmailData): void {
-  if (!data.email) return;
-  sendResendEmail(data.email, `Welcome to EasyStay, ${data.businessName}!`, welcomeEmailHtml(data));
+export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<boolean> {
+  if (!data.email) return false;
+  return sendResendEmail(data.email, `Welcome to EasyStay, ${data.businessName}!`, welcomeEmailHtml(data));
 }
 
-export function sendBookingConfirmation(data: BookingConfirmationData): void {
-  if (!data.guestEmail) return;
-  sendResendEmail(data.guestEmail, `Booking confirmed — ${data.guestName} at ${data.businessName}`, bookingConfirmationHtml(data));
+export async function sendBookingConfirmation(data: BookingConfirmationData): Promise<boolean> {
+  if (!data.guestEmail) return false;
+  return sendResendEmail(data.guestEmail, `Booking confirmed — ${data.guestName} at ${data.businessName}`, bookingConfirmationHtml(data));
 }
 
-export function sendBookingCancelled(data: BookingCancelledData): void {
-  if (!data.guestEmail) return;
-  sendResendEmail(data.guestEmail, `Booking cancelled — ${data.businessName}`, bookingCancelledHtml(data));
+export async function sendBookingCancelled(data: BookingCancelledData): Promise<boolean> {
+  if (!data.guestEmail) return false;
+  return sendResendEmail(data.guestEmail, `Booking cancelled — ${data.businessName}`, bookingCancelledHtml(data));
 }
 
-export function sendCheckInEmail(data: CheckInEmailData): void {
-  if (!data.guestEmail) return;
-  sendResendEmail(data.guestEmail, `Welcome to ${data.businessName} — You're checked in!`, checkInConfirmationHtml(data));
+export async function sendCheckInEmail(data: CheckInEmailData): Promise<boolean> {
+  if (!data.guestEmail) return false;
+  return sendResendEmail(data.guestEmail, `Welcome to ${data.businessName} — You're checked in!`, checkInConfirmationHtml(data));
 }
 
-export function sendCheckOutEmail(data: CheckOutEmailData): void {
-  if (!data.guestEmail) return;
-  sendResendEmail(data.guestEmail, `Your receipt from ${data.businessName}`, checkOutReceiptHtml(data));
+export async function sendCheckOutEmail(data: CheckOutEmailData): Promise<boolean> {
+  if (!data.guestEmail) return false;
+  return sendResendEmail(data.guestEmail, `Your receipt from ${data.businessName}`, checkOutReceiptHtml(data));
 }
 
-export function sendStaffCredentials(data: StaffCredentialsData): void {
-  if (!data.email) return;
-  sendResendEmail(data.email, `Your login for ${data.businessName} — EasyStay`, staffCredentialsHtml(data));
+export async function sendStaffCredentials(data: StaffCredentialsData): Promise<boolean> {
+  if (!data.email) return false;
+  return sendResendEmail(data.email, `Your login for ${data.businessName} — EasyStay`, staffCredentialsHtml(data));
 }
 
-export function sendBookingStatusChange(data: BookingStatusChangeData): void {
-  if (!data.guestEmail) return;
-  sendResendEmail(data.guestEmail, `Booking update: ${data.newStatus} — ${data.businessName}`, bookingStatusChangeHtml(data));
+export async function sendBookingStatusChange(data: BookingStatusChangeData): Promise<boolean> {
+  if (!data.guestEmail) return false;
+  return sendResendEmail(data.guestEmail, `Booking update: ${data.newStatus} — ${data.businessName}`, bookingStatusChangeHtml(data));
+}
+
+export async function sendBusinessInvite(data: BusinessInviteData): Promise<boolean> {
+  if (!data.email) return false;
+  return sendResendEmail(
+    data.email,
+    `You're invited to manage ${data.businessName} on EasyStay`,
+    businessInviteHtml(data)
+  );
 }

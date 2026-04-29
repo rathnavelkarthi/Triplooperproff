@@ -48,7 +48,7 @@ export default function CTA() {
                 >
                     <Link
                         to="/admin/login"
-                        className="inline-flex items-center gap-2 text-[16px] font-semibold text-[#0071e3] bg-white hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] px-8 py-4 min-h-[48px] rounded-full transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_60px_rgba(255,255,255,0.25)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                        className="inline-flex items-center gap-2 text-[16px] font-semibold text-[var(--color-primary)] bg-white hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] px-8 py-4 min-h-[48px] rounded-full transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_60px_rgba(255,255,255,0.25)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                     >
                         Start Free Trial
                         <ArrowRight size={18} />

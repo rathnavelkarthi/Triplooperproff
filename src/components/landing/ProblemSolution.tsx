@@ -13,15 +13,15 @@ interface StatCard {
 }
 
 const problems: StatCard[] = [
-    { icon: TrendingDown, value: '23%', label: 'Revenue leaked to OTA commissions', color: '#E74C3C' },
-    { icon: Clock, value: '4.2hrs', label: 'Staff time wasted daily', color: '#F39C12' },
-    { icon: Layers, value: '6+', label: 'Disconnected tools juggled', color: '#9B59B6' },
+    { icon: TrendingDown, value: '23%', label: 'Revenue leaked to OTA commissions', color: 'var(--color-accent-red)' },
+    { icon: Clock, value: '4.2hrs', label: 'Staff time wasted daily', color: 'var(--color-accent-orange)' },
+    { icon: Layers, value: '6+', label: 'Disconnected tools juggled', color: 'var(--color-accent-purple)' },
 ];
 
 const solutions: StatCard[] = [
-    { icon: TrendingUp, value: '₹0', label: 'Commission on direct bookings', color: '#0071e3' },
-    { icon: Zap, value: '4.2hrs', label: 'Saved every day', color: '#0071e3' },
-    { icon: Target, value: '1', label: 'Unified platform', color: '#0071e3' },
+    { icon: TrendingUp, value: '₹0', label: 'Commission on direct bookings', color: 'var(--color-primary)' },
+    { icon: Zap, value: '4.2hrs', label: 'Saved every day', color: 'var(--color-primary)' },
+    { icon: Target, value: '1', label: 'Unified platform', color: 'var(--color-primary)' },
 ];
 
 function StatCardComponent({ card, index, dark, reduced }: { card: StatCard; index: number; dark?: boolean; reduced?: boolean }) {
@@ -46,7 +46,7 @@ function StatCardComponent({ card, index, dark, reduced }: { card: StatCard; ind
             </div>
             <div>
                 <p className={`text-[32px] font-bold tracking-tight leading-none ${
-                    dark ? 'text-white' : 'text-[#1d1d1f]'
+                    dark ? 'text-white' : 'text-[var(--color-text-primary-light)]'
                 }`}>
                     {card.value}
                 </p>
@@ -91,7 +91,7 @@ export default function ProblemSolution() {
                         <p className="text-[12px] font-semibold text-black/30 uppercase tracking-[0.2em] mb-3">
                             The problem
                         </p>
-                        <h2 className="text-[32px] md:text-[38px] lg:text-[42px] font-bold text-[#1d1d1f] tracking-[-0.03em] leading-tight">
+                        <h2 className="text-[32px] md:text-[38px] lg:text-[42px] font-bold text-[var(--color-text-primary-light)] tracking-[-0.03em] leading-tight">
                             Hotels are drowning in<br className="hidden md:block" /> disconnected tools.
                         </h2>
                     </motion.div>
@@ -141,7 +141,7 @@ export default function ProblemSolution() {
                             whileInView={reduced ? {} : { opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
                             transition={{ ...spring, delay: 0.2 }}
-                            className="text-[14px] font-semibold text-[#0071e3] uppercase tracking-[0.15em] mb-3"
+                            className="text-[14px] font-semibold text-[var(--color-primary)] uppercase tracking-[0.15em] mb-3"
                         >
                             There&apos;s a better way
                         </motion.p>

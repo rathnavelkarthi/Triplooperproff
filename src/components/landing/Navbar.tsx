@@ -66,7 +66,7 @@ export default function Navbar() {
                 >
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-2.5 shrink-0">
-                        <div className="w-7 h-7 bg-[#0071e3] rounded-lg flex items-center justify-center">
+                        <div className="w-7 h-7 bg-[var(--color-primary)] rounded-lg flex items-center justify-center">
                             <span className="text-white text-sm font-bold leading-none">E</span>
                         </div>
                         <span className="text-white text-[15px] font-semibold tracking-tight">
@@ -81,7 +81,7 @@ export default function Navbar() {
                                 key={link.label}
                                 href={link.href}
                                 onClick={(e) => handleAnchor(e, link.href)}
-                                className={`text-[13px] transition-colors duration-200 tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] focus-visible:rounded-sm px-1 py-0.5 ${
+                                className={`text-[13px] transition-colors duration-200 tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:rounded-sm px-1 py-0.5 ${
                                     activeSection === link.href
                                         ? 'text-white font-medium'
                                         : 'text-white/70 hover:text-white'
@@ -96,13 +96,13 @@ export default function Navbar() {
                     <div className="hidden md:flex items-center gap-5">
                         <Link
                             to="/admin/login"
-                            className="text-[13px] text-white/60 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] focus-visible:rounded-sm px-1 py-0.5"
+                            className="text-[13px] text-white/60 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:rounded-sm px-1 py-0.5"
                         >
                             Sign In
                         </Link>
                         <Link
                             to="/admin/login"
-                            className="text-[13px] font-medium text-white bg-[#0071e3] hover:bg-[#0077ed] hover:scale-[1.02] active:scale-[0.98] px-[18px] py-[8px] rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(0,113,227,0.4)] hover:shadow-[0_0_40px_rgba(0,113,227,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black cursor-pointer"
+                            className="text-[13px] font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] hover:scale-[1.02] active:scale-[0.98] px-[18px] py-[8px] rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(0,113,227,0.4)] hover:shadow-[0_0_40px_rgba(0,113,227,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black cursor-pointer"
                         >
                             Start Free
                         </Link>
@@ -111,7 +111,7 @@ export default function Navbar() {
                     {/* Mobile hamburger */}
                     <button
                         onClick={() => setMobileOpen(!mobileOpen)}
-                        className="md:hidden text-white/80 hover:text-white p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] focus-visible:rounded-lg"
+                        className="md:hidden text-white/80 hover:text-white p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:rounded-lg"
                         aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
                         aria-expanded={mobileOpen}
                     >
@@ -151,7 +151,7 @@ export default function Navbar() {
                                 </Link>
                                 <Link
                                     to="/admin/login"
-                                    className="text-[15px] text-center font-medium text-white bg-[#0071e3] hover:bg-[#0077ed] px-5 py-2.5 rounded-full transition-all duration-200"
+                                    className="text-[15px] text-center font-medium text-white bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] px-5 py-2.5 rounded-full transition-all duration-200"
                                     onClick={() => setMobileOpen(false)}
                                 >
                                     Start Free

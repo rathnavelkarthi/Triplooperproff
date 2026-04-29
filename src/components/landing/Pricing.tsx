@@ -117,7 +117,7 @@ export default function Pricing() {
                             onClick={() => setYearly(false)}
                             role="radio"
                             aria-checked={!yearly}
-                            className={`text-[14px] font-medium px-6 py-2.5 min-h-[44px] rounded-full transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] ${
+                            className={`text-[14px] font-medium px-6 py-2.5 min-h-[44px] rounded-full transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${
                                 !yearly ? 'bg-white text-black' : 'text-white/50 hover:text-white/80'
                             }`}
                         >
@@ -127,12 +127,12 @@ export default function Pricing() {
                             onClick={() => setYearly(true)}
                             role="radio"
                             aria-checked={yearly}
-                            className={`text-[14px] font-medium px-6 py-2.5 min-h-[44px] rounded-full transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] ${
+                            className={`text-[14px] font-medium px-6 py-2.5 min-h-[44px] rounded-full transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${
                                 yearly ? 'bg-white text-black' : 'text-white/50 hover:text-white/80'
                             }`}
                         >
                             Yearly
-                            <span className="ml-1.5 text-[10px] text-[#34C759] font-semibold">Save 20%</span>
+                            <span className="ml-1.5 text-[10px] text-[var(--color-success)] font-semibold">Save 20%</span>
                         </button>
                     </div>
                 </motion.div>
@@ -152,12 +152,12 @@ export default function Pricing() {
                             )}
                             className={`relative rounded-2xl p-8 border backdrop-blur-xl transition-all duration-300 ${
                                 tier.popular
-                                    ? 'bg-white/[0.08] border-[#0071e3] shadow-[0_0_80px_rgba(0,113,227,0.6)] lg:scale-105'
+                                    ? 'bg-white/[0.08] border-[var(--color-primary)] shadow-[0_0_80px_rgba(0,113,227,0.6)] lg:scale-105'
                                     : 'bg-white/5 border-white/10 shadow-[0_20px_100px_rgba(0,0,0,0.6)] hover:shadow-[0_40px_140px_rgba(0,113,227,0.25)]'
                             }`}
                         >
                             {tier.popular && (
-                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#0071e3] text-[10px] text-white font-semibold">
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[var(--color-primary)] text-[10px] text-white font-semibold">
                                     Most Popular
                                 </div>
                             )}
@@ -191,7 +191,7 @@ export default function Pricing() {
                             <ul className="space-y-2.5 mb-6">
                                 {tier.features.map(f => (
                                     <li key={f} className="flex items-start gap-2">
-                                        <Check size={14} className="text-[#0071e3] mt-0.5 shrink-0" />
+                                        <Check size={14} className="text-[var(--color-primary)] mt-0.5 shrink-0" />
                                         <span className="text-[13px] text-white/60 leading-snug">{f}</span>
                                     </li>
                                 ))}
@@ -202,7 +202,7 @@ export default function Pricing() {
                                 to="/admin/login"
                                 className={`w-full flex items-center justify-center gap-2 text-[14px] font-medium py-3 min-h-[44px] rounded-full transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                                     tier.popular
-                                        ? 'bg-[#0071e3] text-white hover:bg-[#0077ed] hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_30px_rgba(0,113,227,0.5)] hover:shadow-[0_0_40px_rgba(0,113,227,0.6)]'
+                                        ? 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_30px_rgba(0,113,227,0.5)] hover:shadow-[0_0_40px_rgba(0,113,227,0.6)]'
                                         : 'border border-white/20 text-white/70 hover:border-white/40 hover:text-white hover:-translate-y-0.5 active:translate-y-0'
                                 }`}
                             >

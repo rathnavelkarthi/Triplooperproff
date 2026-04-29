@@ -1,5 +1,6 @@
 export function getSubdomain() {
     const hostname = window.location.hostname;
+    console.log('[useSubdomain] Current hostname:', hostname);
     const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
 
     // Ignore common non-tenant subdomains
@@ -26,18 +27,21 @@ export function getSubdomain() {
         // If the user's project is named 'ganesh-resedence' but their DB subdomain is 'ganesh',
         // we can try returning the exact project name, but the DB must match it.
         // Let's just return the first part.
-        if (!ignoredSubdomains.includes(sub) && sub !== 'vercel') {
-            return sub;
-        }
+            if (!ignoredSubdomains.includes(sub) && sub !== 'vercel') {
+                console.log('[useSubdomain] Detected subdomain (Vercel):', sub);
+                return sub;
+            }
     }
 
     // Custom Domains (e.g., hotel.superstay.com)
     if (parts.length >= 3) {
         const sub = parts[0];
         if (!ignoredSubdomains.includes(sub)) {
+            console.log('[useSubdomain] Detected subdomain (Custom):', sub);
             return sub;
         }
     }
 
+    console.log('[useSubdomain] Detected subdomain:', null);
     return null;
 }

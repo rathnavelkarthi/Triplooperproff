@@ -518,10 +518,10 @@ export default function TenantSite() {
             <Helmet>
                 <title>{tenant.business_name} - Book Direct | Rooms, Dining & More</title>
                 <meta name="description" content={`Book your stay at ${tenant.business_name}. View rooms, prices, amenities, and reserve directly for the best rates. Powered by EasyStay.`} />
-                <link rel="canonical" href={`https://${tenant.subdomain}.easystay.com/`} />
+                <link rel="canonical" href={`https://${tenant.subdomain}.esaystay.com/`} />
                 <meta property="og:title" content={`${tenant.business_name} - Book Direct`} />
                 <meta property="og:description" content={`View rooms, prices, and amenities at ${tenant.business_name}. Reserve directly for the best rates.`} />
-                <meta property="og:url" content={`https://${tenant.subdomain}.easystay.com/`} />
+                <meta property="og:url" content={`https://${tenant.subdomain}.esaystay.com/`} />
                 <meta property="og:type" content="website" />
                 {tenant.hero_image_url && <meta property="og:image" content={tenant.hero_image_url} />}
                 {tenant.logo_url && <meta property="og:image" content={tenant.logo_url} />}
@@ -532,7 +532,7 @@ export default function TenantSite() {
                     "@context": "https://schema.org",
                     "@type": tenant.business_type === 'restaurant' ? "Restaurant" : "LodgingBusiness",
                     "name": tenant.business_name,
-                    "url": `https://${tenant.subdomain}.easystay.com/`,
+                    "url": `https://${tenant.subdomain}.esaystay.com/`,
                     ...(tenant.logo_url && { "logo": tenant.logo_url }),
                     ...(tenant.hero_image_url && { "image": tenant.hero_image_url }),
                     ...(rooms.length > 0 && tenant.business_type !== 'restaurant' && {

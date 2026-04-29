@@ -35,6 +35,14 @@ import ServerOrders from '../../pages/crm/ServerOrders';
 import Expenses from '../../pages/crm/Expenses';
 import ProfitLoss from '../../pages/crm/ProfitLoss';
 
+// Business module
+import BusinessDashboard from '../../pages/crm/business/BusinessDashboard';
+import BusinessPropertyCreate from '../../pages/crm/business/BusinessPropertyCreate';
+import BusinessPropertyDetail from '../../pages/crm/business/BusinessPropertyDetail';
+
+// Platform admin
+import PlatformAdmin from '../../pages/crm/PlatformAdmin';
+
 export default function CRMApp() {
   const { user, tenant, loading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -54,6 +62,8 @@ export default function CRMApp() {
       </div>
     );
   }
+
+  // Handled by RoleGuard in CRMApp
 
   if (!user) {
     return <Navigate to="/admin/login" replace />;
@@ -82,56 +92,60 @@ export default function CRMApp() {
         <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <Routes>
-            <Route path="dashboard" element={isRestaurantOnly ? <RestaurantDashboard /> : <Dashboard />} />
+            <Route path="dashboard" element={
+              user?.role === 'BUSINESS_ADMIN' 
+                ? <Navigate to="/admin/business" replace /> 
+                : (isRestaurantOnly ? <RestaurantDashboard /> : <Dashboard />)
+            } />
             <Route path="server-orders" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SERVER']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SERVER', 'BUSINESS_ADMIN']}>
                 <ServerOrders />
               </RoleGuard>
             } />
 
             {/* Hotel routes */}
             <Route path="channels" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'BUSINESS_ADMIN']}>
                 <ChannelManager />
               </RoleGuard>
             } />
             <Route path="reservations" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'BUSINESS_ADMIN']}>
                 <Reservations />
               </RoleGuard>
             } />
             <Route path="calendar" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'BUSINESS_ADMIN']}>
                 <Calendar />
               </RoleGuard>
             } />
             <Route path="guests" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'BUSINESS_ADMIN']}>
                 <Guests />
               </RoleGuard>
             } />
             <Route path="rooms" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING', 'BUSINESS_ADMIN']}>
                 <Rooms />
               </RoleGuard>
             } />
             <Route path="payments" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'ACCOUNTANT']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'ACCOUNTANT', 'BUSINESS_ADMIN']}>
                 <Payments />
               </RoleGuard>
             } />
             <Route path="invoices" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'RECEPTION', 'ACCOUNTANT']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'RECEPTION', 'ACCOUNTANT', 'BUSINESS_ADMIN']}>
                 <Invoices />
               </RoleGuard>
             } />
             <Route path="reports" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'ACCOUNTANT']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'ACCOUNTANT', 'BUSINESS_ADMIN']}>
                 <Reports />
               </RoleGuard>
             } />
             <Route path="staff" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN']}>
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'BUSINESS_ADMIN']}>
                 <Staff />
               </RoleGuard>
             } />
@@ -209,6 +223,30 @@ export default function CRMApp() {
             <Route path="billing" element={
               <RoleGuard allowedRoles={['SUPER_ADMIN']}>
                 <Billing />
+              </RoleGuard>
+            } />
+
+            {/* Business module */}
+            <Route path="business" element={
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'BUSINESS_ADMIN']}>
+                <BusinessDashboard />
+              </RoleGuard>
+            } />
+            <Route path="business/create" element={
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'BUSINESS_ADMIN']}>
+                <BusinessPropertyCreate />
+              </RoleGuard>
+            } />
+            <Route path="business/:propertyId" element={
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'BUSINESS_ADMIN']}>
+                <BusinessPropertyDetail />
+              </RoleGuard>
+            } />
+
+            {/* Platform admin */}
+            <Route path="platform" element={
+              <RoleGuard allowedRoles={['SUPER_ADMIN']}>
+                <PlatformAdmin />
               </RoleGuard>
             } />
 

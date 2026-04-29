@@ -17,8 +17,8 @@ interface ModuleSectionProps {
 /* ── reusable module section ── */
 export default function ModuleSection({ label, headline, bullets, dark, reversed, mockup, bgClass }: ModuleSectionProps) {
     const reduced = useReducedMotion();
-    const bg = bgClass || (dark ? 'bg-black' : 'bg-[#f5f5f7]');
-    const textColor = dark ? 'text-white' : 'text-[#1d1d1f]';
+    const bg = bgClass || (dark ? 'bg-black' : 'bg-[var(--color-surface-light)]');
+    const textColor = dark ? 'text-white' : 'text-[var(--color-text-primary-light)]';
     const subColor = dark ? 'text-white/50' : 'text-black/50';
     const labelColor = dark ? 'text-white/30' : 'text-black/30';
 
@@ -67,7 +67,7 @@ export default function ModuleSection({ label, headline, bullets, dark, reversed
                                     transition={{ ...spring, delay: 0.1 + i * 0.1 }}
                                     className="flex items-start gap-3"
                                 >
-                                    <Check size={18} className="text-[#0071e3] mt-0.5 shrink-0" />
+                                    <Check size={18} className="text-[var(--color-primary)] mt-0.5 shrink-0" />
                                     <span className={`text-[15px] ${subColor} leading-relaxed`}>{b}</span>
                                 </motion.li>
                             ))}
@@ -126,7 +126,7 @@ export function BookingMockup() {
                             key={d}
                             className={`text-[10px] text-center py-1 rounded ${
                                 d >= 15 && d <= 18
-                                    ? 'bg-[#0071e3]/30 text-[#0071e3]'
+                                    ? 'bg-[#0071e3]/30 text-[var(--color-primary)]'
                                     : 'text-white/30 hover:bg-white/[0.04]'
                             }`}
                         >
@@ -147,7 +147,7 @@ export function BookingMockup() {
                             <p className="text-[12px] text-white/80 font-medium">{r.name}</p>
                             <p className="text-[10px] text-white/30">{r.price}/night</p>
                         </div>
-                        <span className={`text-[10px] font-medium ${r.avail ? 'text-[#34C759]' : 'text-white/20'}`}>
+                        <span className={`text-[10px] font-medium ${r.avail ? 'text-[var(--color-success)]' : 'text-white/20'}`}>
                             {r.avail ? 'Available' : 'Sold Out'}
                         </span>
                     </div>
@@ -163,8 +163,8 @@ export function CRMMockup() {
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
-                    <Users size={16} className="text-[#0071e3]" />
-                    <span className="text-[13px] text-[#1d1d1f] font-semibold">Guest Directory</span>
+                    <Users size={16} className="text-[var(--color-primary)]" />
+                    <span className="text-[13px] text-[var(--color-text-primary-light)] font-semibold">Guest Directory</span>
                 </div>
                 <span className="text-[11px] text-black/30">248 guests</span>
             </div>
@@ -176,18 +176,18 @@ export function CRMMockup() {
             ].map(g => (
                 <div key={g.name} className="flex items-center justify-between py-3 border-b border-black/[0.04] last:border-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#f5f5f7] flex items-center justify-center">
-                            <span className="text-[11px] font-bold text-[#1d1d1f]">{g.name[0]}</span>
+                        <div className="w-8 h-8 rounded-full bg-[var(--color-surface-light)] flex items-center justify-center">
+                            <span className="text-[11px] font-bold text-[var(--color-text-primary-light)]">{g.name[0]}</span>
                         </div>
                         <div>
-                            <p className="text-[13px] text-[#1d1d1f] font-medium">{g.name}</p>
+                            <p className="text-[13px] text-[var(--color-text-primary-light)] font-medium">{g.name}</p>
                             <p className="text-[10px] text-black/40">{g.stays} stays &middot; {g.spend}</p>
                         </div>
                     </div>
                     <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                        g.tag === 'VIP' ? 'bg-[#0071e3]/10 text-[#0071e3]' :
-                        g.tag === 'Regular' ? 'bg-[#34C759]/10 text-[#34C759]' :
-                        'bg-[#FF9500]/10 text-[#FF9500]'
+                        g.tag === 'VIP' ? 'bg-[#0071e3]/10 text-[var(--color-primary)]' :
+                        g.tag === 'Regular' ? 'bg-[#34C759]/10 text-[var(--color-success)]' :
+                        'bg-[#FF9500]/10 text-[var(--color-warning)]'
                     }`}>
                         {g.tag}
                     </span>
@@ -199,7 +199,7 @@ export function CRMMockup() {
                     { icon: FileText, label: 'Invoice' },
                     { icon: CreditCard, label: 'Payment' },
                 ].map(a => (
-                    <div key={a.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#f5f5f7] text-[11px] text-black/50 font-medium">
+                    <div key={a.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-surface-light)] text-[11px] text-black/50 font-medium">
                         <a.icon size={12} />
                         {a.label}
                     </div>
@@ -214,7 +214,7 @@ export function POSMockup() {
         <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.6)] hover:shadow-[0_30px_120px_rgba(0,113,227,0.2)] transition-all duration-300">
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
-                    <UtensilsCrossed size={16} className="text-[#FF9500]" />
+                    <UtensilsCrossed size={16} className="text-[var(--color-warning)]" />
                     <span className="text-[13px] text-white/80 font-semibold">Restaurant POS</span>
                 </div>
                 <span className="text-[11px] text-white/30">Table 5 &middot; Dine-in</span>
@@ -244,11 +244,11 @@ export function POSMockup() {
             </div>
             {/* Actions */}
             <div className="flex gap-2 mt-4">
-                <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#FF9500]/20 text-[#FF9500] text-[11px] font-medium">
+                <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#FF9500]/20 text-[var(--color-warning)] text-[11px] font-medium">
                     <ClipboardList size={12} />
                     Send KOT
                 </div>
-                <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#0071e3]/20 text-[#0071e3] text-[11px] font-medium">
+                <div className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#0071e3]/20 text-[var(--color-primary)] text-[11px] font-medium">
                     <QrCode size={12} />
                     QR Order
                 </div>
@@ -262,8 +262,8 @@ export function AnalyticsMockup() {
         <div className="rounded-2xl bg-white border border-black/[0.06] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
-                    <BarChart3 size={16} className="text-[#0071e3]" />
-                    <span className="text-[13px] text-[#1d1d1f] font-semibold">Revenue Analytics</span>
+                    <BarChart3 size={16} className="text-[var(--color-primary)]" />
+                    <span className="text-[13px] text-[var(--color-text-primary-light)] font-semibold">Revenue Analytics</span>
                 </div>
                 <span className="text-[11px] text-black/30">Last 30 days</span>
             </div>
@@ -274,20 +274,20 @@ export function AnalyticsMockup() {
                     { label: 'Occupancy', value: '84%', change: '+7%', color: '#0071e3' },
                     { label: 'ADR', value: '₹3,840', change: '+12%', color: '#FF9500' },
                 ].map(k => (
-                    <div key={k.label} className="rounded-xl bg-[#f5f5f7] p-3">
+                    <div key={k.label} className="rounded-xl bg-[var(--color-surface-light)] p-3">
                         <p className="text-[10px] text-black/40 mb-1">{k.label}</p>
-                        <p className="text-[16px] font-bold text-[#1d1d1f] tracking-tight">{k.value}</p>
+                        <p className="text-[16px] font-bold text-[var(--color-text-primary-light)] tracking-tight">{k.value}</p>
                         <p className="text-[10px]" style={{ color: k.color }}>{k.change}</p>
                     </div>
                 ))}
             </div>
             {/* Chart */}
-            <div className="rounded-xl bg-[#f5f5f7] p-4">
+            <div className="rounded-xl bg-[var(--color-surface-light)] p-4">
                 <div className="flex items-center justify-between mb-3">
                     <span className="text-[11px] text-black/40 font-medium">Monthly Revenue</span>
                     <div className="flex items-center gap-1">
-                        <TrendingUp size={12} className="text-[#34C759]" />
-                        <span className="text-[10px] text-[#34C759]">Trending up</span>
+                        <TrendingUp size={12} className="text-[var(--color-success)]" />
+                        <span className="text-[10px] text-[var(--color-success)]">Trending up</span>
                     </div>
                 </div>
                 <div className="flex items-end gap-2 h-16">
@@ -304,10 +304,10 @@ export function AnalyticsMockup() {
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/[0.04]">
                 <div>
                     <p className="text-[10px] text-black/40">Net Profit</p>
-                    <p className="text-[15px] font-bold text-[#1d1d1f]">₹4.2L</p>
+                    <p className="text-[15px] font-bold text-[var(--color-text-primary-light)]">₹4.2L</p>
                 </div>
                 <div className="flex items-center gap-1">
-                    <PieChart size={14} className="text-[#0071e3]" />
+                    <PieChart size={14} className="text-[var(--color-primary)]" />
                     <span className="text-[11px] text-black/40">34% margin</span>
                 </div>
             </div>

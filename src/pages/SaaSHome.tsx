@@ -40,16 +40,16 @@ export default function SaaSHome() {
             <Helmet>
                 <title>EasyStay - All-in-One Hotel & Restaurant Management Platform</title>
                 <meta name="description" content="Manage your hotel or restaurant from one system. Websites, bookings, POS, inventory, billing, and analytics — all connected, all in real time. Free to start." />
-                <link rel="canonical" href="https://easystay.com/" />
+                <link rel="canonical" href="https://esaystay.com/" />
                 <meta property="og:title" content="EasyStay - All-in-One Hotel & Restaurant Management Platform" />
                 <meta property="og:description" content="Manage your hotel or restaurant from one system. Websites, bookings, POS, inventory, billing, and analytics — all connected, all in real time." />
-                <meta property="og:url" content="https://easystay.com/" />
+                <meta property="og:url" content="https://esaystay.com/" />
                 <meta property="og:type" content="website" />
-                <meta property="og:image" content="https://easystay.com/og-image.png" />
+                <meta property="og:image" content="https://esaystay.com/og-image.png" />
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="EasyStay - All-in-One Hotel & Restaurant Management" />
                 <meta name="twitter:description" content="Bookings, POS, website, inventory, analytics — connected in one platform. Free to start." />
-                <meta name="twitter:image" content="https://easystay.com/og-image.png" />
+                <meta name="twitter:image" content="https://esaystay.com/og-image.png" />
                 <script type="application/ld+json">{JSON.stringify({
                     "@context": "https://schema.org",
                     "@type": "SoftwareApplication",
@@ -57,7 +57,7 @@ export default function SaaSHome() {
                     "applicationCategory": "BusinessApplication",
                     "operatingSystem": "Web",
                     "description": "All-in-one hotel and restaurant management platform with bookings, POS, website builder, inventory, billing, and analytics.",
-                    "url": "https://easystay.com",
+                    "url": "https://esaystay.com",
                     "offers": {
                         "@type": "Offer",
                         "price": "0",
@@ -67,8 +67,8 @@ export default function SaaSHome() {
                     "publisher": {
                         "@type": "Organization",
                         "name": "EasyStay",
-                        "url": "https://easystay.com",
-                        "logo": "https://easystay.com/logo.png"
+                        "url": "https://esaystay.com",
+                        "logo": "https://esaystay.com/logo.png"
                     }
                 })}</script>
             </Helmet>
@@ -139,7 +139,7 @@ export default function SaaSHome() {
                                             <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
                                         </div>
                                         <div className="flex-1 h-6 rounded-md mx-3 flex items-center px-3" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                                            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>app.easystay.com/admin/dashboard</span>
+                                            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>app.esaystay.com/admin/dashboard</span>
                                         </div>
                                     </div>
                                     {/* Dashboard content */}
