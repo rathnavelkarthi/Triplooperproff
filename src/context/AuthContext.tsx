@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useUser, useClerk } from '@clerk/react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { useUser, useClerk, useSignIn, useSignUp } from '@clerk/react';
 import { supabase } from '../lib/supabaseClient';
 import { supabaseAdmin } from '../lib/supabaseAdmin';
 import { generateSubdomain, hasPermission as checkPermission, DEMO_EMAIL } from '../lib/booking';
@@ -70,6 +70,8 @@ const ACTIVE_PROPERTY_KEY = 'active_property_id';
 function AuthProviderInner({ children }: { children: ReactNode }) {
   const { user: clerkUser, isLoaded: userLoaded } = useUser();
   const clerk = useClerk();
+  const { signIn, isLoaded: signInLoaded } = useSignIn();
+  const { signUp, isLoaded: signUpLoaded } = useSignUp();
 
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -78,6 +80,11 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [supabaseSession, setSupabaseSession] = useState<Session | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(() => localStorage.getItem('is_demo_mode') === 'true');
+
+  // Prevent concurrent loadProperties calls (e.g. login + useEffect both firing)
+  const loadingRef = useRef(false);
+  // Cache the Supabase ID for a Clerk user's email to avoid repeated listUsers() calls
+  const supabaseIdCacheRef = useRef<Record<string, string>>({});
 
   const isPlatformAdmin = user?.email?.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase();
 
@@ -185,17 +192,31 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     }
 
     try {
+      // Concurrency guard: bail if already loading to prevent double-run
+      if (loadingRef.current) {
+        console.log('[AuthContext] loadProperties already running, skipping duplicate call');
+        return;
+      }
+      loadingRef.current = true;
+
       let lookupIds = [userId];
 
       // If we are CLERK, also try to find their Supabase ID to link accounts
       // so they can access their existing data whether they login via Google or Email
       if (type === 'CLERK') {
         try {
-          const { data: adminUsers } = await supabaseAdmin.auth.admin.listUsers();
-          if (adminUsers?.users) {
-            const supaUser = adminUsers.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
-            if (supaUser) {
-              lookupIds.push(supaUser.id);
+          // Use cache to avoid the expensive listUsers() call on every render
+          if (supabaseIdCacheRef.current[email]) {
+            lookupIds.push(supabaseIdCacheRef.current[email]);
+          } else {
+            // Filter by email directly — much faster than fetching all users
+            const { data: adminUsers } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+            if (adminUsers?.users) {
+              const supaUser = adminUsers.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+              if (supaUser) {
+                supabaseIdCacheRef.current[email] = supaUser.id;
+                lookupIds.push(supaUser.id);
+              }
             }
           }
         } catch (e) {
@@ -332,6 +353,9 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       }
     } catch (err: any) {
       console.error('[AuthContext] Critical failure in loadProperties:', err);
+    } finally {
+      // Always release the concurrency guard when done
+      loadingRef.current = false;
     }
     
     // Fallback: If we reach here, the user successfully authenticated but has no tenant.
@@ -420,28 +444,26 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<{ error: string | null }> => {
     try {
-      setLoading(true);
+      // Only set loading if not already loading to avoid flicker loops
+      if (!loadingRef.current) setLoading(true);
       // Try Clerk first (for owners/managers)
-      const clerkInstance = clerk as any;
-      const client = clerkInstance?.client;
-      
-      if (client) {
+      if (signInLoaded && signIn) {
         try {
           console.log('[AuthContext] Attempting Clerk login for:', email);
-          const signIn = await client.signIn.create({ identifier: email, password });
-          if (signIn.status === 'complete') {
+          const result = await signIn.create({ identifier: email, password });
+          if (result.status === 'complete') {
             console.log('[AuthContext] Clerk login successful');
-            await clerkInstance.setActive({ session: signIn.createdSessionId });
-            // Do not setLoading(false) here, let loadProperties handle it after session sync
+            // setActive triggers clerkUser change → useEffect → loadProperties
+            // Do NOT call setLoading(false) here; loadProperties will handle it
+            await clerk.setActive({ session: result.createdSessionId });
             return { error: null };
           }
-          console.log('[AuthContext] Clerk login status:', signIn.status);
+          console.log('[AuthContext] Clerk login status:', result.status);
         } catch (clerkErr: any) {
           console.error('[AuthContext] Clerk login error detail:', {
             status: clerkErr.status,
             errors: clerkErr.errors,
             message: clerkErr.message,
-            clerkError: clerkErr
           });
           console.log('[AuthContext] Clerk login failed, trying Supabase fallback...');
         }
@@ -472,11 +494,9 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     email: string, password: string, businessName: string, businessType: 'hotel' | 'restaurant' | 'combined'
   ): Promise<{ error: string | null; needsVerification?: boolean }> => {
     try {
-      const clerkInstance = clerk as any;
-      const client = clerkInstance?.client;
-      if (!client) return { error: 'Auth not ready. Try again.' };
+      if (!signUpLoaded || !signUp) return { error: 'Auth is loading. Please wait a moment and try again.' };
 
-      const result = await client.signUp.create({
+      const result = await signUp.create({
         emailAddress: email,
         password,
         unsafeMetadata: { businessName },
@@ -484,7 +504,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
       if (result?.status === 'complete') {
         const clerkId = result?.createdUserId;
-        await clerkInstance.setActive({ session: result.createdSessionId });
+        await clerk.setActive({ session: result.createdSessionId });
         if (clerkId) {
           const subdomain = generateSubdomain(businessName);
           const { error: tenantError } = await supabase.rpc('create_tenant', {
@@ -501,7 +521,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       }
 
       if (result?.status === 'missing_requirements') {
-        await result.prepareEmailAddressVerification({ strategy: 'email_code' });
+        await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
         return { error: null, needsVerification: true };
       }
 
@@ -515,15 +535,13 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     code: string, businessName: string, businessType: 'hotel' | 'restaurant' | 'combined'
   ): Promise<{ error: string | null }> => {
     try {
-      const clerkInstance = clerk as any;
-      const client = clerkInstance?.client;
-      if (!client) return { error: 'Auth not ready. Try again.' };
+      if (!signUpLoaded || !signUp) return { error: 'Auth is loading. Please wait a moment and try again.' };
 
-      const result = await client.signUp.attemptEmailAddressVerification({ code });
+      const result = await signUp.attemptEmailAddressVerification({ code });
 
       if (result?.status === 'complete') {
         const clerkId = result?.createdUserId;
-        await clerkInstance.setActive({ session: result.createdSessionId });
+        await clerk.setActive({ session: result.createdSessionId });
 
         if (clerkId) {
           // Simply trigger loadProperties which now handles the unified onboarding

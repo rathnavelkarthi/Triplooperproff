@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useClerk } from '@clerk/react';
+import { useClerk, useSignIn } from '@clerk/react';
 import { motion } from 'motion/react';
 
 // --- Reusable Input Component ---
@@ -80,6 +80,7 @@ export default function Login() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const { user, login, loginAsDemo } = useAuth();
   const clerk = useClerk();
+  const { signIn, isLoaded: signInLoaded } = useSignIn();
   const navigate = useNavigate();
 
   // Auto-redirect if already logged in
@@ -108,18 +109,16 @@ export default function Login() {
     setError('');
     setGoogleLoading(true);
     try {
-      const clerkInstance = clerk as any;
-      const signInResource = clerkInstance?.client?.signIn;
-      if (signInResource) {
-        await signInResource.authenticateWithRedirect({
-          strategy: 'oauth_google',
-          redirectUrl: `${window.location.origin}/sso-callback`,
-          redirectUrlComplete: `${window.location.origin}/admin/dashboard`,
-        });
-      } else {
-        setError('Auth not ready. Please refresh and try again.');
+      if (!signInLoaded || !signIn) {
+        setError('Auth is loading. Please wait a moment and try again.');
         setGoogleLoading(false);
+        return;
       }
+      await signIn.authenticateWithRedirect({
+        strategy: 'oauth_google',
+        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectUrlComplete: `${window.location.origin}/admin/dashboard`,
+      });
     } catch (err: any) {
       setError(err?.errors?.[0]?.message || 'Google sign in failed.');
       setGoogleLoading(false);

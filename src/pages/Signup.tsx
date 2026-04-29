@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import { sendWelcomeEmail } from '../lib/email';
 import { supabase } from '../lib/supabaseClient';
-import { useClerk } from '@clerk/react';
+import { useClerk, useSignIn } from '@clerk/react';
 import { motion } from 'motion/react';
 import { Building, UtensilsCrossed, Layers, ArrowRight, Check, Mail } from 'lucide-react';
 
@@ -46,6 +46,7 @@ export default function Signup() {
 
     const { signup, verifyEmail } = useAuth();
     const clerk = useClerk();
+    const { signIn, isLoaded: signInLoaded } = useSignIn();
     const navigate = useNavigate();
 
     // Load invite data if token present
@@ -140,25 +141,22 @@ export default function Signup() {
         setError('');
         setGoogleLoading(true);
         try {
-            const clerkInstance = clerk as any;
-            const signInResource = clerkInstance?.client?.signIn;
-            if (signInResource) {
-                // Save business info so AuthContext can create the tenant after Google callback
-                localStorage.setItem('pending_business_name', businessName);
-                localStorage.setItem('pending_business_type', businessType);
-                if (inviteToken) {
-                    localStorage.setItem('pending_invite_token', inviteToken);
-                }
-                
-                await signInResource.authenticateWithRedirect({
-                    strategy: 'oauth_google',
-                    redirectUrl: `${window.location.origin}/sso-callback`,
-                    redirectUrlComplete: `${window.location.origin}/admin/dashboard`,
-                });
-            } else {
-                setError('Auth not ready. Please refresh and try again.');
+            if (!signInLoaded || !signIn) {
+                setError('Auth is loading. Please wait a moment and try again.');
                 setGoogleLoading(false);
+                return;
             }
+            localStorage.setItem('pending_business_name', businessName);
+            localStorage.setItem('pending_business_type', businessType);
+            if (inviteToken) {
+                localStorage.setItem('pending_invite_token', inviteToken);
+            }
+
+            await signIn.authenticateWithRedirect({
+                strategy: 'oauth_google',
+                redirectUrl: `${window.location.origin}/sso-callback`,
+                redirectUrlComplete: `${window.location.origin}/admin/dashboard`,
+            });
         } catch (err: any) {
             setError(err?.errors?.[0]?.message || 'Google sign up failed.');
             setGoogleLoading(false);

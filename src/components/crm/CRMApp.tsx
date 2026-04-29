@@ -93,8 +93,8 @@ export default function CRMApp() {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <Routes>
             <Route path="dashboard" element={
-              user?.role === 'BUSINESS_ADMIN' 
-                ? <Navigate to="/admin/business" replace /> 
+              user?.role === 'BUSINESS_ADMIN' && !tenant
+                ? <Navigate to="/admin/business" replace />
                 : (isRestaurantOnly ? <RestaurantDashboard /> : <Dashboard />)
             } />
             <Route path="server-orders" element={

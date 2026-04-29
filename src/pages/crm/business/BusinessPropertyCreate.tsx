@@ -84,7 +84,7 @@ export default function BusinessPropertyCreate() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (user?.role !== 'BUSINESS_ADMIN') {
+  if (user?.role !== 'BUSINESS_ADMIN' && user?.role !== 'SUPER_ADMIN') {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
