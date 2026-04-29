@@ -340,7 +340,7 @@ export default function PlatformAdmin() {
     });
     if (!emailed) {
       toast.warning(
-        'Invite was saved, but the email was not sent. Check local email server at port 3001.'
+        'Invite was saved, but the email could not be sent. Please check the email service configuration.'
       );
     } else {
       toast.success(`Invite email sent to ${inviteEmail}`);

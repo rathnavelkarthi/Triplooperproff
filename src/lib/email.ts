@@ -98,22 +98,29 @@ export interface BusinessInviteData {
 
 async function sendResendEmail(to: string, subject: string, html: string): Promise<boolean> {
   try {
-    // 1. Try local express proxy first (best for CORS)
+    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const emailEndpoint = isLocalDev
+      ? 'http://localhost:3001/api/send-email'
+      : '/api/send-email';
+
+    // 1. Try server-side proxy (local express or Vercel serverless)
     try {
-      const serverRes = await fetch('http://localhost:3001/api/send-email', {
+      const serverRes = await fetch(emailEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to, subject, html, from: FROM })
       });
       if (serverRes.ok) {
-        console.log('[EasyStay Email] Sent via local server');
+        console.log(`[EasyStay Email] Sent via ${isLocalDev ? 'local' : 'serverless'} proxy`);
         return true;
       }
+      const errBody = await serverRes.json().catch(() => ({}));
+      console.error('[EasyStay Email] Server proxy failed:', errBody);
     } catch (e) {
-      // Server likely not running, continue to direct fetch
+      console.warn('[EasyStay Email] Server proxy unreachable, trying direct...');
     }
 
-    // 2. Direct fetch fallback
+    // 2. Direct Resend API fallback (may fail due to CORS in browser)
     if (!RESEND_API_KEY) {
       console.warn('[EasyStay Email] No API key for direct fetch');
       return false;
@@ -134,7 +141,7 @@ async function sendResendEmail(to: string, subject: string, html: string): Promi
       return false;
     }
 
-    console.log('[EasyStay Email] Sent directly from browser');
+    console.log('[EasyStay Email] Sent directly');
     return true;
   } catch (err) {
     console.error('[EasyStay Email] Unexpected error:', err);
