@@ -81,12 +81,32 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   const [supabaseSession, setSupabaseSession] = useState<Session | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(() => localStorage.getItem('is_demo_mode') === 'true');
 
-  const waitForClerk = (check: () => boolean, timeoutMs = 10000): Promise<boolean> => {
+  const signInRef = useRef(signIn);
+  const signUpRef = useRef(signUp);
+  const signInLoadedRef = useRef(signInLoaded);
+  const signUpLoadedRef = useRef(signUpLoaded);
+  signInRef.current = signIn;
+  signUpRef.current = signUp;
+  signInLoadedRef.current = signInLoaded;
+  signUpLoadedRef.current = signUpLoaded;
+
+  const waitForSignIn = (timeoutMs = 10000): Promise<boolean> => {
     return new Promise((resolve) => {
-      if (check()) return resolve(true);
+      if (signInLoadedRef.current && signInRef.current) return resolve(true);
       const start = Date.now();
       const interval = setInterval(() => {
-        if (check()) { clearInterval(interval); resolve(true); }
+        if (signInLoadedRef.current && signInRef.current) { clearInterval(interval); resolve(true); }
+        else if (Date.now() - start > timeoutMs) { clearInterval(interval); resolve(false); }
+      }, 100);
+    });
+  };
+
+  const waitForSignUp = (timeoutMs = 10000): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (signUpLoadedRef.current && signUpRef.current) return resolve(true);
+      const start = Date.now();
+      const interval = setInterval(() => {
+        if (signUpLoadedRef.current && signUpRef.current) { clearInterval(interval); resolve(true); }
         else if (Date.now() - start > timeoutMs) { clearInterval(interval); resolve(false); }
       }, 100);
     });
@@ -458,11 +478,11 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       // Only set loading if not already loading to avoid flicker loops
       if (!loadingRef.current) setLoading(true);
       // Try Clerk first (for owners/managers)
-      const signInReady = await waitForClerk(() => !!(signIn && signInLoaded));
-      if (signInReady && signIn) {
+      const signInReady = await waitForSignIn();
+      if (signInReady && signInRef.current) {
         try {
           console.log('[AuthContext] Attempting Clerk login for:', email);
-          const result = await signIn.create({ identifier: email, password });
+          const result = await signInRef.current!.create({ identifier: email, password });
           if (result.status === 'complete') {
             console.log('[AuthContext] Clerk login successful');
             // setActive triggers clerkUser change → useEffect → loadProperties
@@ -506,10 +526,10 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     email: string, password: string, businessName: string, businessType: 'hotel' | 'restaurant' | 'combined'
   ): Promise<{ error: string | null; needsVerification?: boolean }> => {
     try {
-      const signUpReady = await waitForClerk(() => !!(signUp && signUpLoaded));
-      if (!signUpReady || !signUp) return { error: 'Authentication service failed to load. Please refresh the page.' };
+      const signUpReady = await waitForSignUp();
+      if (!signUpReady || !signUpRef.current) return { error: 'Authentication service failed to load. Please refresh the page.' };
 
-      const result = await signUp.create({
+      const result = await signUpRef.current.create({
         emailAddress: email,
         password,
         unsafeMetadata: { businessName },
@@ -534,7 +554,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       }
 
       if (result?.status === 'missing_requirements') {
-        await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+        await signUpRef.current.prepareEmailAddressVerification({ strategy: 'email_code' });
         return { error: null, needsVerification: true };
       }
 
@@ -548,10 +568,10 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     code: string, businessName: string, businessType: 'hotel' | 'restaurant' | 'combined'
   ): Promise<{ error: string | null }> => {
     try {
-      const signUpReady = await waitForClerk(() => !!(signUp && signUpLoaded));
-      if (!signUpReady || !signUp) return { error: 'Authentication service failed to load. Please refresh the page.' };
+      const signUpReady = await waitForSignUp();
+      if (!signUpReady || !signUpRef.current) return { error: 'Authentication service failed to load. Please refresh the page.' };
 
-      const result = await signUp.attemptEmailAddressVerification({ code });
+      const result = await signUpRef.current.attemptEmailAddressVerification({ code });
 
       if (result?.status === 'complete') {
         const clerkId = result?.createdUserId;
