@@ -81,6 +81,17 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   const [supabaseSession, setSupabaseSession] = useState<Session | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(() => localStorage.getItem('is_demo_mode') === 'true');
 
+  const waitForClerk = (check: () => boolean, timeoutMs = 10000): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (check()) return resolve(true);
+      const start = Date.now();
+      const interval = setInterval(() => {
+        if (check()) { clearInterval(interval); resolve(true); }
+        else if (Date.now() - start > timeoutMs) { clearInterval(interval); resolve(false); }
+      }, 100);
+    });
+  };
+
   // Prevent concurrent loadProperties calls (e.g. login + useEffect both firing)
   const loadingRef = useRef(false);
   // Cache the Supabase ID for a Clerk user's email to avoid repeated listUsers() calls
@@ -447,7 +458,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       // Only set loading if not already loading to avoid flicker loops
       if (!loadingRef.current) setLoading(true);
       // Try Clerk first (for owners/managers)
-      if (signInLoaded && signIn) {
+      const signInReady = await waitForClerk(() => !!(signIn && signInLoaded));
+      if (signInReady && signIn) {
         try {
           console.log('[AuthContext] Attempting Clerk login for:', email);
           const result = await signIn.create({ identifier: email, password });
@@ -494,7 +506,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     email: string, password: string, businessName: string, businessType: 'hotel' | 'restaurant' | 'combined'
   ): Promise<{ error: string | null; needsVerification?: boolean }> => {
     try {
-      if (!signUpLoaded || !signUp) return { error: 'Auth is loading. Please wait a moment and try again.' };
+      const signUpReady = await waitForClerk(() => !!(signUp && signUpLoaded));
+      if (!signUpReady || !signUp) return { error: 'Authentication service failed to load. Please refresh the page.' };
 
       const result = await signUp.create({
         emailAddress: email,
@@ -535,7 +548,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     code: string, businessName: string, businessType: 'hotel' | 'restaurant' | 'combined'
   ): Promise<{ error: string | null }> => {
     try {
-      if (!signUpLoaded || !signUp) return { error: 'Auth is loading. Please wait a moment and try again.' };
+      const signUpReady = await waitForClerk(() => !!(signUp && signUpLoaded));
+      if (!signUpReady || !signUp) return { error: 'Authentication service failed to load. Please refresh the page.' };
 
       const result = await signUp.attemptEmailAddressVerification({ code });
 

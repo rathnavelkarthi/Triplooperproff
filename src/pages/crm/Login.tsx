@@ -109,8 +109,16 @@ export default function Login() {
     setError('');
     setGoogleLoading(true);
     try {
-      if (!signInLoaded || !signIn) {
-        setError('Auth is loading. Please wait a moment and try again.');
+      const ready = await new Promise<boolean>((resolve) => {
+        if (signInLoaded && signIn) return resolve(true);
+        const start = Date.now();
+        const iv = setInterval(() => {
+          if (signInLoaded && signIn) { clearInterval(iv); resolve(true); }
+          else if (Date.now() - start > 10000) { clearInterval(iv); resolve(false); }
+        }, 100);
+      });
+      if (!ready || !signIn) {
+        setError('Authentication service failed to load. Please refresh the page.');
         setGoogleLoading(false);
         return;
       }
