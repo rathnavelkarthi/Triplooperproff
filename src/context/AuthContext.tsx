@@ -406,6 +406,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           if (signIn.status === 'complete') {
             console.log('[AuthContext] Clerk login successful');
             await clerkInstance.setActive({ session: signIn.createdSessionId });
+            // Do not setLoading(false) here, let loadProperties handle it after session sync
             return { error: null };
           }
           console.log('[AuthContext] Clerk login status:', signIn.status);
@@ -422,18 +423,22 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
       // Fallback to Supabase (for staff)
       const { data, error: sError } = await supabase.auth.signInWithPassword({ email, password });
-      if (sError) return { error: sError.message };
+      if (sError) {
+        setLoading(false);
+        return { error: sError.message };
+      }
       
       if (data.session) {
         setSupabaseSession(data.session);
+        // Do not setLoading(false) here, let loadProperties handle it after session sync
         return { error: null };
       }
 
+      setLoading(false);
       return { error: 'Unknown authentication error.' };
     } catch (err: any) {
-      return { error: err.message || 'Login failed.' };
-    } finally {
       setLoading(false);
+      return { error: err.message || 'Login failed.' };
     }
   };
 
