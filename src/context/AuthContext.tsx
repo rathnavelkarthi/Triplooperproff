@@ -315,6 +315,13 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       console.error('[AuthContext] Critical failure in loadProperties:', err);
     }
     
+    // Fallback: If we reach here, the user successfully authenticated but has no tenant.
+    // Give them a BUSINESS_ADMIN role with no tenant so they can be routed to the business creation page
+    // instead of being bounced back to the login screen.
+    const isPlatAdmin = email.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase();
+    setUser(buildUser(userId, email, name, isPlatAdmin ? 'PLATFORM_ADMIN' : 'BUSINESS_ADMIN', type, avatarUrl));
+    setProperties([]);
+    setTenant(null);
     setLoading(false);
   };
 
