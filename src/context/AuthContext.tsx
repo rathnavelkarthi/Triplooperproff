@@ -185,11 +185,29 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     }
 
     try {
+      let lookupIds = [userId];
+
+      // If we are CLERK, also try to find their Supabase ID to link accounts
+      // so they can access their existing data whether they login via Google or Email
+      if (type === 'CLERK') {
+        try {
+          const { data: adminUsers } = await supabaseAdmin.auth.admin.listUsers();
+          if (adminUsers?.users) {
+            const supaUser = adminUsers.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+            if (supaUser) {
+              lookupIds.push(supaUser.id);
+            }
+          }
+        } catch (e) {
+          console.warn('[AuthContext] Failed to lookup Supabase user for Clerk linking', e);
+        }
+      }
+
       // 1. Try to find the tenant link in user_properties
       const { data: links, error: linkError } = await supabase
         .from('user_properties')
-        .select('tenant_id, role, is_owner')
-        .eq('user_id', userId);
+        .select('tenant_id, role, is_owner, user_id')
+        .in('user_id', lookupIds);
 
       if (linkError) console.error('[AuthContext] Error fetching user_properties:', linkError);
 
@@ -214,6 +232,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
             localStorage.setItem(ACTIVE_PROPERTY_KEY, active.id);
             const link = links.find(l => l.tenant_id === active.id);
             const role = (link?.role as Role) || 'RECEPTION';
+            // Important: we use the original userId from Auth for the session state
             setUser(buildUser(userId, email, name, role, type, avatarUrl));
 
             const businessId = (active as Tenant).business_id;
@@ -225,11 +244,11 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
                 .single();
               if (bData) setBusiness(bData as Business);
             } else if (role === 'SUPER_ADMIN' || role === 'BUSINESS_ADMIN') {
-               // Fallback: search by owner_id
+               // Fallback: search by owner_id using any of their linked IDs
                const { data: bData } = await supabaseAdmin
                 .from('businesses')
                 .select('*')
-                .eq('owner_id', userId)
+                .in('owner_id', lookupIds)
                 .limit(1)
                 .single();
               if (bData) setBusiness(bData as Business);
@@ -244,7 +263,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       // 2. Fallback for Owners (mostly Clerk users)
       if (type === 'CLERK') {
         const { data: fallback, error: fbError } = await supabaseAdmin
-          .from('tenants').select('*').eq('owner_id', userId);
+          .from('tenants').select('*').in('owner_id', lookupIds);
 
         if (fbError) {
           console.error('[AuthContext] Clerk fallback error:', fbError);
@@ -262,7 +281,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           const { data: bData } = await supabaseAdmin
             .from('businesses')
             .select('*')
-            .eq('owner_id', userId)
+            .in('owner_id', lookupIds)
             .limit(1)
             .maybeSingle();
 
