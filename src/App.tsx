@@ -23,26 +23,24 @@ console.log('Clerk Key type:', CLERK_KEY?.startsWith('pk_live_') ? 'LIVE' : 'TES
 console.log('Environment mode:', import.meta.env.MODE);
 console.log('==========================');
 
-// For live keys with custom domain, we need to configure Clerk properly
-const clerkConfig = CLERK_KEY?.startsWith('pk_live_') ? {
-  publishableKey: CLERK_KEY,
-  // Custom domain configuration for live keys
-  domain: window.location.hostname.includes('localhost') ? undefined : '.esaystay.com',
-  // Ensure Clerk loads from correct domain
-  clerkJSVariant: 'headless',
-  // Additional configuration for production
-  signInUrl: '/admin/login',
-  signUpUrl: '/signup',
-  afterSignInUrl: '/admin/dashboard',
-  afterSignUpUrl: '/admin/dashboard',
-  afterSignOutUrl: '/admin/login'
-} : {
+// Clerk configuration - SIMPLIFIED
+// The issue is Clerk constructing clerk..esaystay.com (double dots)
+// This seems to be a Clerk bug with custom domains
+console.log('=== CLERK CONFIG ===');
+console.log('Key type:', CLERK_KEY?.startsWith('pk_live_') ? 'LIVE' : 'TEST');
+console.log('Key start:', CLERK_KEY?.substring(0, 30));
+
+// For now, use minimal configuration
+// Clerk should handle custom domains automatically from the key
+const clerkConfig = {
   publishableKey: CLERK_KEY,
   signInUrl: '/admin/login',
   signUpUrl: '/signup',
   afterSignInUrl: '/admin/dashboard',
   afterSignUpUrl: '/admin/dashboard',
-  afterSignOutUrl: '/admin/login'
+  afterSignOutUrl: '/admin/login',
+  // DO NOT set domain property - let Clerk handle it from the key
+  // clerkJSVariant: 'headless', // Try without this first
 };
 
 // Lazy load route components
