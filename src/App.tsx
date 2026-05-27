@@ -15,6 +15,13 @@ import { getSubdomain } from './hooks/useSubdomain';
 
 const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
 
+// Debug Clerk key
+console.log('=== APP INITIALIZATION ===');
+console.log('Clerk Key available:', !!CLERK_KEY);
+console.log('Clerk Key (first 10 chars):', CLERK_KEY?.substring(0, 10) + '...');
+console.log('Environment mode:', import.meta.env.MODE);
+console.log('==========================');
+
 // Lazy load route components
 const SaaSHome = lazy(() => import('./pages/SaaSHome'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));

@@ -89,6 +89,21 @@ export default function Login() {
   signInRef.current = signIn;
   signInLoadedRef.current = signInLoaded;
 
+  // Debugging: Log Clerk status and environment
+  React.useEffect(() => {
+    console.log('=== CLERK DEBUG INFO ===');
+    console.log('Environment:', import.meta.env.MODE);
+    console.log('Clerk Key exists:', !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+    console.log('Clerk Key (first 10 chars):', import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.substring(0, 10) + '...');
+    console.log('Clerk loaded:', clerk.loaded);
+    console.log('Clerk instance:', clerk);
+    console.log('SignIn loaded:', signInLoaded);
+    console.log('SignIn instance:', signIn);
+    console.log('Current URL:', window.location.href);
+    console.log('Current origin:', window.location.origin);
+    console.log('========================');
+  }, [clerk, signIn, signInLoaded]);
+
   // Auto-redirect if already logged in
   React.useEffect(() => {
     if (user) {
@@ -98,20 +113,34 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('=== LOGIN BUTTON CLICKED ===');
+    console.log('Email:', email);
+    console.log('Clerk status before login:', {
+      loaded: clerk.loaded,
+      signInLoaded: signInLoaded,
+      signIn: !!signIn
+    });
+    
     setError('');
     setIsLoading(true);
 
     const result = await login(email, password);
+    console.log('Login result:', result);
 
     if (result.error) {
       setError(result.error);
       setIsLoading(false);
     } else {
+      console.log('Login successful, navigating to dashboard');
       navigate('/admin/dashboard');
     }
   };
 
   const handleGoogleLogin = async () => {
+    console.log('=== GOOGLE LOGIN BUTTON CLICKED ===');
+    console.log('Current origin:', window.location.origin);
+    console.log('SignIn available:', !!signIn);
+    
     setError('');
     setGoogleLoading(true);
     try {
@@ -124,6 +153,7 @@ export default function Login() {
         }, 100);
       });
       if (!ready || !signIn) {
+        console.error('SignIn not ready after waiting');
         setError('Authentication service failed to load. Please refresh the page.');
         setGoogleLoading(false);
         return;
@@ -141,12 +171,17 @@ export default function Login() {
         const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
         return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
       })();
+      console.log('Apex origin calculated:', apexOrigin);
+      console.log('Redirect URL:', `${apexOrigin}/admin/dashboard`);
+      console.log('Callback URL:', `${apexOrigin}/sso-callback`);
+      
       await signIn.sso({
         strategy: 'oauth_google',
         redirectUrl: `${apexOrigin}/admin/dashboard`,
         redirectCallbackUrl: `${apexOrigin}/sso-callback`,
       });
     } catch (err: any) {
+      console.error('Google login error:', err);
       setError(err?.errors?.[0]?.message || 'Google sign in failed.');
       setGoogleLoading(false);
     }
@@ -257,6 +292,21 @@ export default function Login() {
           </div>
 
           <form className="space-y-5" onSubmit={handleLogin}>
+            {/* Debug Panel - Only show in development */}
+            {import.meta.env.DEV && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-3 rounded-lg text-[11px] font-mono"
+              >
+                <div className="font-bold mb-1">Debug Info:</div>
+                <div>Clerk Loaded: {clerk.loaded ? '✅' : '❌'}</div>
+                <div>SignIn Ready: {signInLoaded ? '✅' : '❌'}</div>
+                <div>Env Key: {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ? '✅' : '❌'}</div>
+                <div className="text-xs opacity-70 mt-1">Check console for details</div>
+              </motion.div>
+            )}
+
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
