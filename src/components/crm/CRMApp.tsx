@@ -245,7 +245,7 @@ export default function CRMApp() {
 
             {/* Platform admin */}
             <Route path="platform" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN']}>
+              <RoleGuard allowedRoles={['PLATFORM_ADMIN']}>
                 <PlatformAdmin />
               </RoleGuard>
             } />

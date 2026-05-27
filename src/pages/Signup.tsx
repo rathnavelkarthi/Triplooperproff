@@ -46,7 +46,8 @@ export default function Signup() {
 
     const { signup, verifyEmail } = useAuth();
     const clerk = useClerk();
-    const { signIn, isLoaded: signInLoaded } = useSignIn();
+    const { signIn, fetchStatus } = useSignIn();
+    const signInLoaded = !!signIn && fetchStatus !== 'fetching';
     const navigate = useNavigate();
 
     // Load invite data if token present
@@ -142,10 +143,10 @@ export default function Signup() {
         setGoogleLoading(true);
         try {
             const ready = await new Promise<boolean>((resolve) => {
-                if (signInLoaded && signIn) return resolve(true);
+                if (signIn) return resolve(true);
                 const start = Date.now();
                 const iv = setInterval(() => {
-                    if (signInLoaded && signIn) { clearInterval(iv); resolve(true); }
+                    if (signIn) { clearInterval(iv); resolve(true); }
                     else if (Date.now() - start > 10000) { clearInterval(iv); resolve(false); }
                 }, 100);
             });
@@ -160,10 +161,10 @@ export default function Signup() {
                 localStorage.setItem('pending_invite_token', inviteToken);
             }
 
-            await signIn.authenticateWithRedirect({
+            await signIn.sso({
                 strategy: 'oauth_google',
-                redirectUrl: `${window.location.origin}/sso-callback`,
-                redirectUrlComplete: `${window.location.origin}/admin/dashboard`,
+                redirectUrl: `${window.location.origin}/admin/dashboard`,
+                redirectCallbackUrl: `${window.location.origin}/sso-callback`,
             });
         } catch (err: any) {
             setError(err?.errors?.[0]?.message || 'Google sign up failed.');

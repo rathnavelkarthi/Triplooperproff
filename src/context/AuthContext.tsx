@@ -70,8 +70,10 @@ const ACTIVE_PROPERTY_KEY = 'active_property_id';
 function AuthProviderInner({ children }: { children: ReactNode }) {
   const { user: clerkUser, isLoaded: userLoaded } = useUser();
   const clerk = useClerk();
-  const { signIn, isLoaded: signInLoaded } = useSignIn();
-  const { signUp, isLoaded: signUpLoaded } = useSignUp();
+  const { signIn, fetchStatus: signInFetchStatus } = useSignIn();
+  const { signUp, fetchStatus: signUpFetchStatus } = useSignUp();
+  const signInLoaded = !!signIn && signInFetchStatus !== 'fetching';
+  const signUpLoaded = !!signUp && signUpFetchStatus !== 'fetching';
 
   const [user, setUser] = useState<User | null>(null);
   const [tenant, setTenant] = useState<Tenant | null>(null);
@@ -119,14 +121,21 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   const isPlatformAdmin = user?.email?.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase();
 
-  const buildUser = (id: string, email: string, name: string, role: Role, type: 'CLERK' | 'SUPABASE', avatarUrl?: string): User => ({
-    id,
-    name,
-    email,
-    role,
-    type,
-    avatar: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0E2A38&color=fff`,
-  });
+  const buildUser = (id: string, email: string, name: string, role: Role, type: 'CLERK' | 'SUPABASE', avatarUrl?: string): User => {
+    // Force PLATFORM_ADMIN role for the configured platform-admin email, regardless of
+    // whatever role Supabase / staff / user_properties has for them. This prevents the
+    // platform admin from being downgraded to RECEPTION/MANAGER/BUSINESS_ADMIN by stale rows.
+    const effectiveRole: Role =
+      email?.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase() ? 'PLATFORM_ADMIN' : role;
+    return {
+      id,
+      name,
+      email,
+      role: effectiveRole,
+      type,
+      avatar: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0E2A38&color=fff`,
+    };
+  };
 
   const loadProperties = async (userId: string, email: string, name: string, type: 'CLERK' | 'SUPABASE', avatarUrl?: string) => {
     console.log(`[AuthContext] Loading properties for ${type} user: ${userId}`);
@@ -579,7 +588,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         if (clerkId) {
           // Simply trigger loadProperties which now handles the unified onboarding
           // using the data stored in localStorage during Signup phase.
-          await loadProperties(clerkId, email, businessName, 'CLERK');
+          await loadProperties(clerkId, signUpRef.current.emailAddress || '', businessName, 'CLERK');
         }
         return { error: null };
       }
@@ -650,8 +659,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   };
 
   const hasPermission = (allowedRoles: Role[]) => {
-    // Platform admin can access everything
-    if (isPlatformAdmin && allowedRoles.includes('PLATFORM_ADMIN')) return true;
+    // Platform admin can access EVERYTHING — they don't need to be in the allowedRoles list.
+    if (isPlatformAdmin) return true;
     return checkPermission(user?.role ?? null, allowedRoles);
   };
   const session = user ? { access_token: isDemoMode ? 'demo-token' : 'active-session' } : null;

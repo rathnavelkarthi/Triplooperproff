@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useClerk, useSignIn } from '@clerk/react';
@@ -80,8 +80,14 @@ export default function Login() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const { user, login, loginAsDemo } = useAuth();
   const clerk = useClerk();
-  const { signIn, isLoaded: signInLoaded } = useSignIn();
+  const { signIn, fetchStatus } = useSignIn();
+  const signInLoaded = !!signIn && fetchStatus !== 'fetching';
   const navigate = useNavigate();
+
+  const signInRef = useRef(signIn);
+  const signInLoadedRef = useRef(signInLoaded);
+  signInRef.current = signIn;
+  signInLoadedRef.current = signInLoaded;
 
   // Auto-redirect if already logged in
   React.useEffect(() => {
@@ -110,10 +116,10 @@ export default function Login() {
     setGoogleLoading(true);
     try {
       const ready = await new Promise<boolean>((resolve) => {
-        if (signInLoaded && signIn) return resolve(true);
+        if (signInRef.current) return resolve(true);
         const start = Date.now();
         const iv = setInterval(() => {
-          if (signInLoaded && signIn) { clearInterval(iv); resolve(true); }
+          if (signInRef.current) { clearInterval(iv); resolve(true); }
           else if (Date.now() - start > 10000) { clearInterval(iv); resolve(false); }
         }, 100);
       });
@@ -122,10 +128,10 @@ export default function Login() {
         setGoogleLoading(false);
         return;
       }
-      await signIn.authenticateWithRedirect({
+      await signIn.sso({
         strategy: 'oauth_google',
-        redirectUrl: `${window.location.origin}/sso-callback`,
-        redirectUrlComplete: `${window.location.origin}/admin/dashboard`,
+        redirectUrl: `${window.location.origin}/admin/dashboard`,
+        redirectCallbackUrl: `${window.location.origin}/sso-callback`,
       });
     } catch (err: any) {
       setError(err?.errors?.[0]?.message || 'Google sign in failed.');
