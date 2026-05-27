@@ -485,25 +485,32 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     try {
       // Only set loading if not already loading to avoid flicker loops
       if (!loadingRef.current) setLoading(true);
-      // Try Clerk first (for owners/managers)
+      // Try Clerk first (for owners/managers) — Clerk v6 Signals API
       const signInReady = await waitForSignIn();
       if (signInReady && signInRef.current) {
         try {
           console.log('[AuthContext] Attempting Clerk login for:', email);
-          const result = await signInRef.current!.create({ identifier: email, password });
-          if (result.status === 'complete') {
+          // Step 1: seed the sign-in with the identifier
+          const createRes = await signInRef.current.create({ identifier: email });
+          if (createRes.error) throw createRes.error;
+          // Step 2: submit the password
+          const pwRes = await signInRef.current.password({ password });
+          if (pwRes.error) throw pwRes.error;
+          // Step 3: check status on the resource itself (Signals API)
+          if (signInRef.current.status === 'complete') {
             console.log('[AuthContext] Clerk login successful');
-            // setActive triggers clerkUser change → useEffect → loadProperties
-            // Do NOT call setLoading(false) here; loadProperties will handle it
-            await clerk.setActive({ session: result.createdSessionId });
+            // finalize() converts the completed sign-in into an active session.
+            // useUser will then re-fire → useEffect → loadProperties.
+            const fin = await signInRef.current.finalize();
+            if (fin.error) throw fin.error;
             return { error: null };
           }
-          console.log('[AuthContext] Clerk login status:', result.status);
+          console.log('[AuthContext] Clerk login status:', signInRef.current.status);
         } catch (clerkErr: any) {
           console.error('[AuthContext] Clerk login error detail:', {
-            status: clerkErr.status,
-            errors: clerkErr.errors,
-            message: clerkErr.message,
+            status: clerkErr?.status,
+            errors: clerkErr?.errors,
+            message: clerkErr?.message,
           });
           console.log('[AuthContext] Clerk login failed, trying Supabase fallback...');
         }
@@ -537,15 +544,19 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       const signUpReady = await waitForSignUp();
       if (!signUpReady || !signUpRef.current) return { error: 'Authentication service failed to load. Please refresh the page.' };
 
-      const result = await signUpRef.current.create({
+      // Clerk v6 Signals API — create() returns { error } only; status lives on the resource.
+      const createRes = await signUpRef.current.create({
         emailAddress: email,
         password,
         unsafeMetadata: { businessName },
       });
+      if (createRes.error) throw createRes.error;
 
-      if (result?.status === 'complete') {
-        const clerkId = result?.createdUserId;
-        await clerk.setActive({ session: result.createdSessionId });
+      // After create, inspect the resource's status field.
+      if (signUpRef.current.status === 'complete') {
+        const clerkId = signUpRef.current.id;
+        const fin = await signUpRef.current.finalize();
+        if (fin.error) throw fin.error;
         if (clerkId) {
           const subdomain = generateSubdomain(businessName);
           const { error: tenantError } = await supabase.rpc('create_tenant', {
@@ -561,8 +572,10 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         return { error: null };
       }
 
-      if (result?.status === 'missing_requirements') {
-        await signUpRef.current.prepareEmailAddressVerification({ strategy: 'email_code' });
+      if (signUpRef.current.status === 'missing_requirements') {
+        // v6: verifications.sendEmailCode() replaces prepareEmailAddressVerification({strategy:'email_code'})
+        const sendRes = await signUpRef.current.verifications.sendEmailCode();
+        if (sendRes.error) throw sendRes.error;
         return { error: null, needsVerification: true };
       }
 
@@ -573,17 +586,20 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   };
 
   const verifyEmail = async (
-    code: string, businessName: string, businessType: 'hotel' | 'restaurant' | 'combined'
+    code: string, businessName: string, _businessType: 'hotel' | 'restaurant' | 'combined'
   ): Promise<{ error: string | null }> => {
     try {
       const signUpReady = await waitForSignUp();
       if (!signUpReady || !signUpRef.current) return { error: 'Authentication service failed to load. Please refresh the page.' };
 
-      const result = await signUpRef.current.attemptEmailAddressVerification({ code });
+      // Clerk v6 Signals API — verifications.verifyEmailCode() replaces attemptEmailAddressVerification()
+      const verifyRes = await signUpRef.current.verifications.verifyEmailCode({ code });
+      if (verifyRes.error) throw verifyRes.error;
 
-      if (result?.status === 'complete') {
-        const clerkId = result?.createdUserId;
-        await clerk.setActive({ session: result.createdSessionId });
+      if (signUpRef.current.status === 'complete') {
+        const clerkId = signUpRef.current.id;
+        const fin = await signUpRef.current.finalize();
+        if (fin.error) throw fin.error;
 
         if (clerkId) {
           // Simply trigger loadProperties which now handles the unified onboarding

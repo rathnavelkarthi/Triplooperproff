@@ -53,6 +53,8 @@ export default function App() {
                     {/* Tenant Site Routes */}
                     <Route path="/" element={<TenantSite />} />
                     <Route path="/room/:roomId" element={<RoomDetail />} />
+                    {/* SSO callback must exist on subdomains too — if Google redirects here we still need to finish the handshake */}
+                    <Route path="/sso-callback" element={<SSOCallback />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>

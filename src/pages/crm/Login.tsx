@@ -128,10 +128,23 @@ export default function Login() {
         setGoogleLoading(false);
         return;
       }
+      // Always run OAuth on the apex domain (e.g. esaystay.com), never a tenant subdomain
+      // (e.g. saffronspice.esaystay.com), because the apex is where /admin/* lives and where
+      // Clerk's allowed origins are configured. Otherwise Google → Clerk → subdomain
+      // gets stuck redirecting because the apex's signed-in session isn't visible there.
+      const apexOrigin = (() => {
+        const { protocol, hostname, port } = window.location;
+        const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+        if (isLocalhost) return window.location.origin;
+        const parts = hostname.split('.');
+        // For host like saffronspice.esaystay.com → keep the last two parts (esaystay.com)
+        const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
+        return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
+      })();
       await signIn.sso({
         strategy: 'oauth_google',
-        redirectUrl: `${window.location.origin}/admin/dashboard`,
-        redirectCallbackUrl: `${window.location.origin}/sso-callback`,
+        redirectUrl: `${apexOrigin}/admin/dashboard`,
+        redirectCallbackUrl: `${apexOrigin}/sso-callback`,
       });
     } catch (err: any) {
       setError(err?.errors?.[0]?.message || 'Google sign in failed.');

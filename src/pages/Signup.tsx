@@ -161,10 +161,20 @@ export default function Signup() {
                 localStorage.setItem('pending_invite_token', inviteToken);
             }
 
+            // Always perform OAuth on the apex domain (e.g. esaystay.com) — not a tenant
+            // subdomain — so the signed-in Clerk session lands where /admin/* is served.
+            const apexOrigin = (() => {
+                const { protocol, hostname, port } = window.location;
+                const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+                if (isLocalhost) return window.location.origin;
+                const parts = hostname.split('.');
+                const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
+                return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
+            })();
             await signIn.sso({
                 strategy: 'oauth_google',
-                redirectUrl: `${window.location.origin}/admin/dashboard`,
-                redirectCallbackUrl: `${window.location.origin}/sso-callback`,
+                redirectUrl: `${apexOrigin}/admin/dashboard`,
+                redirectCallbackUrl: `${apexOrigin}/sso-callback`,
             });
         } catch (err: any) {
             setError(err?.errors?.[0]?.message || 'Google sign up failed.');
