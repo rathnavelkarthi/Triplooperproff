@@ -140,6 +140,8 @@ export default function Login() {
     console.log('=== GOOGLE LOGIN BUTTON CLICKED ===');
     console.log('Current origin:', window.location.origin);
     console.log('SignIn available:', !!signIn);
+    console.log('Clerk loaded:', clerk.loaded);
+    console.log('Clerk instance:', clerk);
     
     setError('');
     setGoogleLoading(true);
@@ -152,12 +154,22 @@ export default function Login() {
           else if (Date.now() - start > 10000) { clearInterval(iv); resolve(false); }
         }, 100);
       });
+      
       if (!ready || !signIn) {
         console.error('SignIn not ready after waiting');
         setError('Authentication service failed to load. Please refresh the page.');
         setGoogleLoading(false);
         return;
       }
+
+      // Check if Google OAuth is configured
+      if (!clerk.loaded) {
+        console.error('Clerk not loaded');
+        setError('Authentication service not ready. Please wait a moment and try again.');
+        setGoogleLoading(false);
+        return;
+      }
+
       // Always run OAuth on the apex domain (e.g. esaystay.com), never a tenant subdomain
       // (e.g. saffronspice.esaystay.com), because the apex is where /admin/* lives and where
       // Clerk's allowed origins are configured. Otherwise Google → Clerk → subdomain
@@ -171,18 +183,49 @@ export default function Login() {
         const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
         return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
       })();
+      
       console.log('Apex origin calculated:', apexOrigin);
       console.log('Redirect URL:', `${apexOrigin}/admin/dashboard`);
       console.log('Callback URL:', `${apexOrigin}/sso-callback`);
       
-      await signIn.sso({
-        strategy: 'oauth_google',
-        redirectUrl: `${apexOrigin}/admin/dashboard`,
-        redirectCallbackUrl: `${apexOrigin}/sso-callback`,
-      });
+      // Try alternative approach if main one fails
+      try {
+        await signIn.sso({
+          strategy: 'oauth_google',
+          redirectUrl: `${apexOrigin}/admin/dashboard`,
+          redirectCallbackUrl: `${apexOrigin}/sso-callback`,
+        });
+      } catch (ssoError: any) {
+        console.error('SSO error, trying alternative:', ssoError);
+        
+        // Alternative: Use Clerk's built-in OAuth
+        if (clerk.openSignIn) {
+          await clerk.openSignIn({
+            redirectUrl: `${apexOrigin}/admin/dashboard`,
+          });
+        } else {
+          throw ssoError;
+        }
+      }
     } catch (err: any) {
-      console.error('Google login error:', err);
-      setError(err?.errors?.[0]?.message || 'Google sign in failed.');
+      console.error('Google login error details:', {
+        message: err?.message,
+        errors: err?.errors,
+        status: err?.status,
+        code: err?.code
+      });
+      
+      // User-friendly error messages
+      let errorMessage = 'Google sign in failed.';
+      if (err?.code === 'oauth_provider_not_configured') {
+        errorMessage = 'Google OAuth is not configured in Clerk Dashboard. Please contact administrator.';
+      } else if (err?.code === 'invalid_redirect_url') {
+        errorMessage = 'Redirect URL not configured in Clerk Dashboard.';
+      } else if (err?.errors?.[0]?.message) {
+        errorMessage = err.errors[0].message;
+      }
+      
+      setError(errorMessage);
       setGoogleLoading(false);
     }
   };

@@ -19,8 +19,31 @@ const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
 console.log('=== APP INITIALIZATION ===');
 console.log('Clerk Key available:', !!CLERK_KEY);
 console.log('Clerk Key (first 10 chars):', CLERK_KEY?.substring(0, 10) + '...');
+console.log('Clerk Key type:', CLERK_KEY?.startsWith('pk_live_') ? 'LIVE' : 'TEST');
 console.log('Environment mode:', import.meta.env.MODE);
 console.log('==========================');
+
+// For live keys with custom domain, we need to configure Clerk properly
+const clerkConfig = CLERK_KEY?.startsWith('pk_live_') ? {
+  publishableKey: CLERK_KEY,
+  // Custom domain configuration for live keys
+  domain: window.location.hostname.includes('localhost') ? undefined : '.esaystay.com',
+  // Ensure Clerk loads from correct domain
+  clerkJSVariant: 'headless',
+  // Additional configuration for production
+  signInUrl: '/admin/login',
+  signUpUrl: '/signup',
+  afterSignInUrl: '/admin/dashboard',
+  afterSignUpUrl: '/admin/dashboard',
+  afterSignOutUrl: '/admin/login'
+} : {
+  publishableKey: CLERK_KEY,
+  signInUrl: '/admin/login',
+  signUpUrl: '/signup',
+  afterSignInUrl: '/admin/dashboard',
+  afterSignUpUrl: '/admin/dashboard',
+  afterSignOutUrl: '/admin/login'
+};
 
 // Lazy load route components
 const SaaSHome = lazy(() => import('./pages/SaaSHome'));
@@ -46,7 +69,7 @@ export default function App() {
 
   if (hostSubdomain) {
     return (
-      <ClerkProvider publishableKey={CLERK_KEY} afterSignOutUrl="/admin/login">
+      <ClerkProvider {...clerkConfig}>
         <HelmetProvider>
           <AuthProvider>
             <CRMProvider>
@@ -74,7 +97,7 @@ export default function App() {
   }
 
   return (
-    <ClerkProvider publishableKey={CLERK_KEY}>
+    <ClerkProvider {...clerkConfig}>
       <HelmetProvider>
         <AuthProvider>
           <CRMProvider>
