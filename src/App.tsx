@@ -23,51 +23,68 @@ console.log('Clerk Key type:', CLERK_KEY?.startsWith('pk_live_') ? 'LIVE' : 'TES
 console.log('Environment mode:', import.meta.env.MODE);
 console.log('==========================');
 
-// Clerk configuration with MONKEY PATCH for double-dot bug
+// Clerk configuration with AGGRESSIVE FIX for double-dot bug
 console.log('=== CLERK CONFIG ===');
 console.log('Key type:', CLERK_KEY?.startsWith('pk_live_') ? 'LIVE' : 'TEST');
 console.log('Key start:', CLERK_KEY?.substring(0, 30));
 
-// MONKEY PATCH: Fix Clerk's double-dot bug before Clerk loads
+// AGGRESSIVE FIX: Completely override Clerk's script loading for live keys
 if (CLERK_KEY?.startsWith('pk_live_') && typeof window !== 'undefined') {
-  console.log('Applying monkey patch for Clerk double-dot bug...');
+  console.log('Applying aggressive fix for Clerk double-dot bug...');
   
-  // Store original createElement
-  const originalCreateElement = document.createElement;
+  // 1. Preload Clerk JS from correct URL BEFORE Clerk tries to load it
+  const preloadScript = document.createElement('script');
+  preloadScript.src = 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+  preloadScript.async = true;
+  preloadScript.id = 'clerk-js-preload';
+  preloadScript.onload = () => console.log('✅ Clerk JS preloaded successfully');
+  preloadScript.onerror = (e) => console.error('❌ Failed to preload Clerk JS:', e);
+  document.head.appendChild(preloadScript);
   
-  // Monkey patch createElement to fix Clerk's script URL
-  document.createElement = function(tagName: string, options?: any) {
-    const element = originalCreateElement.call(this, tagName, options);
-    
-    if (tagName === 'script') {
-      // Intercept script element creation
-      const originalSetAttribute = element.setAttribute;
-      element.setAttribute = function(name: string, value: string) {
-        if (name === 'src' && value.includes('clerk..esaystay.com')) {
-          // Fix the double-dot URL
-          const fixedValue = value.replace('clerk..esaystay.com', 'clerk.esaystay.com');
-          console.log('FIXING Clerk URL:', value, '→', fixedValue);
-          return originalSetAttribute.call(this, name, fixedValue);
-        }
-        return originalSetAttribute.call(this, name, value);
-      };
+  // 2. Monkey patch fetch/XMLHttpRequest to intercept Clerk's requests
+  const originalFetch = window.fetch;
+  window.fetch = function(input, init) {
+    if (typeof input === 'string' && input.includes('clerk..esaystay.com')) {
+      const fixedUrl = input.replace('clerk..esaystay.com', 'clerk.esaystay.com');
+      console.log('FIXING fetch URL:', input, '→', fixedUrl);
+      return originalFetch.call(this, fixedUrl, init);
     }
-    
-    return element;
+    return originalFetch.call(this, input, init);
   };
   
-  // Also try to preload Clerk JS from correct URL
-  setTimeout(() => {
-    const script = document.createElement('script');
-    script.src = 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
-    script.async = true;
-    script.onload = () => console.log('Clerk JS preloaded successfully');
-    script.onerror = (e) => console.error('Failed to preload Clerk JS:', e);
-    document.head.appendChild(script);
-  }, 100);
+  // 3. Monkey patch XMLHttpRequest
+  const originalXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+    if (typeof url === 'string' && url.includes('clerk..esaystay.com')) {
+      const fixedUrl = url.replace('clerk..esaystay.com', 'clerk.esaystay.com');
+      console.log('FIXING XHR URL:', url, '→', fixedUrl);
+      return originalXHROpen.call(this, method, fixedUrl, async, user, password);
+    }
+    return originalXHROpen.call(this, method, url, async, user, password);
+  };
+  
+  // 4. Create a custom Clerk loader that bypasses the bug
+  window.__clerk_custom_loader = {
+    load: () => {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+        script.async = true;
+        script.onload = () => {
+          console.log('✅ Custom Clerk loader succeeded');
+          resolve(true);
+        };
+        script.onerror = (e) => {
+          console.error('❌ Custom Clerk loader failed:', e);
+          reject(e);
+        };
+        document.head.appendChild(script);
+      });
+    }
+  };
 }
 
-// Clerk configuration
+// Clerk configuration - Use minimal config and let our fixes handle it
 const clerkConfig = {
   publishableKey: CLERK_KEY,
   signInUrl: '/admin/login',
@@ -75,8 +92,16 @@ const clerkConfig = {
   afterSignInUrl: '/admin/dashboard',
   afterSignUpUrl: '/admin/dashboard',
   afterSignOutUrl: '/admin/login',
-  // Try headless mode to have more control
+  // Use headless mode and provide custom loader
   clerkJSVariant: 'headless',
+  // Try to disable Clerk's auto-loading and use our custom loader
+  ...(CLERK_KEY?.startsWith('pk_live_') && {
+    // These options might help bypass the bug
+    sdkMetadata: {
+      name: 'clerk.react',
+      version: '6.0.1',
+    }
+  })
 };
 
 // Lazy load route components
