@@ -23,15 +23,51 @@ console.log('Clerk Key type:', CLERK_KEY?.startsWith('pk_live_') ? 'LIVE' : 'TES
 console.log('Environment mode:', import.meta.env.MODE);
 console.log('==========================');
 
-// Clerk configuration - SIMPLIFIED
-// The issue is Clerk constructing clerk..esaystay.com (double dots)
-// This seems to be a Clerk bug with custom domains
+// Clerk configuration with MONKEY PATCH for double-dot bug
 console.log('=== CLERK CONFIG ===');
 console.log('Key type:', CLERK_KEY?.startsWith('pk_live_') ? 'LIVE' : 'TEST');
 console.log('Key start:', CLERK_KEY?.substring(0, 30));
 
-// For now, use minimal configuration
-// Clerk should handle custom domains automatically from the key
+// MONKEY PATCH: Fix Clerk's double-dot bug before Clerk loads
+if (CLERK_KEY?.startsWith('pk_live_') && typeof window !== 'undefined') {
+  console.log('Applying monkey patch for Clerk double-dot bug...');
+  
+  // Store original createElement
+  const originalCreateElement = document.createElement;
+  
+  // Monkey patch createElement to fix Clerk's script URL
+  document.createElement = function(tagName: string, options?: any) {
+    const element = originalCreateElement.call(this, tagName, options);
+    
+    if (tagName === 'script') {
+      // Intercept script element creation
+      const originalSetAttribute = element.setAttribute;
+      element.setAttribute = function(name: string, value: string) {
+        if (name === 'src' && value.includes('clerk..esaystay.com')) {
+          // Fix the double-dot URL
+          const fixedValue = value.replace('clerk..esaystay.com', 'clerk.esaystay.com');
+          console.log('FIXING Clerk URL:', value, '→', fixedValue);
+          return originalSetAttribute.call(this, name, fixedValue);
+        }
+        return originalSetAttribute.call(this, name, value);
+      };
+    }
+    
+    return element;
+  };
+  
+  // Also try to preload Clerk JS from correct URL
+  setTimeout(() => {
+    const script = document.createElement('script');
+    script.src = 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+    script.async = true;
+    script.onload = () => console.log('Clerk JS preloaded successfully');
+    script.onerror = (e) => console.error('Failed to preload Clerk JS:', e);
+    document.head.appendChild(script);
+  }, 100);
+}
+
+// Clerk configuration
 const clerkConfig = {
   publishableKey: CLERK_KEY,
   signInUrl: '/admin/login',
@@ -39,8 +75,8 @@ const clerkConfig = {
   afterSignInUrl: '/admin/dashboard',
   afterSignUpUrl: '/admin/dashboard',
   afterSignOutUrl: '/admin/login',
-  // DO NOT set domain property - let Clerk handle it from the key
-  // clerkJSVariant: 'headless', // Try without this first
+  // Try headless mode to have more control
+  clerkJSVariant: 'headless',
 };
 
 // Lazy load route components
