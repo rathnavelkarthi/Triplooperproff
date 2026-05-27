@@ -3,21 +3,6 @@
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=hrkzztoekcgggrjujyhb"
-    },
-    "clerk": {
-      "command": "uvx",
-      "args": ["clerk-mcp-server"],
-      "env": {
-        "CLERK_SECRET_KEY": "sk_live_XjjvCazHjd2QVmIN91Mw5EuhaCcORffYttPLhLhrr6",
-        "CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuZXNheXN0YXkuY29tJAC"
-      }
-    },
-    "vercel": {
-      "command": "uvx",
-      "args": ["mcp-vercel"],
-      "env": {
-        "VERCEL_ACCESS_TOKEN": "vcp_6oj9dpWeN7D6eLHAIDhLVbEnxoIbG8M2SpOBQFG5q3aharMh1t0vhDzC"
-      }
     }
   }
 }
