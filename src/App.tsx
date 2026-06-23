@@ -30,45 +30,87 @@ console.log('Key start:', CLERK_KEY?.substring(0, 30));
 
 // AGGRESSIVE FIX: Completely override Clerk's script loading for live keys
 if (CLERK_KEY?.startsWith('pk_live_') && typeof window !== 'undefined') {
-  console.log('Applying aggressive fix for Clerk double-dot bug...');
+  console.log('Applying aggressive fix for Clerk double-dot and domain typos...');
   
-  // 1. Preload Clerk JS from correct URL BEFORE Clerk tries to load it
+  // 1. Intercept script tag creation to fix dynamic script loading of chunks
+  const originalCreateElement = document.createElement;
+  document.createElement = function(this: Document, tagName: string, options?: ElementCreationOptions): HTMLElement {
+    const element = originalCreateElement.call(this, tagName, options);
+    if (tagName.toLowerCase() === 'script') {
+      const originalSetAttribute = element.setAttribute;
+      element.setAttribute = function(name: string, value: string) {
+        if (name.toLowerCase() === 'src' && typeof value === 'string') {
+          value = value
+            .replace('clerk.easystay.com', 'clerk.esaystay.com')
+            .replace('clerk..esaystay.com', 'clerk.esaystay.com')
+            .replace('clerk..easystay.com', 'clerk.esaystay.com');
+        }
+        return originalSetAttribute.call(this, name, value);
+      };
+
+      Object.defineProperty(element, 'src', {
+        get() {
+          return this.getAttribute('src') || '';
+        },
+        set(value) {
+          if (typeof value === 'string') {
+            value = value
+              .replace('clerk.easystay.com', 'clerk.esaystay.com')
+              .replace('clerk..esaystay.com', 'clerk.esaystay.com')
+              .replace('clerk..easystay.com', 'clerk.esaystay.com');
+          }
+          this.setAttribute('src', value);
+        },
+        configurable: true,
+        enumerable: true
+      });
+    }
+    return element;
+  };
+
+  // 2. Preload Clerk JS from correct URL BEFORE Clerk tries to load it
   const preloadScript = document.createElement('script');
-  preloadScript.src = 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+  preloadScript.setAttribute('src', 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js');
   preloadScript.async = true;
   preloadScript.id = 'clerk-js-preload';
   preloadScript.onload = () => console.log('✅ Clerk JS preloaded successfully');
   preloadScript.onerror = (e) => console.error('❌ Failed to preload Clerk JS:', e);
   document.head.appendChild(preloadScript);
   
-  // 2. Monkey patch fetch/XMLHttpRequest to intercept Clerk's requests
+  // 3. Monkey patch fetch/XMLHttpRequest to intercept Clerk's requests
   const originalFetch = window.fetch;
   window.fetch = function(input, init) {
-    if (typeof input === 'string' && input.includes('clerk..esaystay.com')) {
-      const fixedUrl = input.replace('clerk..esaystay.com', 'clerk.esaystay.com');
+    if (typeof input === 'string' && (input.includes('clerk..esaystay.com') || input.includes('clerk.easystay.com') || input.includes('clerk..easystay.com'))) {
+      const fixedUrl = input
+        .replace('clerk..esaystay.com', 'clerk.esaystay.com')
+        .replace('clerk.easystay.com', 'clerk.esaystay.com')
+        .replace('clerk..easystay.com', 'clerk.esaystay.com');
       console.log('FIXING fetch URL:', input, '→', fixedUrl);
       return originalFetch.call(this, fixedUrl, init);
     }
     return originalFetch.call(this, input, init);
   };
   
-  // 3. Monkey patch XMLHttpRequest
+  // 4. Monkey patch XMLHttpRequest
   const originalXHROpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
-    if (typeof url === 'string' && url.includes('clerk..esaystay.com')) {
-      const fixedUrl = url.replace('clerk..esaystay.com', 'clerk.esaystay.com');
+  (XMLHttpRequest.prototype as any).open = function(method: string, url: string | URL, ...args: any[]) {
+    if (typeof url === 'string' && (url.includes('clerk..esaystay.com') || url.includes('clerk.easystay.com') || url.includes('clerk..easystay.com'))) {
+      const fixedUrl = url
+        .replace('clerk..esaystay.com', 'clerk.esaystay.com')
+        .replace('clerk.easystay.com', 'clerk.esaystay.com')
+        .replace('clerk..easystay.com', 'clerk.esaystay.com');
       console.log('FIXING XHR URL:', url, '→', fixedUrl);
-      return originalXHROpen.call(this, method, fixedUrl, async, user, password);
+      return originalXHROpen.call(this, method, fixedUrl, ...args);
     }
-    return originalXHROpen.call(this, method, url, async, user, password);
+    return originalXHROpen.call(this, method, url, ...args);
   };
   
-  // 4. Create a custom Clerk loader that bypasses the bug
-  window.__clerk_custom_loader = {
+  // 5. Create a custom Clerk loader that bypasses the bug
+  (window as any).__clerk_custom_loader = {
     load: () => {
       return new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js';
+        script.setAttribute('src', 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js');
         script.async = true;
         script.onload = () => {
           console.log('✅ Custom Clerk loader succeeded');
