@@ -61,6 +61,7 @@ const navItems: NavItem[] = [
   { name: 'Reservations', path: '/admin/reservations', icon: ListTodo, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'combined'], group: 'Hotel', featureKey: 'reservations' },
   { name: 'Calendar View', path: '/admin/calendar', icon: CalendarDays, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'combined'], group: 'Hotel', featureKey: 'calendar' },
   { name: 'Rooms', path: '/admin/rooms', icon: BedDouble, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'combined'], group: 'Hotel', featureKey: 'rooms' },
+  { name: 'Service Requests', path: '/admin/service-requests', icon: ClipboardList, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'combined'], group: 'Hotel', featureKey: 'reservations' },
 
   // Restaurant
   { name: 'Server Orders', path: '/admin/server-orders', icon: ListTodo, roles: ['SUPER_ADMIN', 'MANAGER', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'server_orders' },

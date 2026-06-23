@@ -288,12 +288,12 @@ export default function Signup() {
     return (
         <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#0C2230] relative overflow-hidden font-sans">
             <Helmet>
-                <title>Sign Up Free - EasyStay | Hotel & Restaurant Management</title>
-                <meta name="description" content="Create your free EasyStay account. Set up your hotel or restaurant in minutes with bookings, POS, website, and analytics — all in one platform." />
-                <link rel="canonical" href="https://esaystay.com/signup" />
-                <meta property="og:title" content="Sign Up Free - EasyStay" />
+                <title>Sign Up Free - Trip Looper | Hotel & Restaurant Management</title>
+                <meta name="description" content="Create your free Trip Looper account. Set up your hotel or restaurant in minutes with bookings, POS, website, and analytics — all in one platform." />
+                <link rel="canonical" href="https://triplooper.com/signup" />
+                <meta property="og:title" content="Sign Up Free - Trip Looper" />
                 <meta property="og:description" content="Create your free account. Set up your hotel or restaurant in minutes." />
-                <meta property="og:url" content="https://esaystay.com/signup" />
+                <meta property="og:url" content="https://triplooper.com/signup" />
                 <meta property="og:type" content="website" />
                 <meta name="twitter:card" content="summary" />
             </Helmet>

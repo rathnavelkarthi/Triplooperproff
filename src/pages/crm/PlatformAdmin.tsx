@@ -402,7 +402,7 @@ export default function PlatformAdmin() {
             Clean Start
           </button>
         </div>
-        <p className="text-sm text-gray-400">All users, properties, and business invites across EasyStay.</p>
+        <p className="text-sm text-gray-400">All users, properties, and business invites across Trip Looper.</p>
       </div>
 
       {/* Stats */}

@@ -5,7 +5,7 @@ const spring = { type: 'spring' as const, stiffness: 100, damping: 20 };
 
 const testimonials = [
     {
-        quote: 'We dropped three separate tools the first week. EasyStay replaced everything.',
+        quote: 'We dropped three separate tools the first week. Trip Looper replaced everything.',
         name: 'Arjun Reddy',
         hotel: 'Seaside Residency',
         location: 'Pondicherry',

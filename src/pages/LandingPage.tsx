@@ -1,9 +1,7 @@
-import { lazy, Suspense, useEffect, useRef } from 'react';
-import { motion, useMotionValue, useSpring } from 'motion/react';
+import { lazy, Suspense } from 'react';
 import Navbar from '../components/landing/Navbar';
 import Hero from '../components/landing/Hero';
 import Footer from '../components/landing/Footer';
-import { useReducedMotion } from '../hooks/useReducedMotion';
 
 /* Apple font stacks from DESIGN.md */
 const FONT_DISPLAY = '"SF Pro Display", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
@@ -65,6 +63,12 @@ const landingStyles = `
     letter-spacing: -0.03em;
     line-height: 1.1;
 }
+.landing-root input,
+.landing-root select,
+.landing-root textarea,
+.landing-root button {
+    font-family: inherit;
+}
 /* Accessible focus rings */
 .landing-root :focus-visible {
     outline: 2px solid var(--color-primary);
@@ -98,6 +102,7 @@ const landingStyles = `
 
 // Lazy load below-the-fold sections
 const ProblemSolution = lazy(() => import('../components/landing/ProblemSolution'));
+const HotelDirectory = lazy(() => import('../components/landing/HotelDirectory'));
 const ModuleSection = lazy(() => import('../components/landing/ModuleSection').then(m => ({ default: m.default })));
 const BookingMockup = lazy(() => import('../components/landing/ModuleSection').then(m => ({ default: m.BookingMockup })));
 const CRMMockup = lazy(() => import('../components/landing/ModuleSection').then(m => ({ default: m.CRMMockup })));
@@ -205,49 +210,7 @@ function ModuleSectionWithMockup({
     );
 }
 
-/* ── Cursor glow (desktop only, perf-optimized with useMotionValue) ── */
-function CursorGlow() {
-    const x = useMotionValue(-500);
-    const y = useMotionValue(-500);
-    const smoothX = useSpring(x, { stiffness: 200, damping: 30 });
-    const smoothY = useSpring(y, { stiffness: 200, damping: 30 });
-    const isTouchRef = useRef(false);
-
-    useEffect(() => {
-        isTouchRef.current = 'ontouchstart' in window;
-        if (isTouchRef.current) return;
-
-        const onMove = (e: MouseEvent) => {
-            x.set(e.clientX - 192);
-            y.set(e.clientY - 192);
-        };
-        const onLeave = () => {
-            x.set(-500);
-            y.set(-500);
-        };
-
-        window.addEventListener('mousemove', onMove, { passive: true });
-        document.addEventListener('mouseleave', onLeave);
-        return () => {
-            window.removeEventListener('mousemove', onMove);
-            document.removeEventListener('mouseleave', onLeave);
-        };
-    }, [x, y]);
-
-    if (typeof window !== 'undefined' && 'ontouchstart' in window) return null;
-
-    return (
-        <motion.div
-            className="pointer-events-none fixed w-96 h-96 bg-blue-500/10 blur-[120px] rounded-full z-40"
-            style={{ left: smoothX, top: smoothY }}
-            aria-hidden="true"
-        />
-    );
-}
-
 export default function LandingPage() {
-    const reduced = useReducedMotion();
-
     return (
         <div className="landing-root min-h-screen antialiased" style={{ scrollBehavior: 'smooth' }}>
             <style dangerouslySetInnerHTML={{ __html: landingStyles }} />
@@ -257,10 +220,14 @@ export default function LandingPage() {
                 Skip to main content
             </a>
 
-            {!reduced && <CursorGlow />}
             <Navbar />
+
             <main id="main-content">
                 <Hero />
+                
+                <Suspense fallback={<SectionLoader />}>
+                    <HotelDirectory />
+                </Suspense>
 
                 <Suspense fallback={<SectionLoader />}>
                     <ProblemSolution />

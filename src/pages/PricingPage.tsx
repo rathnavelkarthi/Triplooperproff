@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
@@ -9,7 +9,97 @@ import FAQAccordion from '../components/pricing/FAQAccordion';
 import { useAuth } from '../context/AuthContext';
 import { initiatePayment } from '../lib/razorpay';
 import { toast } from 'sonner';
+import SaaSFooter from '../components/saas/SaaSFooter';
 
+/* ─────────────────────────────────────────────
+   FadeIn — wrapper that fades children in after
+   a configurable delay (ms) and duration (ms)
+   ───────────────────────────────────────────── */
+function FadeIn({
+    children,
+    delay = 0,
+    duration = 1000,
+}: {
+    children: ReactNode;
+    delay?: number;
+    duration?: number;
+}) {
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const t = setTimeout(() => setVisible(true), delay);
+        return () => clearTimeout(t);
+    }, [delay]);
+
+    return (
+        <div
+            className="transition-opacity"
+            style={{
+                opacity: visible ? 1 : 0,
+                transitionDuration: `${duration}ms`,
+            }}
+        >
+            {children}
+        </div>
+    );
+}
+
+/* ─────────────────────────────────────────────
+   AnimatedHeading — character-by-character
+   reveal with staggered translateX + opacity
+   ───────────────────────────────────────────── */
+function AnimatedHeading({ text }: { text: string }) {
+    const [fired, setFired] = useState(false);
+    const charDelay = 30; // ms per character
+    const initialDelay = 200; // ms before first char moves
+
+    useEffect(() => {
+        const t = setTimeout(() => setFired(true), initialDelay);
+        return () => clearTimeout(t);
+    }, []);
+
+    const lines = text.split('\n');
+
+    return (
+        <>
+            {lines.map((line, lineIndex) => {
+                const lineStartOffset = lines
+                    .slice(0, lineIndex)
+                    .reduce((sum, l) => sum + l.length, 0);
+
+                return (
+                    <span key={lineIndex} className="block">
+                        {line.split('').map((char, charIndex) => {
+                            const totalIndex = lineStartOffset + charIndex;
+                            const delay = totalIndex * charDelay;
+                            const isSpace = char === ' ';
+
+                            return (
+                                <span
+                                    key={`${lineIndex}-${charIndex}`}
+                                    className="inline-block"
+                                    style={{
+                                        opacity: fired ? 1 : 0,
+                                        transform: fired
+                                            ? 'translateX(0)'
+                                            : 'translateX(-18px)',
+                                        transition: `opacity 500ms ${delay}ms, transform 500ms ${delay}ms`,
+                                    }}
+                                >
+                                    {isSpace ? '\u00A0' : char}
+                                </span>
+                            );
+                        })}
+                    </span>
+                );
+            })}
+        </>
+    );
+}
+
+/* ═══════════════════════════════════════════════
+   PricingPage
+   ═══════════════════════════════════════════════ */
 export default function PricingPage() {
     const [isYearly, setIsYearly] = useState(true);
     const { user, tenant, refreshTenant } = useAuth();
@@ -46,244 +136,327 @@ export default function PricingPage() {
         }
     };
 
+    const scrollToPlans = () => {
+        document.getElementById('pricing-plans')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
     return (
-        <div className="bg-[#F8FAFC] min-h-screen pt-32 pb-24 relative overflow-hidden text-[#0E2A38]">
+        <div className="min-h-screen bg-black text-white" style={{ fontFamily: "'Inter', sans-serif" }}>
             <Helmet>
-                <title>Pricing - EasyStay | Free to Start, Plans from ₹2,499/mo</title>
+                <title>Pricing - Trip Looper | Free to Start, Plans from ₹2,499/mo</title>
                 <meta name="description" content="Simple, transparent pricing for hotel and restaurant management. Start free with up to 5 rooms. Growth, Pro, and Enterprise plans for every property size." />
-                <link rel="canonical" href="https://esaystay.com/pricing" />
-                <meta property="og:title" content="EasyStay Pricing - Free to Start, Plans from ₹2,499/mo" />
+                <link rel="canonical" href="https://triplooper.com/pricing" />
+                <meta property="og:title" content="Trip Looper Pricing - Free to Start, Plans from ₹2,499/mo" />
                 <meta property="og:description" content="Simple, transparent pricing. Start free with up to 5 rooms. Growth, Pro, and Enterprise plans for every property size." />
-                <meta property="og:url" content="https://esaystay.com/pricing" />
+                <meta property="og:url" content="https://triplooper.com/pricing" />
                 <meta property="og:type" content="website" />
-                <meta property="og:image" content="https://esaystay.com/og-image.png" />
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content="EasyStay Pricing - Free to Start" />
-                <meta name="twitter:description" content="Hotel & restaurant management from ₹2,499/mo. Free starter plan available." />
-                <meta name="twitter:image" content="https://esaystay.com/og-image.png" />
-                <script type="application/ld+json">{JSON.stringify({
-                    "@context": "https://schema.org",
-                    "@type": "FAQPage",
-                    "mainEntity": [
-                        { "@type": "Question", "name": "Is there a free plan?", "acceptedAnswer": { "@type": "Answer", "text": "Yes! Our Starter plan is completely free — up to 5 rooms, 20 bookings per month, and a basic booking page. No credit card required." }},
-                        { "@type": "Question", "name": "Is there a setup fee?", "acceptedAnswer": { "@type": "Answer", "text": "No. All onboarding, initial data migration, and training are included in your subscription." }},
-                        { "@type": "Question", "name": "Do you integrate with OTAs?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, our Pro and Enterprise plans include seamless two-way synchronization with all major OTAs (MakeMyTrip, Goibibo, Booking.com, Agoda) via our channel manager." }},
-                        { "@type": "Question", "name": "Can I manage my hotel restaurant too?", "acceptedAnswer": { "@type": "Answer", "text": "Absolutely. Our Pro plan includes a full restaurant POS — menu management, food orders with kitchen tracking, table management, and inventory control." }},
-                        { "@type": "Question", "name": "Can I manage multiple properties?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The Enterprise plan includes a multi-property dashboard where you can manage all your hotels from a single login." }},
-                        { "@type": "Question", "name": "What happens after Year 1?", "acceptedAnswer": { "@type": "Answer", "text": "Your subscription locks in your pricing for 12 months. After Year 1, you can renew at the same rate." }}
-                    ]
-                })}</script>
             </Helmet>
 
-            {/* Background Layering */}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#F8FAFC] to-[#EEF2F7] -z-20" />
-            <div className="absolute inset-0 opacity-5 mix-blend-overlay -z-10" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
+            {/* ════════════════════════════════════
+                HERO — Full viewport, video bg, NO overlay
+               ════════════════════════════════════ */}
+            <section className="relative w-full h-screen overflow-hidden">
 
-            <div className="max-w-[1280px] mx-auto px-6 sm:px-8 lg:px-12">
-
-                {/* HERO SECTION */}
-                <div className="text-center max-w-4xl mx-auto mb-16">
-                    <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                        className="font-serif text-5xl md:text-6xl lg:text-[72px] font-bold text-[#0E2A38] tracking-tight leading-[1.1] mb-6 drop-shadow-sm"
-                    >
-                        Simple Pricing.<br />Start Free.
-                    </motion.h1>
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                        className="text-lg md:text-xl text-gray-500 font-medium tracking-wide"
-                    >
-                        One platform. Complete hotel & restaurant operations. Free to start.
-                    </motion.p>
-                </div>
-
-                {/* BILLING TOGGLE */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
+                {/* Background Video — raw, no dimming */}
+                <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                 >
-                    <BillingToggle isYearly={isYearly} onToggle={setIsYearly} />
-                </motion.div>
-
-                {/* PRICING GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-32 items-start">
-                    <PricingCard
-                        index={0}
-                        name="STARTER"
-                        isFree={true}
-                        price={starterPrice}
-                        description="Try HospitalityOS with zero commitment."
-                        ctaText={loading === 'starter' ? 'Loading...' : 'Start Free'}
-                        onCtaClick={() => handlePlanClick('starter')}
-                        features={[
-                            "Basic Booking Page",
-                            "Up to 5 Rooms",
-                            "Calendar View",
-                            "20 Bookings / month",
-                            "Email Support"
-                        ]}
+                    <source
+                        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4"
+                        type="video/mp4"
                     />
-                    <PricingCard
-                        index={1}
-                        name="GROWTH"
-                        price={growthPrice}
-                        period={growthPeriod}
-                        description="For independent hotels going digital."
-                        ctaText={loading === 'growth' ? 'Processing...' : 'Get Started'}
-                        onCtaClick={() => handlePlanClick('growth')}
-                        features={[
-                            "Everything in Starter, plus:",
-                            "Custom Booking Website",
-                            "Booking Engine",
-                            "CRM Dashboard",
-                            "Guest Management",
-                            "GST Invoice System",
-                            "WhatsApp (100 msgs/mo)"
-                        ]}
-                    />
-                    <PricingCard
-                        index={2}
-                        name="PRO"
-                        isPopular={true}
-                        price={proPrice}
-                        period={proPeriod}
-                        description="Complete hotel + restaurant platform."
-                        ctaText={loading === 'pro' ? 'Processing...' : 'Start Pro Plan'}
-                        onCtaClick={() => handlePlanClick('pro')}
-                        features={[
-                            "Everything in Growth, plus:",
-                            "OTA Booking Sync",
-                            "Restaurant POS & Menu",
-                            "Food Orders & Inventory",
-                            "Full WhatsApp Automation",
-                            "Revenue Analytics",
-                            "Priority Support"
-                        ]}
-                    />
-                    <PricingCard
-                        index={3}
-                        name="ENTERPRISE"
-                        price={enterprisePrice}
-                        period={enterprisePeriod}
-                        description="For hotel groups and chains."
-                        ctaText={loading === 'enterprise' ? 'Processing...' : 'Contact Sales'}
-                        onCtaClick={() => handlePlanClick('enterprise')}
-                        features={[
-                            "Everything in Pro, plus:",
-                            "Unlimited Rooms",
-                            "Multi-Property Dashboard",
-                            "API Access",
-                            "Custom Branding",
-                            "Dedicated Account Manager",
-                            "On-Site Training"
-                        ]}
-                    />
-                </div>
+                </video>
 
-            </div>
+                {/* Content layer */}
+                <div className="relative z-10 flex flex-col h-full">
 
-            {/* ROI SECTION (DARK) */}
-            <section className="bg-[#0E2A38] text-white py-32 relative overflow-hidden mb-32">
-                <div className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none z-0" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
+                    {/* ── Navbar ── */}
+                    <nav className="px-6 md:px-12 lg:px-16 pt-6">
+                        <div className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between">
+                            {/* Logo */}
+                            <a href="/" className="text-2xl font-semibold tracking-tight text-white">
+                                Trip Looper
+                            </a>
 
-                <div className="max-w-[1000px] mx-auto px-6 sm:px-8 lg:px-12 text-center relative z-10">
-                    <motion.h2
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: "-20%" }}
-                        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                        className="font-serif text-4xl md:text-5xl font-bold mb-16 tracking-wide drop-shadow-lg"
-                    >
-                        Your Software Should <span className="text-[#C9A646]">Generate Revenue.</span>
-                    </motion.h2>
-
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true, margin: "-20%" }}
-                        transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                        className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 lg:p-14 rounded-3xl shadow-2xl inline-block text-left"
-                    >
-                        <div className="space-y-6 text-[17px] font-medium text-white/90">
-                            <p className="flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-gray-500" /> Growth plan costs just <strong className="text-white text-xl ml-2">₹2,499/month</strong></p>
-                            <p className="flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-gray-500" /> One extra direct booking at <strong className="text-[#2E7D5B] text-xl ml-2 bg-[#E8F3EF]/10 px-2 py-0.5 rounded">₹3,000/night</strong> covers it</p>
-
-                            <div className="h-[1px] bg-white/20 my-8" />
-
-                            <div className="flex items-center justify-between gap-12">
-                                <span className="text-white/60 text-lg">Annual ROI</span>
-                                <span className="font-serif text-4xl lg:text-5xl font-bold text-[#C9A646]">12x return</span>
+                            {/* Center links — hidden on mobile */}
+                            <div className="hidden md:flex items-center gap-8">
+                                {['Features', 'Pricing', 'Hotels', 'Contact'].map((link) => (
+                                    <a
+                                        key={link}
+                                        href={link === 'Pricing' ? '#pricing-plans' : link === 'Features' ? '/#features' : '#'}
+                                        className="text-sm text-white/80 hover:text-gray-300 transition-colors duration-200"
+                                    >
+                                        {link}
+                                    </a>
+                                ))}
                             </div>
-                        </div>
 
-                        <div className="mt-12 pt-8 border-t border-white/10 text-center">
-                            <p className="text-lg font-bold tracking-widest uppercase text-white/80">
-                                One booking pays for <span className="text-white">the entire month.</span>
-                            </p>
+                            {/* CTA */}
+                            <a
+                                href="https://wa.me/919345244727?text=Hi%2C%20I%20want%20to%20learn%20about%20Trip%20Looper"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-white text-black px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors duration-200"
+                            >
+                                Start a Chat
+                            </a>
                         </div>
-                    </motion.div>
+                    </nav>
+
+                    {/* ── Hero content — pushed to bottom ── */}
+                    <div className="flex-1 flex flex-col justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16">
+                        <div className="lg:grid lg:grid-cols-2 lg:items-end">
+
+                            {/* Left column */}
+                            <div>
+                                <h1
+                                    className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4 text-white"
+                                    style={{ letterSpacing: '-0.04em' }}
+                                >
+                                    <AnimatedHeading text={"Shaping hospitality\nwith vision and action."} />
+                                </h1>
+
+                                <FadeIn delay={800} duration={1000}>
+                                    <p className="text-base md:text-lg text-gray-300 mb-5">
+                                        We back hoteliers and craft software that defines what comes next.
+                                    </p>
+                                </FadeIn>
+
+                                <FadeIn delay={1200} duration={1000}>
+                                    <div className="flex flex-wrap gap-4">
+                                        <button
+                                            onClick={scrollToPlans}
+                                            className="bg-white text-black px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
+                                        >
+                                            Get Started
+                                        </button>
+                                        <a
+                                            href="/#features"
+                                            className="liquid-glass border border-white/20 text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-all duration-300"
+                                        >
+                                            Explore Now
+                                        </a>
+                                    </div>
+                                </FadeIn>
+                            </div>
+
+                            {/* Right column — tag */}
+                            <FadeIn delay={1400} duration={1000}>
+                                <div className="flex items-end justify-start lg:justify-end mt-8 lg:mt-0">
+                                    <div className="liquid-glass border border-white/20 px-6 py-3 rounded-xl">
+                                        <span className="text-lg md:text-xl lg:text-2xl font-light text-white">
+                                            Hotels. Restaurants. Operations.
+                                        </span>
+                                    </div>
+                                </div>
+                            </FadeIn>
+                        </div>
+                    </div>
+
                 </div>
             </section>
 
-            <div className="max-w-[1280px] mx-auto px-6 sm:px-8 lg:px-12">
-                {/* TRUST SECTION */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-32">
-                    {[
-                        { icon: Shield, title: "Secure Infrastructure" },
-                        { icon: Zap, title: "Real-Time Sync" },
-                        { icon: Receipt, title: "No Hidden Charges" },
-                        { icon: Building2, title: "Annual Contracts" }
-                    ].map((item, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
+            {/* ════════════════════════════════════
+                PRICING SECTION — below the fold
+               ════════════════════════════════════ */}
+            <div className="bg-[#ededed] text-neutral-800">
+
+                <div id="pricing-plans" className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-24 space-y-16 scroll-mt-6">
+
+                    <div className="text-center max-w-2xl mx-auto space-y-3">
+                        <h2 className="text-4xl md:text-5xl font-bold text-[#0E2A38] tracking-tight leading-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
+                            Simple pricing. Start free.
+                        </h2>
+                        <p className="text-sm font-medium text-neutral-500">
+                            One platform. Complete hotel and restaurant operations. Start free with up to 5 rooms.
+                        </p>
+                    </div>
+
+                    {/* BILLING TOGGLE */}
+                    <BillingToggle isYearly={isYearly} onToggle={setIsYearly} />
+
+                    {/* PRICING GRID */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 items-start">
+                        <PricingCard
+                            index={0}
+                            name="STARTER"
+                            isFree={true}
+                            price={starterPrice}
+                            description="Try Trip Looper with zero commitment."
+                            ctaText={loading === 'starter' ? 'Loading...' : 'Start Free'}
+                            onCtaClick={() => handlePlanClick('starter')}
+                            features={[
+                                "Basic Booking Page",
+                                "Up to 5 Rooms",
+                                "Calendar View",
+                                "20 Bookings / month",
+                                "Email Support"
+                            ]}
+                        />
+                        <PricingCard
+                            index={1}
+                            name="GROWTH"
+                            price={growthPrice}
+                            period={growthPeriod}
+                            description="For independent hotels going digital."
+                            ctaText={loading === 'growth' ? 'Processing...' : 'Get Started'}
+                            onCtaClick={() => handlePlanClick('growth')}
+                            features={[
+                                "Everything in Starter, plus:",
+                                "Custom Booking Website",
+                                "Booking Engine",
+                                "CRM Dashboard",
+                                "Guest Management",
+                                "GST Invoice System",
+                                "WhatsApp (100 msgs/mo)"
+                            ]}
+                        />
+                        <PricingCard
+                            index={2}
+                            name="PRO"
+                            isPopular={true}
+                            price={proPrice}
+                            period={proPeriod}
+                            description="Complete hotel + restaurant platform."
+                            ctaText={loading === 'pro' ? 'Processing...' : 'Start Pro Plan'}
+                            onCtaClick={() => handlePlanClick('pro')}
+                            features={[
+                                "Everything in Growth, plus:",
+                                "OTA Booking Sync",
+                                "Restaurant POS & Menu",
+                                "Food Orders & Inventory",
+                                "Full WhatsApp Automation",
+                                "Revenue Analytics",
+                                "Priority Support"
+                            ]}
+                        />
+                        <PricingCard
+                            index={3}
+                            name="ENTERPRISE"
+                            price={enterprisePrice}
+                            period={enterprisePeriod}
+                            description="For hotel groups and chains."
+                            ctaText={loading === 'enterprise' ? 'Processing...' : 'Contact Sales'}
+                            onCtaClick={() => handlePlanClick('enterprise')}
+                            features={[
+                                "Everything in Pro, plus:",
+                                "Unlimited Rooms",
+                                "Multi-Property Dashboard",
+                                "API Access",
+                                "Custom Branding",
+                                "Dedicated Account Manager",
+                                "On-Site Training"
+                            ]}
+                        />
+                    </div>
+                </div>
+
+                {/* ROI SECTION (DARK) */}
+                <section className="bg-[#0b0f1a] text-white py-24 mx-4 rounded-3xl relative overflow-hidden border border-neutral-800 shadow-lg">
+                    <div className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none z-0" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
+
+                    <div className="max-w-[1000px] mx-auto px-6 sm:px-8 lg:px-12 text-center relative z-10">
+                        <motion.h2
+                            initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-10%" }}
-                            transition={{ delay: i * 0.1, duration: 0.8 }}
-                            className="flex flex-col items-center text-center p-6"
+                            viewport={{ once: true, margin: "-20%" }}
+                            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                            className="text-3xl md:text-4xl font-bold mb-10 tracking-wide"
+                            style={{ fontFamily: "'Inter', sans-serif" }}
                         >
-                            <div className="w-16 h-16 bg-[#F7F4EF] rounded-full flex items-center justify-center mb-6 text-[#0E2A38]">
-                                <item.icon size={28} strokeWidth={1.5} />
+                            Your software should <span className="text-[#ef4d23]">generate revenue.</span>
+                        </motion.h2>
+
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true, margin: "-20%" }}
+                            transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                            className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 lg:p-12 rounded-3xl shadow-xl inline-block text-left"
+                        >
+                            <div className="space-y-4 text-sm sm:text-base font-medium text-white/90">
+                                <p className="flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-slate-500" /> Growth plan costs just <strong className="text-white text-lg ml-2">₹2,499/month</strong></p>
+                                <p className="flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-slate-500" /> One extra direct booking at <strong className="text-emerald-400 text-lg ml-2 bg-[#E8F3EF]/10 px-2.5 py-0.5 rounded">₹3,000/night</strong> covers it</p>
+
+                                <div className="h-[1px] bg-white/20 my-6" />
+
+                                <div className="flex items-center justify-between gap-12">
+                                    <span className="text-white/60 text-base">Annual ROI</span>
+                                    <span className="text-3xl lg:text-4xl font-bold text-[#ef4d23]">12x return</span>
+                                </div>
                             </div>
-                            <h4 className="font-bold text-[#0E2A38] text-sm tracking-wide">{item.title}</h4>
+
+                            <div className="mt-8 pt-6 border-t border-white/10 text-center">
+                                <p className="text-sm font-bold tracking-widest uppercase text-white/70">
+                                    One booking pays for <span className="text-white">the entire month.</span>
+                                </p>
+                            </div>
                         </motion.div>
-                    ))}
+                    </div>
+                </section>
+
+                <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16">
+                    {/* TRUST SECTION */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        {[
+                            { icon: Shield, title: "Secure Infrastructure" },
+                            { icon: Zap, title: "Real-Time Sync" },
+                            { icon: Receipt, title: "No Hidden Charges" },
+                            { icon: Building2, title: "Annual Contracts" }
+                        ].map((item, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: "-10%" }}
+                                transition={{ delay: i * 0.1, duration: 0.8 }}
+                                className="flex flex-col items-center text-center p-6 bg-white border border-neutral-200/60 rounded-2xl shadow-sm"
+                            >
+                                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-[#ef4d23]">
+                                    <item.icon size={22} strokeWidth={1.5} />
+                                </div>
+                                <h4 className="font-bold text-neutral-800 text-xs sm:text-sm tracking-wide">{item.title}</h4>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    {/* FAQ SECTION */}
+                    <div className="pb-8">
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl font-bold text-neutral-900" style={{ fontFamily: "'Inter', sans-serif" }}>Frequently asked questions</h2>
+                        </div>
+                        <FAQAccordion />
+                    </div>
+
+                    {/* FINAL CTA */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-10%" }}
+                        transition={{ duration: 1 }}
+                        className="text-center bg-white rounded-3xl py-16 px-6 border border-neutral-200 shadow-sm"
+                    >
+                        <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-8 tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
+                            Ready to upgrade your hotel operations?
+                        </h2>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <a href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20talk%20to%20sales%20about%20Trip%20Looper" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-8 py-3.5 bg-[#ef4d23] hover:bg-[#d63f1a] text-white rounded-xl font-bold text-sm tracking-wider transition-colors shadow-sm inline-block text-center cursor-pointer">
+                                Talk to Sales
+                            </a>
+                            <a href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20Trip%20Looper" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-8 py-3.5 bg-white hover:bg-slate-50 text-neutral-800 border-2 border-neutral-800 rounded-xl font-bold text-sm tracking-wider transition-colors shadow-sm inline-block text-center cursor-pointer">
+                                Schedule Demo
+                            </a>
+                        </div>
+                    </motion.div>
                 </div>
 
-                {/* FAQ SECTION */}
-                <div className="mb-32">
-                    <div className="text-center mb-16">
-                        <h2 className="font-serif text-4xl font-bold text-[#0E2A38]">Frequently Asked Questions</h2>
-                    </div>
-                    <FAQAccordion />
-                </div>
-
-                {/* FINAL CTA */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-10%" }}
-                    transition={{ duration: 1 }}
-                    className="text-center bg-[#F7F4EF] rounded-3xl py-24 px-6 border border-gray-200"
-                >
-                    <h2 className="font-serif text-4xl md:text-5xl font-bold text-[#0E2A38] mb-10 tracking-tight">
-                        Ready to Upgrade Your Hotel Operations?
-                    </h2>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                        <a href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20talk%20to%20sales%20about%20HospitalityOS" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-10 py-4 bg-[#C9A646] hover:bg-[#b08d35] text-white rounded-xl font-bold tracking-wider transition-colors shadow-md hover:shadow-lg inline-block text-center">
-                            Talk to Sales
-                        </a>
-                        <a href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20HospitalityOS" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-10 py-4 bg-white hover:bg-gray-50 text-[#0E2A38] border-2 border-[#0E2A38] rounded-xl font-bold tracking-wider transition-colors shadow-sm inline-block text-center">
-                            Schedule Demo
-                        </a>
-                    </div>
-                </motion.div>
-
+                {/* FOOTER */}
+                <SaaSFooter />
             </div>
         </div>
     );

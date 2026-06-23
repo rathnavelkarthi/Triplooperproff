@@ -149,7 +149,7 @@ export default function BusinessPropertyCreate() {
         .eq('business_id', currentBusiness.id);
 
       if ((count || 0) >= currentBusiness.max_properties) {
-        setError(`Property limit reached (${currentBusiness.max_properties}). Contact EasyStay to increase.`);
+        setError(`Property limit reached (${currentBusiness.max_properties}). Contact Trip Looper to increase.`);
         setCreating(false);
         return;
       }

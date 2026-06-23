@@ -116,6 +116,14 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const SSOCallback = lazy(() => import('./pages/SSOCallback'));
 const TableOrder = lazy(() => import('./pages/TableOrder'));
 
+// Guest portal
+const GuestLayout = lazy(() => import('./pages/guest/GuestLayout'));
+const GuestPortal = lazy(() => import('./pages/guest/GuestPortal'));
+const GuestFoodOrder = lazy(() => import('./pages/guest/GuestFoodOrder'));
+const GuestServices = lazy(() => import('./pages/guest/GuestServices'));
+const GuestBill = lazy(() => import('./pages/guest/GuestBill'));
+const GuestChat = lazy(() => import('./pages/guest/GuestChat'));
+
 // Simple loading fallback
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -142,6 +150,15 @@ export default function App() {
                     {/* Tenant Site Routes */}
                     <Route path="/" element={<TenantSite />} />
                     <Route path="/room/:roomId" element={<RoomDetail />} />
+                    
+                    {/* Guest Portal on subdomain */}
+                    <Route path="/guest/:token" element={<GuestLayout />}>
+                      <Route index element={<GuestPortal />} />
+                      <Route path="food" element={<GuestFoodOrder />} />
+                      <Route path="services" element={<GuestServices />} />
+                      <Route path="bill" element={<GuestBill />} />
+                      <Route path="chat" element={<GuestChat />} />
+                    </Route>
                     {/* SSO callback must exist on subdomains too — if Google redirects here we still need to finish the handshake */}
                     <Route path="/sso-callback" element={<SSOCallback />} />
                     <Route path="*" element={<NotFound />} />
@@ -174,15 +191,7 @@ export default function App() {
                   <Route path="/" element={<LandingPage />} />
 
                   {/* Pricing page */}
-                  <Route path="/pricing" element={
-                    <div className="min-h-screen flex flex-col font-sans text-foreground bg-background">
-                      <SaaSNavbar />
-                      <main id="main-content" className="flex-grow">
-                        <PricingPage />
-                      </main>
-                      <SaaSFooter />
-                    </div>
-                  } />
+                  <Route path="/pricing" element={<PricingPage />} />
 
                   {/* Public table ordering (QR code) */}
                   <Route path="/order/:subdomain/:tableId" element={<TableOrder />} />
@@ -190,6 +199,15 @@ export default function App() {
                   {/* Tenant websites */}
                   <Route path="/site/:subdomain" element={<TenantSite />} />
                   <Route path="/site/:subdomain/room/:roomId" element={<RoomDetail />} />
+
+                  {/* Guest Portal on main domain */}
+                  <Route path="/guest/:token" element={<GuestLayout />}>
+                    <Route index element={<GuestPortal />} />
+                    <Route path="food" element={<GuestFoodOrder />} />
+                    <Route path="services" element={<GuestServices />} />
+                    <Route path="bill" element={<GuestBill />} />
+                    <Route path="chat" element={<GuestChat />} />
+                  </Route>
 
                   {/* Signup */}
                   <Route path="/signup" element={<Signup />} />

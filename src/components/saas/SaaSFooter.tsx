@@ -9,7 +9,7 @@ const footerLinks: Record<string, FooterLink[]> = {
         { label: 'How It Works', href: '/#how-it-works' },
     ],
     Company: [
-        { label: 'Contact', href: 'mailto:hello@esaystay.com' },
+        { label: 'Contact', href: 'mailto:hello@triplooper.com' },
     ],
     Legal: [
         { label: 'Privacy Policy', href: '/privacy' },
@@ -27,10 +27,10 @@ export default function SaaSFooter() {
                     <div className="col-span-2 md:col-span-1">
                         <Link to="/" className="flex items-center gap-2 mb-4">
                             <div className="w-7 h-7 bg-accent rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-xs">E</span>
+                                <span className="text-white font-bold text-xs">T</span>
                             </div>
                             <span className="text-base font-bold text-background tracking-tight">
-                                Easy<span className="text-accent">Stay</span>
+                                Trip <span className="text-accent">Looper</span>
                             </span>
                         </Link>
                         <p className="text-xs text-background/25 leading-relaxed max-w-[200px]">
@@ -70,7 +70,7 @@ export default function SaaSFooter() {
                 {/* Bottom */}
                 <div className="pt-8 border-t border-background/[0.06] flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-[10px] text-background/20 tracking-wider">
-                        &copy; {new Date().getFullYear()} EasyStay. All rights reserved.
+                        &copy; {new Date().getFullYear()} Trip Looper. All rights reserved.
                     </p>
                     <Link
                         to="/admin/login"

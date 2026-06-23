@@ -6,3 +6,36 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Scratch/Temporary script directories
+scratch/
+
+# Local generated credential reports (must not be committed)
+scripts/credentials-readable.txt
+scripts/credentials-report.json
+
+# Local lead data spreadsheets and reports
+*.xlsx
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.webm
+*.html
+!index.html
+
+# Local lead files and outreach logs
+leads_*.json
+lh.json
+outreach_log.json
+easystay_whatsapp_outreach_n8n.json
+
+# Playwright, Gemini/Claude cache & telemetry folders
+.playwright-mcp/
+.gemini/
+.agents/
+.claude/
+.agent/
+test-results/
+triplooper data/

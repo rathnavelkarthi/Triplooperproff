@@ -153,7 +153,7 @@ export default function TableOrder() {
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="w-8 h-8 border-4 border-[#0E2A38] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
     );
 
@@ -174,7 +174,7 @@ export default function TableOrder() {
                 <p className="text-gray-500 text-sm">Your order #{orderId} has been sent to the kitchen.</p>
                 <p className="text-gray-400 text-xs">Table {tableNumber} &middot; {restaurantName}</p>
                 <button onClick={() => { setOrderId(null); setCustomerName(''); setCustomerPhone(''); }}
-                    className="mt-4 px-6 py-2.5 bg-[#0E2A38] text-white rounded-lg text-sm font-medium hover:bg-[#1a3d4f]">
+                    className="mt-4 px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-hover">
                     Order More
                 </button>
             </div>
@@ -187,7 +187,7 @@ export default function TableOrder() {
     return (
         <div className="min-h-screen bg-gray-50 pb-32">
             {/* Header */}
-            <div className="bg-[#0E2A38] text-white px-4 py-4 sticky top-0 z-30">
+            <div className="bg-primary text-white px-4 py-4 sticky top-0 z-30">
                 <h1 className="text-lg font-bold">{restaurantName}</h1>
                 <p className="text-xs text-white/70">Table {tableNumber}</p>
             </div>
@@ -240,16 +240,16 @@ export default function TableOrder() {
                                         <div className="flex items-center gap-1">
                                             <button onClick={() => updateQty(e.item.id, -1)} className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-xs">−</button>
                                             <span className="text-xs w-4 text-center">{e.quantity}</span>
-                                            <button onClick={() => updateQty(e.item.id, 1)} className="w-6 h-6 rounded-full bg-[#0E2A38] text-white flex items-center justify-center text-xs">+</button>
+                                            <button onClick={() => updateQty(e.item.id, 1)} className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs">+</button>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                             <div className="space-y-2 pt-2 border-t border-gray-100">
                                 <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Your name *"
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#0E2A38]/20" />
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20" />
                                 <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="Phone (optional)"
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#0E2A38]/20" />
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20" />
                             </div>
                             <button onClick={placeOrder} disabled={submitting}
                                 className="w-full py-3 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 disabled:opacity-50">
@@ -258,7 +258,7 @@ export default function TableOrder() {
                         </div>
                     )}
                     <button onClick={() => setShowCart(v => !v)}
-                        className="w-full bg-[#0E2A38] text-white px-4 py-3.5 flex items-center justify-between">
+                        className="w-full bg-primary text-white px-4 py-3.5 flex items-center justify-between">
                         <span className="text-sm font-medium">{cartCount} item{cartCount > 1 ? 's' : ''} &middot; ₹{cartTotal}</span>
                         <span className="text-sm font-medium">{showCart ? 'Close' : 'View Cart'} &rarr;</span>
                     </button>
@@ -289,14 +289,14 @@ function MenuItemCard({ item, cartQty, onAdd, onPlus, onMinus }: {
             </div>
             <div className="flex-shrink-0 flex items-end">
                 {cartQty === 0 ? (
-                    <button onClick={onAdd} className="px-3 py-1 text-xs font-medium border border-[#0E2A38] text-[#0E2A38] rounded-lg hover:bg-[#0E2A38]/5">
+                    <button onClick={onAdd} className="px-3 py-1 text-xs font-medium border border-primary text-primary rounded-lg hover:bg-primary/5">
                         ADD
                     </button>
                 ) : (
                     <div className="flex items-center gap-1.5">
                         <button onClick={onMinus} className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-xs">−</button>
                         <span className="text-sm font-medium w-4 text-center">{cartQty}</span>
-                        <button onClick={onPlus} className="w-6 h-6 rounded-full bg-[#0E2A38] text-white flex items-center justify-center text-xs">+</button>
+                        <button onClick={onPlus} className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs">+</button>
                     </div>
                 )}
             </div>

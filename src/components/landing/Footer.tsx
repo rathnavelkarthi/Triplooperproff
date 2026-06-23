@@ -9,7 +9,7 @@ const footerLinks: Record<string, FooterLink[]> = {
         { label: 'Pricing', href: '#pricing' },
     ],
     Company: [
-        { label: 'Contact', href: 'mailto:hello@esaystay.com' },
+        { label: 'Contact', href: 'mailto:hello@triplooper.com' },
     ],
     Legal: [
         { label: 'Privacy Policy', href: '/privacy', isRoute: true },
@@ -34,10 +34,10 @@ export default function Footer() {
                     <div className="col-span-2 md:col-span-1">
                         <Link to="/" className="flex items-center gap-2 mb-4">
                             <div className="w-6 h-6 bg-[#0071e3] rounded-md flex items-center justify-center">
-                                <span className="text-white text-[10px] font-bold leading-none">E</span>
+                                <span className="text-white text-[10px] font-bold leading-none">T</span>
                             </div>
                             <span className="text-white/80 text-[14px] font-semibold tracking-tight">
-                                EasyStay
+                                Trip Looper
                             </span>
                         </Link>
                         <p className="text-[12px] text-white/30 leading-relaxed max-w-[200px]">
@@ -80,7 +80,7 @@ export default function Footer() {
                 {/* Divider */}
                 <div className="border-t border-white/[0.06] pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <p className="text-[11px] text-white/20">
-                        &copy; {new Date().getFullYear()} EasyStay. All rights reserved.
+                        &copy; {new Date().getFullYear()} Trip Looper. All rights reserved.
                     </p>
                     <Link
                         to="/admin/login"

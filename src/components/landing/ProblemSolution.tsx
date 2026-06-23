@@ -146,7 +146,7 @@ export default function ProblemSolution() {
                             There&apos;s a better way
                         </motion.p>
                         <h2 className="text-[32px] md:text-[38px] lg:text-[42px] font-bold text-white tracking-[-0.03em] leading-tight">
-                            The EasyStay way.
+                            The Trip Looper way.
                         </h2>
                     </motion.div>
 

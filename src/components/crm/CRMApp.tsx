@@ -13,6 +13,7 @@ import Reservations from '../../pages/crm/Reservations';
 import Calendar from '../../pages/crm/Calendar';
 import Guests from '../../pages/crm/Guests';
 import Rooms from '../../pages/crm/Rooms';
+import ServiceRequests from '../../pages/crm/ServiceRequests';
 import Payments from '../../pages/crm/Payments';
 import Invoices from '../../pages/crm/Invoices';
 import Reports from '../../pages/crm/Reports';
@@ -127,6 +128,11 @@ export default function CRMApp() {
             <Route path="rooms" element={
               <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING', 'BUSINESS_ADMIN']}>
                 <Rooms />
+              </RoleGuard>
+            } />
+            <Route path="service-requests" element={
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'HOUSEKEEPING', 'BUSINESS_ADMIN']}>
+                <ServiceRequests />
               </RoleGuard>
             } />
             <Route path="payments" element={

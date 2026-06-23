@@ -1,15 +1,7 @@
 import { motion } from 'motion/react';
 import {
-    IndianRupee,
-    Users,
-    BedDouble,
-    CalendarCheck,
     TrendingUp,
-    AlertCircle,
-    Clock,
-    CheckCircle2,
-    ArrowRight,
-    LucideIcon
+    type LucideIcon,
 } from 'lucide-react';
 import {
     BarChart,
@@ -19,55 +11,13 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    LineChart,
-    Line,
     PieChart,
     Pie,
     Cell,
 } from 'recharts';
 
-/* ── chart data (same as real CRM dashboard) ── */
-const revenueData = [
-    { name: 'Jan', total: 400000 },
-    { name: 'Feb', total: 300000 },
-    { name: 'Mar', total: 500000 },
-    { name: 'Apr', total: 450000 },
-    { name: 'May', total: 600000 },
-    { name: 'Jun', total: 550000 },
-];
-
-const occupancyData = [
-    { name: 'Mon', rate: 65 },
-    { name: 'Tue', rate: 70 },
-    { name: 'Wed', rate: 68 },
-    { name: 'Thu', rate: 85 },
-    { name: 'Fri', rate: 95 },
-    { name: 'Sat', rate: 100 },
-    { name: 'Sun', rate: 90 },
-];
-
-const sourceData = [
-    { name: 'Direct', value: 45 },
-    { name: 'Agoda', value: 25 },
-    { name: 'MakeMyTrip', value: 20 },
-    { name: 'Goibibo', value: 10 },
-];
-
-const COLORS = ['#C9A646', '#10b981', '#3b82f6', '#64748b'];
-
-const stats = [
-    { title: 'Total Revenue', value: '₹24,50,000', icon: IndianRupee, trend: '+12.5%', up: true },
-    { title: 'Occupancy Rate', value: '85%', icon: BedDouble, trend: '+5.2%', up: true },
-    { title: 'Total Bookings', value: '342', icon: CalendarCheck, trend: '+18.1%', up: true },
-    { title: 'Pending Payments', value: '₹1,25,000', icon: AlertCircle, trend: '-2.4%', up: false },
-];
-
-const activities = [
-    { icon: CalendarCheck, bg: 'bg-blue-500/20', color: 'text-blue-400', title: 'New Booking from Agoda', time: '10 mins ago', desc: 'Room 102 - Executive Double AC' },
-    { icon: IndianRupee, bg: 'bg-emerald-500/20', color: 'text-emerald-400', title: 'Payment Received', time: '25 mins ago', desc: '₹12,400 via UPI (TXN-8821)' },
-    { icon: CheckCircle2, bg: 'bg-amber-500/20', color: 'text-amber-400', title: 'Room Marked Clean', time: '1 hr ago', desc: 'Housekeeping finished Room 205' },
-    { icon: Users, bg: 'bg-purple-500/20', color: 'text-purple-400', title: 'Guest Check-in', time: '2 hrs ago', desc: 'Sarah Jenkins arrived' },
-];
+/* ── Shared data (same source as Hero195) ── */
+import { revenueData, sourceData, COLORS, stats } from './hero-data';
 
 function StatCard({ title, value, icon: Icon, trend, up, delay }: { title: string; value: string; icon: LucideIcon; trend: string; up: boolean; delay: number; key?: string }) {
     return (

@@ -357,10 +357,16 @@ export default function TenantSite() {
     const [showTableBooking, setShowTableBooking] = useState(false);
     const [tableBookingSuccess, setTableBookingSuccess] = useState<any>(null);
 
+    // Parse query params for checkIn, checkOut, guests
+    const queryParams = new URLSearchParams(window.location.search);
+    const paramCheckIn = queryParams.get('checkIn') || '';
+    const paramCheckOut = queryParams.get('checkOut') || '';
+    const paramGuests = parseInt(queryParams.get('guests') || '2', 10);
+
     // Hero booking strip state
-    const [heroCheckIn, setHeroCheckIn] = useState('');
-    const [heroCheckOut, setHeroCheckOut] = useState('');
-    const [heroGuests, setHeroGuests] = useState(2);
+    const [heroCheckIn, setHeroCheckIn] = useState(paramCheckIn);
+    const [heroCheckOut, setHeroCheckOut] = useState(paramCheckOut);
+    const [heroGuests, setHeroGuests] = useState(paramGuests);
     const heroCheckInRef = useRef<HTMLInputElement>(null);
     const heroCheckOutRef = useRef<HTMLInputElement>(null);
 
@@ -448,6 +454,19 @@ export default function TenantSite() {
 
     const { tenant, rooms, testimonials, settings, chef_specials = [], gallery = [] } = siteData;
 
+    const isApple = tenant.template === 'apple';
+
+    const themeStyles = {
+        '--color-primary': isApple ? '#0071e3' : (settings.primary_color || '#ff385c'),
+        '--color-primary-hover': isApple ? '#0062c4' : (settings.primary_color_hover || settings.primary_color || '#e00b41'),
+        '--color-accent': isApple ? '#0071e3' : (settings.accent_color || '#ff385c'),
+        '--color-accent-hover': isApple ? '#0062c4' : (settings.accent_color_hover || settings.accent_color || '#e00b41'),
+        '--color-background': isApple ? '#ffffff' : (settings.bg_color || '#ffffff'),
+        '--color-foreground': isApple ? '#1d1d1f' : (settings.text_color || '#222222'),
+        '--font-sans': isApple ? '"SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' : undefined,
+        '--font-serif': isApple ? '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' : undefined,
+    } as React.CSSProperties;
+
     const getContent = (section: string, key: string, field: 'content_text' | 'image_url' = 'content_text') => {
         const block = pageContent.find(p => p.section === section && p.block_key === key);
         return block && block[field] ? block[field] : null;
@@ -514,14 +533,14 @@ export default function TenantSite() {
     };
 
     return (
-        <div id="main-content" className="min-h-screen bg-background font-sans text-gray-900 antialiased overflow-x-hidden">
+        <div id="main-content" style={themeStyles} className="min-h-screen bg-background font-sans text-gray-900 antialiased overflow-x-hidden">
             <Helmet>
                 <title>{tenant.business_name} - Book Direct | Rooms, Dining & More</title>
-                <meta name="description" content={`Book your stay at ${tenant.business_name}. View rooms, prices, amenities, and reserve directly for the best rates. Powered by EasyStay.`} />
-                <link rel="canonical" href={`https://${tenant.subdomain}.esaystay.com/`} />
+                <meta name="description" content={`Book your stay at ${tenant.business_name}. View rooms, prices, amenities, and reserve directly for the best rates. Powered by Trip Looper.`} />
+                <link rel="canonical" href={`https://${tenant.subdomain}.triplooper.com/`} />
                 <meta property="og:title" content={`${tenant.business_name} - Book Direct`} />
                 <meta property="og:description" content={`View rooms, prices, and amenities at ${tenant.business_name}. Reserve directly for the best rates.`} />
-                <meta property="og:url" content={`https://${tenant.subdomain}.esaystay.com/`} />
+                <meta property="og:url" content={`https://${tenant.subdomain}.triplooper.com/`} />
                 <meta property="og:type" content="website" />
                 {tenant.hero_image_url && <meta property="og:image" content={tenant.hero_image_url} />}
                 {tenant.logo_url && <meta property="og:image" content={tenant.logo_url} />}
@@ -555,31 +574,43 @@ export default function TenantSite() {
                 })}</script>
             </Helmet>
             {/* ===== NAVBAR ===== */}
-            <nav className="fixed top-0 inset-x-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100/80">
-                <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+            <nav className={
+                isApple 
+                ? "fixed top-0 inset-x-0 z-40 bg-[#000000]/80 backdrop-blur-md saturate-[180%] border-b border-white/10 text-white"
+                : "fixed top-0 inset-x-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100/80"
+            }>
+                <div className={`max-w-6xl mx-auto px-6 ${isApple ? 'h-12' : 'h-16'} flex items-center justify-between`}>
                     <div className="flex items-center gap-3">
                         {tenant.logo_url ? (
                             <img src={tenant.logo_url} alt={`${tenant.business_name} logo`} className="w-8 h-8 rounded-lg object-cover" />
                         ) : (
-                            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                                <span className="text-white font-bold text-sm">{tenant.business_name.charAt(0)}</span>
+                            <div className={`w-8 h-8 rounded-lg ${isApple ? 'bg-white/10 text-white' : 'bg-primary text-white'} flex items-center justify-center`}>
+                                <span className="font-bold text-sm">{tenant.business_name.charAt(0)}</span>
                             </div>
                         )}
-                        <span className="font-serif font-bold text-primary tracking-tight">{tenant.business_name}</span>
+                        <span className={`tracking-tight ${isApple ? 'font-sans font-normal text-xs text-white/90' : 'font-serif font-bold text-primary'}`}>{tenant.business_name}</span>
                     </div>
-                    <div className="hidden md:flex items-center gap-8 text-sm">
-                        {isHotel && <a href="#rooms" className="text-gray-500 hover:text-gray-900 transition-colors font-medium">Rooms</a>}
-                        {isRestaurant && menuCategories.length > 0 && <a href="#menu" className="text-gray-500 hover:text-gray-900 transition-colors font-medium">Menu</a>}
-                        {testimonials.length > 0 && <a href="#reviews" className="text-gray-500 hover:text-gray-900 transition-colors font-medium">Reviews</a>}
-                        {aboutText && <a href="#about" className="text-gray-500 hover:text-gray-900 transition-colors font-medium">About</a>}
-                        <a href="#location" className="text-gray-500 hover:text-gray-900 transition-colors font-medium">Location</a>
-                        <a href="#contact" className="text-gray-500 hover:text-gray-900 transition-colors font-medium">Contact</a>
+                    <div className={`hidden md:flex items-center gap-8 ${isApple ? 'text-[12px] font-normal text-white/70' : 'text-sm'}`}>
+                        {isHotel && <a href="#rooms" className={isApple ? "hover:text-white transition-colors" : "text-gray-500 hover:text-gray-900 transition-colors font-medium"}>Rooms</a>}
+                        {isRestaurant && menuCategories.length > 0 && <a href="#menu" className={isApple ? "hover:text-white transition-colors" : "text-gray-500 hover:text-gray-900 transition-colors font-medium"}>Menu</a>}
+                        {testimonials.length > 0 && <a href="#reviews" className={isApple ? "hover:text-white transition-colors" : "text-gray-500 hover:text-gray-900 transition-colors font-medium"}>Reviews</a>}
+                        {aboutText && <a href="#about" className={isApple ? "hover:text-white transition-colors" : "text-gray-500 hover:text-gray-900 transition-colors font-medium"}>About</a>}
+                        <a href="#location" className={isApple ? "hover:text-white transition-colors" : "text-gray-500 hover:text-gray-900 transition-colors font-medium"}>Location</a>
+                        <a href="#contact" className={isApple ? "hover:text-white transition-colors" : "text-gray-500 hover:text-gray-900 transition-colors font-medium"}>Contact</a>
                     </div>
                     {isHotel ? (
-                        <a href="#rooms" className="bg-primary text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-primary-hover transition-all shadow-sm hover:shadow-md">Book now</a>
+                        <a href="#rooms" className={
+                            isApple 
+                            ? "bg-[#0071e3] text-white text-[12px] font-normal px-4 py-1.5 rounded-full hover:bg-[#0077ed] transition-all"
+                            : "bg-primary text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-primary-hover transition-all shadow-sm hover:shadow-md"
+                        }>Book now</a>
                     ) : (
-                        <a href={buildWhatsAppOrderUrl()} target="_blank" rel="noopener noreferrer" className="bg-green-500 text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-green-600 transition-all shadow-sm hover:shadow-md flex items-center gap-2">
-                            <MessageCircle size={16} /> Order now
+                        <a href={buildWhatsAppOrderUrl()} target="_blank" rel="noopener noreferrer" className={
+                            isApple
+                            ? "bg-[#0071e3] text-white text-[12px] font-normal px-4 py-1.5 rounded-full hover:bg-[#0077ed] transition-all flex items-center gap-1.5"
+                            : "bg-green-500 text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-green-600 transition-all shadow-sm hover:shadow-md flex items-center gap-2"
+                        }>
+                            <MessageCircle size={14} /> Order now
                         </a>
                     )}
                 </div>
@@ -616,11 +647,11 @@ export default function TenantSite() {
                             className="max-w-3xl mx-auto md:mx-0 flex flex-col items-center md:items-start"
                         >
                             <h1
-                                className="font-serif text-4xl md:text-5xl lg:text-[64px] font-bold text-white leading-[1.15] tracking-tight mb-6"
+                                className={isApple ? "font-sans text-4xl md:text-5xl lg:text-[56px] font-semibold text-white leading-[1.07] tracking-[-0.03em] mb-6 whitespace-pre-line" : "font-serif text-4xl md:text-5xl lg:text-[64px] font-bold text-white leading-[1.15] tracking-tight mb-6"}
                             >
                                 {heroTitle.split(',').join('\n')}
                             </h1>
-                            <p className="text-lg md:text-[20px] text-white/95 leading-relaxed mb-10 max-w-2xl font-light">
+                            <p className={isApple ? "text-lg md:text-[21px] text-white/80 leading-[1.19] tracking-[0.01em] mb-10 max-w-2xl font-normal" : "text-lg md:text-[20px] text-white/95 leading-relaxed mb-10 max-w-2xl font-light"}>
                                 {heroSubtitle}
                             </p>
 
@@ -677,11 +708,19 @@ export default function TenantSite() {
                                 {isRestaurant && !isHotel ? (
                                     <>
                                         <button onClick={handleBookTable}
-                                            className="bg-accent text-primary font-bold px-8 py-3.5 rounded-xl text-sm shadow-lg shadow-accent/20 flex items-center gap-2 hover:bg-accent-hover transition-all">
+                                            className={
+                                                isApple
+                                                ? "bg-[#0071e3] text-white font-normal px-8 py-3 rounded-full text-sm hover:bg-[#0077ed] transition-all flex items-center gap-2 shadow-sm"
+                                                : "bg-accent text-primary font-bold px-8 py-3.5 rounded-xl text-sm shadow-lg shadow-accent/20 flex items-center gap-2 hover:bg-accent-hover transition-all"
+                                            }>
                                             Book a Table <ArrowRight size={16} />
                                         </button>
                                         <a href="#menu"
-                                            className="bg-white/10 backdrop-blur-sm text-white font-semibold px-8 py-3.5 rounded-xl text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2">
+                                            className={
+                                                isApple
+                                                ? "bg-transparent text-white hover:underline font-normal px-6 py-3 text-sm flex items-center gap-1.5"
+                                                : "bg-white/10 backdrop-blur-sm text-white font-semibold px-8 py-3.5 rounded-xl text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
+                                            }>
                                             View Menu <UtensilsCrossed size={14} />
                                         </a>
                                     </>
@@ -698,7 +737,11 @@ export default function TenantSite() {
                             transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
                             className="sticky top-[60px] md:relative z-40 w-full px-4 md:px-6 max-w-5xl mx-auto pb-6 md:pb-0 md:-mb-10 mt-6 md:mt-0"
                         >
-                            <div className="bg-white/95 backdrop-blur-2xl rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-white/40 overflow-hidden">
+                            <div className={
+                                isApple
+                                ? "bg-white rounded-xl shadow-[rgba(0,0,0,0.22)_3px_5px_30px_0px] overflow-hidden"
+                                : "bg-white/95 backdrop-blur-2xl rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-white/40 overflow-hidden"
+                            }>
                                 <div className="grid grid-cols-1 md:grid-cols-4 items-stretch">
                                     {/* Check-in */}
                                     <div 
@@ -767,10 +810,14 @@ export default function TenantSite() {
                                     <div className="p-5 md:p-6 flex items-center justify-center bg-gray-50/30">
                                         <button
                                             onClick={handleHeroBook}
-                                            className="w-full bg-[#0E2A38] text-white font-bold px-6 py-4 rounded-xl hover:bg-black transition-all shadow-lg shadow-black/5 text-[15px] flex items-center justify-center gap-2 whitespace-nowrap group"
+                                            className={
+                                                isApple
+                                                ? "w-full bg-[#0071e3] text-white font-normal px-6 py-3.5 rounded-full hover:bg-[#0077ed] transition-all text-[15px] flex items-center justify-center gap-2 whitespace-nowrap shadow-none"
+                                                : "w-full bg-primary text-primary-foreground font-bold px-6 py-4 rounded-xl hover:bg-primary-hover transition-all shadow-lg shadow-primary/5 text-[15px] flex items-center justify-center gap-2 whitespace-nowrap group"
+                                            }
                                         >
                                             Check Availability
-                                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                            <ArrowRight size={18} className={isApple ? "" : "group-hover:translate-x-1 transition-transform"} />
                                         </button>
                                     </div>
                                 </div>
@@ -792,7 +839,7 @@ export default function TenantSite() {
 
             {/* ===== OPERATING HOURS STRIP (Restaurant) ===== */}
             {isRestaurant && (
-                <div className="bg-primary/5 border-y border-primary/10">
+                <div className={isApple ? "bg-[#f5f5f7] border-y border-gray-200/50" : "bg-primary/5 border-y border-primary/10"}>
                     <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-center gap-6 flex-wrap">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -817,7 +864,7 @@ export default function TenantSite() {
 
             {/* ===== QUICK HIGHLIGHTS / AMENITIES ===== */}
             {isHotel && (
-                <section className="pt-24 pb-12 md:pt-36 md:pb-20 px-6 bg-white border-b border-gray-100 hidden md:block">
+                <section className={isApple ? "pt-16 pb-12 px-6 bg-[#f5f5f7] border-none hidden md:block" : "pt-24 pb-12 md:pt-36 md:pb-20 px-6 bg-white border-b border-gray-100 hidden md:block"}>
                     <div className="max-w-5xl mx-auto grid grid-cols-3 md:grid-cols-6 gap-6">
                         {[
                             { label: 'Free WiFi', icon: Wifi },
@@ -845,7 +892,7 @@ export default function TenantSite() {
                     <div className="max-w-6xl mx-auto">
                         <div className="text-center mb-12">
                             <p className="text-xs font-semibold text-accent uppercase tracking-[0.2em] mb-3">Handpicked for you</p>
-                            <h2 className="text-3xl md:text-5xl font-bold text-primary tracking-tight">Chef's signature dishes</h2>
+                            <h2 className={isApple ? "text-3xl md:text-[40px] font-semibold text-foreground tracking-tight leading-[1.10]" : "text-3xl md:text-5xl font-bold text-primary tracking-tight"}>Chef's signature dishes</h2>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {chef_specials.map((dish, i) => (
@@ -855,7 +902,7 @@ export default function TenantSite() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.1, duration: 0.6 }}
-                                    className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 hover:border-gray-200"
+                                    className={isApple ? "group relative bg-white rounded-xl overflow-hidden shadow-[rgba(0,0,0,0.22)_3px_5px_30px_0px] transition-all" : "group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 hover:border-gray-200"}
                                 >
                                     <div className="relative h-56 overflow-hidden">
                                         {dish.image_url ? (
@@ -871,11 +918,11 @@ export default function TenantSite() {
                                             </span>
                                         </div>
                                         <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-md">
-                                            <span className="font-bold text-primary">₹{dish.price}</span>
+                                            <span className={`font-semibold ${isApple ? 'text-[#1d1d1f]' : 'text-primary'}`}>₹{dish.price}</span>
                                         </div>
                                     </div>
                                     <div className="p-4">
-                                        <h3 className="font-bold text-primary text-lg mb-1">{dish.name}</h3>
+                                        <h3 className={`font-semibold text-lg mb-1 ${isApple ? 'text-foreground' : 'text-primary'}`}>{dish.name}</h3>
                                         {dish.description && <p className="text-sm text-gray-500 line-clamp-2">{dish.description}</p>}
                                     </div>
                                 </motion.div>
@@ -887,10 +934,10 @@ export default function TenantSite() {
 
             {/* ===== ROOMS (Hotel only) ===== */}
             {isHotel && vis.rooms !== false && rooms.length > 0 && (
-                <section id="rooms" className="py-16 md:py-24 px-6">
+                <section id="rooms" className={isApple ? "py-16 md:py-24 px-6 bg-[#f5f5f7]" : "py-16 md:py-24 px-6"}>
                     <div className="max-w-6xl mx-auto">
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-5xl font-bold text-primary tracking-tight">Accommodation</h2>
+                            <h2 className={isApple ? "text-3xl md:text-[40px] font-semibold text-foreground tracking-tight leading-[1.10]" : "text-3xl md:text-5xl font-bold text-primary tracking-tight"}>Accommodation</h2>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -901,7 +948,7 @@ export default function TenantSite() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.1, duration: 0.6 }}
-                                    className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-gray-200 flex flex-col"
+                                    className={isApple ? "group bg-white rounded-xl overflow-hidden shadow-[rgba(0,0,0,0.22)_3px_5px_30px_0px] transition-all duration-500 flex flex-col" : "group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-gray-200 flex flex-col"}
                                 >
                                     {/* Room image -- 70% height aspect ratio via sizing */}
                                     <div className="relative h-72 md:h-80 overflow-hidden shrink-0">
@@ -922,7 +969,7 @@ export default function TenantSite() {
                                         {/* Price overlay on image */}
                                         <div className="absolute top-4 left-4">
                                             <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
-                                                <p className="text-lg font-bold text-primary">₹{adjustedPrice(room.price_per_night).toLocaleString()}<span className="text-[10px] font-normal text-gray-400 ml-0.5">/night</span></p>
+                                                <p className={`text-lg font-semibold ${isApple ? 'text-[#1d1d1f]' : 'text-primary'}`}>₹{adjustedPrice(room.price_per_night).toLocaleString()}<span className="text-[10px] font-normal text-gray-400 ml-0.5">/night</span></p>
                                             </div>
                                         </div>
 
@@ -944,7 +991,7 @@ export default function TenantSite() {
                                     <div className="p-5 flex-1 flex flex-col">
                                         <div className="flex items-start justify-between mb-2">
                                             <div>
-                                                <h3 className="font-bold text-primary text-xl mb-1">{room.name}</h3>
+                                                <h3 className={`font-semibold text-xl mb-1 ${isApple ? 'text-foreground' : 'text-primary'}`}>{room.name}</h3>
                                                 <p className="text-sm font-medium text-gray-500 flex items-center gap-2">
                                                     <span>{room.max_occupancy} guests</span>
                                                     {room.amenities && room.amenities.length > 0 && (
@@ -960,13 +1007,13 @@ export default function TenantSite() {
                                         <div className="mt-auto pt-6 flex gap-3">
                                             <Link
                                                 to={hostSubdomain ? `/room/${room.id}` : `/site/${subdomain}/room/${room.id}`}
-                                                className="flex-1 bg-white text-primary font-semibold py-3 rounded-xl text-sm border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all text-center"
+                                                className={isApple ? "flex-1 bg-transparent text-[#0066cc] hover:underline font-normal py-3 text-sm text-center" : "flex-1 bg-white text-primary font-semibold py-3 rounded-xl text-sm border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all text-center"}
                                             >
                                                 Explore
                                             </Link>
                                             <button
                                                 onClick={() => setBookingRoom(room)}
-                                                className="flex-1 bg-primary text-white font-semibold py-3 rounded-xl text-sm hover:bg-primary-hover transition-all flex items-center justify-center gap-2 shadow-sm"
+                                                className={isApple ? "flex-1 bg-[#0071e3] text-white font-normal py-3 rounded-full text-sm hover:bg-[#0077ed] transition-all" : "flex-1 bg-primary text-white font-semibold py-3 rounded-xl text-sm hover:bg-primary-hover transition-all flex items-center justify-center gap-2 shadow-sm"}
                                             >
                                                 Book Now
                                             </button>
@@ -985,7 +1032,7 @@ export default function TenantSite() {
                     <div className="max-w-5xl mx-auto">
                         <div className="text-center mb-16">
                             <p className="text-xs font-semibold text-accent uppercase tracking-[0.2em] mb-3">Our menu</p>
-                            <h2 className="text-4xl md:text-5xl font-bold text-primary tracking-tight">What we serve</h2>
+                            <h2 className={isApple ? "text-3xl md:text-[40px] font-semibold text-foreground tracking-tight leading-[1.10]" : "text-4xl md:text-5xl font-bold text-primary tracking-tight"}>What we serve</h2>
                             <p className="text-gray-500 mt-4 max-w-lg mx-auto">Fresh ingredients, bold flavors. Browse our menu and order via WhatsApp.</p>
                         </div>
 
@@ -996,8 +1043,8 @@ export default function TenantSite() {
                                     key={cat.id}
                                     onClick={() => setActiveMenuCat(cat.id)}
                                     className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${activeMenuCat === cat.id
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                        : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                        ? (isApple ? 'bg-[#1d1d1f] text-white shadow-none' : 'bg-primary text-white shadow-lg shadow-primary/20')
+                                        : (isApple ? 'bg-[#f5f5f7] text-[#1d1d1f] border-none hover:bg-[#ebebeb]' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50')
                                         }`}
                                 >
                                     {cat.name}
@@ -1016,7 +1063,7 @@ export default function TenantSite() {
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: i * 0.05, duration: 0.4 }}
-                                        className="bg-white rounded-xl border border-gray-100 p-4 flex gap-4 hover:shadow-md hover:border-gray-200 transition-all group"
+                                        className={isApple ? "bg-[#f5f5f7] rounded-xl p-4 flex gap-4 transition-all group border-none" : "bg-white rounded-xl border border-gray-100 p-4 flex gap-4 hover:shadow-md hover:border-gray-200 transition-all group"}
                                     >
                                         {item.image_url ? (
                                             <img src={item.image_url} alt={item.name} loading="lazy" className="w-20 h-20 rounded-lg object-cover shrink-0" />
@@ -1031,9 +1078,9 @@ export default function TenantSite() {
                                                     <span className={`w-3.5 h-3.5 rounded-sm border-2 flex items-center justify-center shrink-0 ${item.is_veg ? 'border-green-600' : 'border-red-600'}`}>
                                                         <span className={`w-2 h-2 rounded-full ${item.is_veg ? 'bg-green-600' : 'bg-red-600'}`} />
                                                     </span>
-                                                    <h3 className="font-semibold text-gray-900 text-sm">{item.name}</h3>
+                                                    <h3 className="font-semibold text-foreground text-sm">{item.name}</h3>
                                                 </div>
-                                                <p className="font-bold text-primary text-sm whitespace-nowrap">₹{item.price}</p>
+                                                <p className={`font-semibold text-sm whitespace-nowrap ${isApple ? 'text-foreground' : 'text-primary'}`}>₹{item.price}</p>
                                             </div>
                                             {item.description && (
                                                 <p className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">{item.description}</p>
@@ -1055,7 +1102,7 @@ export default function TenantSite() {
                                     href={buildWhatsAppOrderUrl()}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-3 bg-green-500 text-white font-semibold px-8 py-4 rounded-xl hover:bg-green-600 transition-all shadow-lg shadow-green-500/20 text-sm"
+                                    className={isApple ? "inline-flex items-center gap-3 bg-[#0071e3] text-white font-normal px-8 py-3.5 rounded-full hover:bg-[#0077ed] transition-all text-sm" : "inline-flex items-center gap-3 bg-green-500 text-white font-semibold px-8 py-4 rounded-xl hover:bg-green-600 transition-all shadow-lg shadow-green-500/20 text-sm"}
                                 >
                                     <MessageCircle size={20} />
                                     Order via WhatsApp
@@ -1069,11 +1116,11 @@ export default function TenantSite() {
 
             {/* ===== GALLERY (Restaurant) ===== */}
             {isRestaurant && gallery.length > 0 && (
-                <section id="gallery" className="py-16 md:py-24 px-6 bg-gray-50">
+                <section id="gallery" className={isApple ? "py-16 md:py-24 px-6 bg-[#f5f5f7]" : "py-16 md:py-24 px-6 bg-gray-50"}>
                     <div className="max-w-6xl mx-auto">
                         <div className="text-center mb-12">
                             <p className="text-xs font-semibold text-accent uppercase tracking-[0.2em] mb-3">Our space</p>
-                            <h2 className="text-3xl md:text-5xl font-bold text-primary tracking-tight">Gallery</h2>
+                            <h2 className={isApple ? "text-3xl md:text-[40px] font-semibold text-foreground tracking-tight leading-[1.10]" : "text-3xl md:text-5xl font-bold text-primary tracking-tight"}>Gallery</h2>
                         </div>
                         <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
                             {gallery.map((img, i) => (
@@ -1100,11 +1147,11 @@ export default function TenantSite() {
 
             {/* ===== TESTIMONIALS -- 3-column grid ===== */}
             {vis.testimonials !== false && testimonials.length > 0 && (
-                <section id="reviews" className="py-28 px-6 bg-primary">
+                <section id="reviews" className={isApple ? "py-28 px-6 bg-black text-white" : "py-28 px-6 bg-primary"}>
                     <div className="max-w-6xl mx-auto">
                         <div className="text-center mb-16">
                             <p className="text-xs font-semibold text-accent uppercase tracking-[0.2em] mb-3">Guest reviews</p>
-                            <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">What our guests say</h2>
+                            <h2 className={isApple ? "text-3xl md:text-[40px] font-semibold text-white tracking-tight leading-[1.10]" : "text-4xl md:text-5xl font-bold text-white tracking-tight"}>What our guests say</h2>
                             {testimonials.length >= 3 && (
                                 <div className="flex items-center justify-center gap-2 mt-5">
                                     <div className="flex gap-0.5">
@@ -1128,7 +1175,7 @@ export default function TenantSite() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.1, duration: 0.6 }}
-                                    className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors duration-300 flex flex-col"
+                                    className={isApple ? "bg-[#272729] rounded-xl p-7 transition-colors duration-300 flex flex-col border-none text-white" : "bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors duration-300 flex flex-col"}
                                 >
                                     <div className="flex items-center justify-between mb-5">
                                         <Stars count={t.rating} />
@@ -1139,7 +1186,7 @@ export default function TenantSite() {
                                     </p>
 
                                     <div className="flex items-center gap-3 pt-5 border-t border-white/10 mt-auto">
-                                        <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center ring-2 ring-white/10 shrink-0">
+                                        <div className={isApple ? "w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0" : "w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center ring-2 ring-white/10 shrink-0"}>
                                             <span className="text-accent font-bold">{t.guest_name.charAt(0)}</span>
                                         </div>
                                         <div>
@@ -1153,9 +1200,9 @@ export default function TenantSite() {
                         {/* Google Reviews link */}
                         <div className="text-center mt-12">
                             <a href={tenant.google_review_url || '#'} target="_blank" rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 text-white font-semibold text-sm bg-white/10 rounded-full px-8 py-3 hover:bg-white/20 transition-all border border-white/10">
+                                className={isApple ? "inline-flex items-center gap-2 text-[#2997ff] font-normal text-sm hover:underline" : "inline-flex items-center gap-2 text-white font-semibold text-sm bg-white/10 rounded-full px-8 py-3 hover:bg-white/20 transition-all border border-white/10"}>
                                 <span>View all reviews</span>
-                                <ArrowRight size={16} className="text-white" />
+                                <ArrowRight size={16} className={isApple ? "text-[#2997ff]" : "text-white"} />
                             </a>
                         </div>
                     </div>
@@ -1167,17 +1214,17 @@ export default function TenantSite() {
                 <section id="about" className="py-28 px-6">
                     <div className="max-w-3xl mx-auto text-center">
                         <p className="text-xs font-semibold text-accent uppercase tracking-[0.2em] mb-3">About us</p>
-                        <h2 className="text-4xl md:text-5xl font-bold text-primary tracking-tight mb-8">{aboutHeading}</h2>
+                        <h2 className={isApple ? "text-3xl md:text-[40px] font-semibold text-foreground tracking-tight leading-[1.10] mb-8" : "text-4xl md:text-5xl font-bold text-primary tracking-tight mb-8"}>{aboutHeading}</h2>
                         <p className="text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto whitespace-pre-wrap">{aboutText}</p>
                     </div>
                 </section>
             )}
 
             {/* ===== LOCATION + MAP ===== */}
-            <section id="location" className="py-16 md:py-24 px-6 bg-white border-t border-gray-100">
+            <section id="location" className={isApple ? "py-16 md:py-24 px-6 bg-[#f5f5f7] border-none" : "py-16 md:py-24 px-6 bg-white border-t border-gray-100"}>
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-5xl font-bold text-primary tracking-tight">Perfectly Located</h2>
+                        <h2 className={isApple ? "text-3xl md:text-[40px] font-semibold text-foreground tracking-tight leading-[1.10]" : "text-3xl md:text-5xl font-bold text-primary tracking-tight"}>Perfectly Located</h2>
                     </div>
 
                     {/* Proximity Distance Badges */}
@@ -1187,8 +1234,8 @@ export default function TenantSite() {
                             { value: settings.locationStat2Value || '2km', label: settings.locationStat2Label || 'from Town Center' },
                             { value: settings.locationStat3Value || '15 min', label: settings.locationStat3Label || 'from Airport' },
                         ].map((stat, i) => (
-                            <div key={i} className="flex items-center justify-center gap-2 bg-gray-50 border border-gray-100 rounded-full px-5 py-2.5">
-                                <span className="font-bold text-[#0E2A38] text-sm">{stat.value}</span>
+                            <div key={i} className={isApple ? "flex items-center justify-center gap-2 bg-white rounded-full px-5 py-2.5 shadow-[rgba(0,0,0,0.04)_0px_2px_6px_0px]" : "flex items-center justify-center gap-2 bg-gray-50 border border-gray-100 rounded-full px-5 py-2.5"}>
+                                <span className="font-bold text-primary text-sm">{stat.value}</span>
                                 <span className="text-gray-500 text-sm">{stat.label}</span>
                             </div>
                         ))}
@@ -1243,7 +1290,7 @@ export default function TenantSite() {
                                 href={`https://maps.google.com/maps?q=${encodeURIComponent(contactAddress)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center gap-2 hover:bg-gray-50 px-4 py-2 rounded-xl transition-colors group"
+                                className={isApple ? "inline-flex items-center justify-center gap-2 hover:underline px-4 py-2 transition-colors group" : "inline-flex items-center justify-center gap-2 hover:bg-gray-50 px-4 py-2 rounded-xl transition-colors group"}
                             >
                                 <MapPin size={18} className="text-accent group-hover:scale-110 transition-transform shrink-0" />
                                 <span className="text-sm text-gray-600 whitespace-pre-wrap text-left leading-relaxed max-w-lg">
@@ -1258,7 +1305,7 @@ export default function TenantSite() {
 
             {/* ===== DIRECT BOOKING BENEFITS (Hotel only) ===== */}
             {isHotel && (
-                <section className="py-20 px-6 bg-primary relative overflow-hidden">
+                <section className={isApple ? "py-20 px-6 bg-[#272729] relative overflow-hidden text-white" : "py-20 px-6 bg-primary relative overflow-hidden"}>
                     {/* Decorative */}
                     <div className="absolute top-0 right-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl" />
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/3 rounded-full blur-3xl" />
@@ -1285,7 +1332,7 @@ export default function TenantSite() {
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: i * 0.1 }}
-                                        className="flex items-start gap-4 bg-white/5 rounded-xl p-5 border border-white/5"
+                                        className="flex items-start gap-4 bg-white/5 rounded-xl p-5 border-none"
                                     >
                                         <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
                                             <Icon size={20} className="text-accent" />
@@ -1302,7 +1349,7 @@ export default function TenantSite() {
                         <div className="text-center">
                             <a
                                 href="#rooms"
-                                className="inline-flex items-center gap-2 bg-accent text-primary font-bold px-8 py-3.5 rounded-xl hover:bg-accent-hover transition-all shadow-lg shadow-accent/20 text-sm"
+                                className={isApple ? "inline-flex items-center gap-2 bg-[#0071e3] text-white font-normal px-8 py-3.5 rounded-full hover:bg-[#0077ed] transition-all text-sm" : "inline-flex items-center gap-2 bg-accent text-primary font-bold px-8 py-3.5 rounded-xl hover:bg-accent-hover transition-all shadow-lg shadow-accent/20 text-sm"}
                             >
                                 Browse rooms & book
                                 <ArrowRight size={16} />
@@ -1314,7 +1361,7 @@ export default function TenantSite() {
 
             {/* ===== CONTACT / FOOTER ===== */}
             {vis.contact !== false && (
-                <footer id="contact" className="bg-ocean-950 text-white py-20 px-6">
+                <footer id="contact" className={isApple ? "bg-[#1d1d1f] text-white py-20 px-6 border-t border-white/10" : "bg-ocean-950 text-white py-20 px-6"}>
                     <div className="max-w-6xl mx-auto">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
                             {/* Brand */}
@@ -1323,11 +1370,11 @@ export default function TenantSite() {
                                     {tenant.logo_url ? (
                                         <img src={tenant.logo_url} alt={`${tenant.business_name} logo`} className="w-8 h-8 rounded-lg object-cover" />
                                     ) : (
-                                        <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+                                        <div className={`w-8 h-8 rounded-lg ${isApple ? 'bg-white/10 text-white' : 'bg-accent'} flex items-center justify-center`}>
                                             <span className="text-white font-bold text-sm">{tenant.business_name.charAt(0)}</span>
                                         </div>
                                     )}
-                                    <span className="font-serif font-bold text-lg tracking-tight">{tenant.business_name}</span>
+                                    <span className={isApple ? "font-sans font-semibold text-sm tracking-tight text-white" : "font-serif font-bold text-lg tracking-tight"}>{tenant.business_name}</span>
                                 </div>
                                 {aboutText && <p className="text-white/40 text-sm leading-relaxed line-clamp-3">{aboutText}</p>}
                             </div>
@@ -1397,7 +1444,7 @@ export default function TenantSite() {
                                         <p className="text-xs text-gray-400">Starting from</p>
                                         <p className="text-lg font-bold text-accent">₹{Math.min(...rooms.map(r => adjustedPrice(r.price_per_night))).toLocaleString()}<span className="text-xs font-normal text-gray-400">/night</span></p>
                                     </div>
-                                    <a href="#rooms" className="bg-primary text-white font-semibold px-6 py-3 rounded-xl text-sm shadow-lg shadow-primary/20 flex items-center gap-2 hover:bg-primary-hover transition-all">
+                                    <a href="#rooms" className={isApple ? "bg-[#0071e3] text-white font-normal px-6 py-2.5 rounded-full text-sm flex items-center gap-2 hover:bg-[#0077ed] transition-all" : "bg-primary text-white font-semibold px-6 py-3 rounded-xl text-sm shadow-lg shadow-primary/20 flex items-center gap-2 hover:bg-primary-hover transition-all"}>
                                         Book now <ArrowRight size={14} />
                                     </a>
                                 </>
@@ -1407,7 +1454,7 @@ export default function TenantSite() {
                                         <p className="text-xs text-gray-400">{priceRange} {cuisineType && `· ${cuisineType}`}</p>
                                         <p className="text-sm font-semibold text-gray-700">Reserve your table</p>
                                     </div>
-                                    <button onClick={handleBookTable} className="bg-accent text-primary font-bold px-6 py-3 rounded-xl text-sm shadow-lg shadow-accent/20 flex items-center gap-2 hover:bg-accent-hover transition-all">
+                                    <button onClick={handleBookTable} className={isApple ? "bg-[#0071e3] text-white font-normal px-6 py-2.5 rounded-full text-sm flex items-center gap-2 hover:bg-[#0077ed] transition-all" : "bg-accent text-primary font-bold px-6 py-3 rounded-xl text-sm shadow-lg shadow-accent/20 flex items-center gap-2 hover:bg-accent-hover transition-all"}>
                                         Book a Table <ArrowRight size={14} />
                                     </button>
                                 </>
@@ -1463,7 +1510,7 @@ export default function TenantSite() {
                 <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
                     <button
                         onClick={handleHeroBook}
-                        className="w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2"
+                        className={isApple ? "w-full bg-[#0071e3] text-white font-normal py-3 rounded-full flex items-center justify-center gap-2" : "w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2"}
                     >
                         Check Availability
                         <ArrowRight size={16} />
@@ -1478,7 +1525,7 @@ export default function TenantSite() {
                 <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
                     <button
                         onClick={handleBookTable}
-                        className="w-full bg-accent text-primary font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2"
+                        className={isApple ? "w-full bg-[#0071e3] text-white font-normal py-3 rounded-full flex items-center justify-center gap-2" : "w-full bg-accent text-primary font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center gap-2"}
                     >
                         Book a Table
                         <ArrowRight size={16} />

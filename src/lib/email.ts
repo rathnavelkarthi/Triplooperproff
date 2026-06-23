@@ -30,6 +30,7 @@ export interface BookingConfirmationData {
   source: string;
   reservationId: string;
   businessName: string;
+  guestToken?: string;
 }
 
 export interface BookingCancelledData {
@@ -465,6 +466,8 @@ function bookingConfirmationHtml(data: BookingConfirmationData): string {
     preheader: `Booking confirmed for ${data.guestName} — ${fmtDate(data.checkIn)} at ${data.businessName}`,
     businessName: data.businessName,
     bodyContent: body,
+    ctaText: data.guestToken ? 'Access Guest Portal &rarr;' : undefined,
+    ctaUrl: data.guestToken ? `https://esaystay.com/guest/${data.guestToken}` : undefined,
     footerNote: 'For changes or cancellations, please contact the front desk or manage from your dashboard.',
   });
 }

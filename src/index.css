@@ -1,43 +1,75 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
-  --color-primary: #0E2A38;
-  --color-primary-hover: #0a1f29;
-  --color-primary-foreground: #F7F4EF;
+  /* Airbnb Colors */
+  --color-primary: #ff385c;
+  --color-primary-hover: #e00b41;
+  --color-primary-foreground: #ffffff;
 
-  --color-secondary: #EDE6DC;
-  --color-secondary-hover: #e0d5c4;
-  --color-secondary-foreground: #0E2A38;
+  --color-secondary: #f7f7f7;
+  --color-secondary-hover: #f2f2f2;
+  --color-secondary-foreground: #222222;
 
-  --color-background: #F7F4EF;
-  --color-foreground: #0E2A38;
-  --color-muted: #EDE6DC;
-  --color-accent: #C9A646;
-  --color-accent-hover: #b08d35;
-  --color-success: #2E7D5B;
-  --color-success-light: #E8F3EF;
+  --color-background: #ffffff;
+  --color-foreground: #222222;
+  --color-muted: #f7f7f7;
+  --color-accent: #ff385c;
+  --color-accent-hover: #e00b41;
+  --color-success: #222222;
+  --color-success-light: #f7f7f7;
 
-  --color-ocean-50: #f4f7f9;
-  --color-ocean-100: #e3ebf1;
-  --color-ocean-200: #c1d3e0;
-  --color-ocean-300: #9fbacd;
-  --color-ocean-400: #7b9eb8;
-  --color-ocean-500: #5d83a1;
-  --color-ocean-600: #426786;
-  --color-ocean-700: #35536d;
-  --color-ocean-800: #2d455b;
-  --color-ocean-900: #0E2A38;
-  --color-ocean-950: #0a1f29;
+  /* Airbnb Luxe & Plus Brand Tints */
+  --color-luxe: #460479;
+  --color-plus: #92174d;
+  --color-rausch-disabled: #ffd1da;
 
-  --color-accent-foreground: #FFFFFF;
-  --color-destructive: #ef4444;
+  /* Airbnb Gray/Ocean mapping (to seamlessly support existing ocean-X classes) */
+  --color-ocean-50: #f7f7f7;
+  --color-ocean-100: #f2f2f2;
+  --color-ocean-200: #ebebeb;
+  --color-ocean-300: #dddddd;
+  --color-ocean-400: #c1c1c1;
+  --color-ocean-500: #929292;
+  --color-ocean-600: #6a6a6a;
+  --color-ocean-700: #3f3f3f;
+  --color-ocean-800: #222222;
+  --color-ocean-900: #222222;
+  --color-ocean-950: #111111;
 
-  --radius-default: 0.75rem;
-  --radius-small: 0.375rem;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #c13515;
+
+  /* Airbnb Shape Language & Shadows */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 16px;
+  --radius-xl: 32px;
+  --radius-2xl: 14px; /* Matches Airbnb card ~14px */
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+  
+  --radius-default: 14px;
+  --radius-small: 8px;
+
+  --shadow-sm: rgba(0, 0, 0, 0.02) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 2px 6px 0px;
+  --shadow-md: rgba(0, 0, 0, 0.02) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 2px 6px 0px, rgba(0, 0, 0, 0.1) 0px 4px 8px 0px;
+  --shadow-lg: rgba(0, 0, 0, 0.02) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 4px 12px 0px, rgba(0, 0, 0, 0.1) 0px 8px 24px 0px;
+  --shadow-xl: rgba(0, 0, 0, 0.02) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 8px 16px 0px, rgba(0, 0, 0, 0.1) 0px 16px 32px 0px;
+  --shadow-2xl: rgba(0, 0, 0, 0.02) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 2px 6px 0px, rgba(0, 0, 0, 0.1) 0px 4px 8px 0px; /* Maps hover cards to standard Airbnb float shadow */
+
+  --animate-border-beam: border-beam calc(var(--duration) * 1s) infinite linear;
+  --shadow-airbnb: rgba(0, 0, 0, 0.02) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 2px 6px 0px, rgba(0, 0, 0, 0.1) 0px 4px 8px 0px;
+}
+
+@keyframes border-beam {
+  100% {
+    offset-distance: 100%;
+  }
 }
 
 @layer utilities {
@@ -60,6 +92,33 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Liquid Glass effect ── */
+.liquid-glass {
+  background: rgba(0, 0, 0, 0.4);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 20%,
+    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+    rgba(255,255,255,0.1) 80%, rgba(255,255,255,0.3) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 h1,
 h2,
 h3,
@@ -71,10 +130,10 @@ h6 {
   line-height: 1.25;
 }
 
-h1 { font-size: 48px; font-weight: 700; }
-h2 { font-size: 36px; font-weight: 600; }
-h3 { font-size: 28px; font-weight: 600; }
-h4 { font-size: 22px; font-weight: 600; }
+h1 { font-size: 28px; font-weight: 700; line-height: 1.43; letter-spacing: 0; }
+h2 { font-size: 22px; font-weight: 500; line-height: 1.18; letter-spacing: -0.44px; }
+h3 { font-size: 21px; font-weight: 700; line-height: 1.43; letter-spacing: 0; }
+h4 { font-size: 20px; font-weight: 600; line-height: 1.20; letter-spacing: -0.18px; }
 
 p, span, li, td, th, label, input, textarea, select, button {
   line-height: 1.55;

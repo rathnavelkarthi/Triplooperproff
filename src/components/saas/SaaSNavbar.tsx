@@ -43,7 +43,7 @@ export default function SaaSNavbar() {
                             <Zap size={16} className="text-white fill-current" />
                         </div>
                         <span className="text-lg font-bold text-foreground tracking-tight">
-                            EasyStay
+                            Trip Looper
                         </span>
                     </Link>
 
@@ -61,7 +61,7 @@ export default function SaaSNavbar() {
                         ))}
                         <div className="flex items-center gap-3 ml-4">
                             <a
-                                href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20EasyStay"
+                                href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20Trip%20Looper"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-sm font-semibold text-foreground border border-foreground/15 px-4 py-2 rounded-lg hover:border-foreground/30 transition-all duration-200"
@@ -116,7 +116,7 @@ export default function SaaSNavbar() {
                         ))}
                         <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-foreground/5">
                             <a
-                                href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20EasyStay"
+                                href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20Trip%20Looper"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={() => setIsMobileMenuOpen(false)}

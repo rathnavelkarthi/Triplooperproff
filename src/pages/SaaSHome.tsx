@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import {
     ArrowRight, CheckCircle2, Building2, CalendarRange,
     BarChart3, Settings, Users, Star, Zap, ChevronRight,
     Wifi, ShieldCheck, CreditCard, Globe, MessageCircle,
     TrendingUp, Clock, Smartphone
 } from 'lucide-react';
+import Hero195 from '../components/saas/Hero195';
 
 // ─── Design Tokens ──────────────────────────────────────────────
 const C = {
@@ -80,148 +81,8 @@ export default function SaaSHome() {
 
 
 
-            {/* ═══════ 1. HERO ═══════ */}
-            <section className="relative pt-28 pb-8 md:pt-36 md:pb-16 px-6" style={{ background: C.cream }}>
-                <div className="max-w-7xl mx-auto text-center">
-                    {/* Badge */}
-                    <motion.div {...fadeUp}>
-                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold border mb-8" style={{ background: C.white, borderColor: C.border, color: C.forest }}>
-                            <span className="w-2 h-2 rounded-full" style={{ background: C.gold }} /> New: AI-Powered Revenue Engine
-                        </span>
-                    </motion.div>
-
-                    {/* Headline */}
-                    <motion.h1
-                        {...fadeUp}
-                        transition={{ ...fadeUp.transition, delay: 0.1 }}
-                        className="text-5xl md:text-7xl lg:text-8xl font-display leading-[1.05] tracking-tight mb-6 mx-auto max-w-5xl"
-                        style={{ color: C.forest }}
-                    >
-                        The operating system for modern hospitality
-                    </motion.h1>
-
-                    <motion.p
-                        {...fadeUp}
-                        transition={{ ...fadeUp.transition, delay: 0.2 }}
-                        className="text-lg md:text-xl font-body max-w-2xl mx-auto mb-10 leading-relaxed"
-                        style={{ color: C.textMuted }}
-                    >
-                        Bookings, POS, website, inventory, and analytics — connected in one beautiful platform. Replace 6 tools with one.
-                    </motion.p>
-
-                    {/* CTA Buttons */}
-                    <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.3 }} className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
-                        <Link to="/signup" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-semibold transition-all hover:opacity-90 shadow-xl" style={{ background: C.forest, color: C.cream }}>
-                            Start Free <ArrowRight size={18} />
-                        </Link>
-                        <a href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20EasyStay" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-base font-semibold border-2 transition-all hover:bg-white/50" style={{ borderColor: C.border, color: C.forest }}>
-                            Book a Demo
-                        </a>
-                    </motion.div>
-
-                    {/* Hero Dashboard Image */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.35, ease: 'easeOut' }}
-                        className="relative max-w-6xl mx-auto"
-                    >
-                        <div className="rounded-2xl md:rounded-3xl overflow-hidden border shadow-2xl shadow-[#1A3C34]/10" style={{ borderColor: C.border }}>
-                            {/* Dashboard mockup */}
-                            <div className="w-full h-[250px] md:h-[550px] relative" style={{ background: C.forest }}>
-                                <div className="p-3 md:p-5">
-                                    {/* Browser chrome */}
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="flex gap-1.5">
-                                            <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                                            <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-                                        </div>
-                                        <div className="flex-1 h-6 rounded-md mx-3 flex items-center px-3" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                                            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>app.esaystay.com/admin/dashboard</span>
-                                        </div>
-                                    </div>
-                                    {/* Dashboard content */}
-                                    <div className="grid grid-cols-4 gap-2 md:gap-3 mb-3">
-                                        {[
-                                            { label: 'Total Bookings', val: '284', color: '#4caf50' },
-                                            { label: 'Occupancy', val: '87%', color: C.gold },
-                                            { label: "Today's Revenue", val: '₹1.24L', color: '#2196F3' },
-                                            { label: 'Avg Rating', val: '4.8', color: '#FF9800' },
-                                        ].map((kpi, i) => (
-                                            <div key={i} className="rounded-lg p-2 md:p-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                                                <p className="text-[8px] md:text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>{kpi.label}</p>
-                                                <p className="text-sm md:text-xl font-bold mt-0.5" style={{ color: kpi.color }}>{kpi.val}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {/* Chart placeholder bars */}
-                                    <div className="rounded-lg p-3 md:p-4 hidden md:block" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                                        <p className="text-[10px] font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.3)' }}>Revenue — Last 30 Days</p>
-                                        <div className="flex items-end gap-1 h-40">
-                                            {Array.from({ length: 30 }, (_, i) => {
-                                                const h = 20 + Math.sin(i * 0.4) * 30 + Math.random() * 40;
-                                                return <div key={i} className="flex-1 rounded-t transition-all" style={{ height: `${h}%`, background: `linear-gradient(to top, ${C.gold}60, ${C.gold}20)` }} />;
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Overlay bottom bar */}
-                            <div className="absolute bottom-0 inset-x-0 p-4 md:p-8" style={{ background: 'linear-gradient(to top, rgba(26,60,52,0.95), transparent)' }}>
-                                <div className="flex flex-wrap gap-3 md:gap-6 items-end justify-between max-w-5xl mx-auto">
-                                    <div>
-                                        <p className="text-white/60 text-xs uppercase tracking-widest font-semibold mb-1">Today's Revenue</p>
-                                        <p className="text-white text-2xl md:text-4xl font-bold font-display">₹1,24,500</p>
-                                    </div>
-                                    <div className="flex gap-4 md:gap-8">
-                                        <div className="text-right">
-                                            <p className="text-white/60 text-xs uppercase tracking-widest font-semibold mb-1">Occupancy</p>
-                                            <p className="text-white text-xl md:text-2xl font-bold">87%</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-white/60 text-xs uppercase tracking-widest font-semibold mb-1">Bookings</p>
-                                            <p className="text-white text-xl md:text-2xl font-bold">+28%</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Floating Cards */}
-                        <motion.div
-                            animate={{ y: [0, -8, 0] }}
-                            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                            className="absolute -top-4 -left-4 md:-top-6 md:-left-8 rounded-2xl p-4 md:p-5 shadow-xl border hidden md:flex items-center gap-3 z-20"
-                            style={{ background: C.white, borderColor: C.border }}
-                        >
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#E8F5E9' }}>
-                                <TrendingUp size={20} style={{ color: '#2E7D32' }} />
-                            </div>
-                            <div>
-                                <p className="font-bold text-sm" style={{ color: C.forest }}>Direct Bookings</p>
-                                <p className="text-xs font-semibold" style={{ color: '#2E7D32' }}>↑ 42% this month</p>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            animate={{ y: [0, 10, 0] }}
-                            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
-                            className="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-8 rounded-2xl p-4 md:p-5 shadow-xl border hidden md:flex items-center gap-3 z-20"
-                            style={{ background: C.white, borderColor: C.border }}
-                        >
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${C.gold}20` }}>
-                                <Star size={20} style={{ color: C.gold }} />
-                            </div>
-                            <div>
-                                <p className="font-bold text-sm" style={{ color: C.forest }}>Guest Rating</p>
-                                <p className="text-xs font-semibold" style={{ color: C.gold }}>4.8 / 5.0 average</p>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                </div>
-            </section>
+            {/* ═══════ 1. HERO (Hero195) ═══════ */}
+            <Hero195 />
 
             {/* ═══════ 2. TRUST LOGOS + STATS ═══════ */}
             <section className="py-12 md:py-16 px-6 border-y" style={{ background: C.white, borderColor: C.border }}>
