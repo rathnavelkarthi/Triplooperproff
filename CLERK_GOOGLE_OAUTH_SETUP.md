@@ -2,7 +2,7 @@
 
 ## Current Status:
 ✅ DNS configured correctly: `clerk.esaystay.com` → Clerk Cloudflare
-✅ Live Clerk key with custom domain: `pk_live_Y2xlcmsuZXNheXN0YXkuY29tJAC`
+✅ Live Clerk key with custom domain: `pk_live_Y2xlcmsuZXNheXN0YXkuY29tJA==`
 ✅ Application code updated for production
 ❌ Google OAuth not configured in Clerk Dashboard
 
@@ -53,7 +53,7 @@ VITE_CLERK_PUBLISHABLE_KEY=pk_test_bW9kZWwtY2hlZXRhaC04MC5jbGVyay5hY2NvdW50cy5kZ
 
 ### Production (Vercel Environment Variables):
 ```env
-VITE_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuZXNheXN0YXkuY29tJAC
+VITE_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuZXNheXN0YXkuY29tJA==
 ```
 
 ## Application Code Updates Made:

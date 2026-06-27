@@ -13,7 +13,15 @@ import ScrollToTop from './components/ScrollToTop';
 import { Toaster } from 'sonner';
 import { getSubdomain } from './hooks/useSubdomain';
 
-const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
+let CLERK_KEY = (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '') as string;
+
+// Sanitize/normalize Clerk key (removes trailing NUL bytes, whitespace, and fixes JAC typo)
+if (CLERK_KEY) {
+  CLERK_KEY = CLERK_KEY.trim().replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+  if (CLERK_KEY.startsWith('pk_live_') && CLERK_KEY.endsWith('JAC')) {
+    CLERK_KEY = CLERK_KEY.slice(0, -3) + 'JA==';
+  }
+}
 
 // Debug Clerk key
 console.log('=== APP INITIALIZATION ===');
