@@ -1,5 +1,5 @@
 /**
- * Shared sample data for the EasyStay SaaS landing hero (`Hero195`)
+ * Shared sample data for the Triplooper SaaS landing hero (`Hero195`)
  * and the deeper `DashboardPreview` section. Single source of truth so
  * the hero teaser and the product deep-dive never drift apart.
  *

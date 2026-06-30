@@ -10,6 +10,9 @@ coverage/
 # Scratch/Temporary script directories
 scratch/
 
+# Supabase CLI local link state (machine-specific)
+supabase/.temp/
+
 # Local generated credential reports (must not be committed)
 scripts/credentials-readable.txt
 scripts/credentials-report.json

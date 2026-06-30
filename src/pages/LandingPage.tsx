@@ -1042,7 +1042,7 @@ export default function LandingPage() {
           <div className="space-y-3">
             <h4 className="font-bold text-[#0B3B2B] uppercase tracking-wider text-[10px]">Contact</h4>
             <ul className="space-y-2 text-[#0B3B2B]/75 font-mono">
-              <li>support@esaystay.com</li>
+              <li>support@triplooper.com</li>
               <li>+91 90427 37424</li>
             </ul>
           </div>

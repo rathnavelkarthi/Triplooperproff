@@ -102,10 +102,10 @@ export default function GuestLayout() {
           <h2 className="text-2xl font-semibold mb-3 tracking-tight">Access Expired or Invalid</h2>
           <p className="text-zinc-400 text-sm leading-relaxed mb-8">{error || 'This link is no longer active.'}</p>
           <a
-            href="https://esaystay.com"
+            href="https://triplooper.com"
             className="inline-flex w-full items-center justify-center bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] transition-all text-black font-semibold h-12 rounded-xl text-sm shadow-lg shadow-emerald-500/10"
           >
-            Visit EasyStay
+            Visit Triplooper
           </a>
         </div>
       </div>

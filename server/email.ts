@@ -47,7 +47,7 @@ app.post('/api/send-email', async (req, res) => {
   }
 
   try {
-    const fromAddress = req.body.from || process.env.VITE_RESEND_FROM || 'EasyStay <onboarding@esaystay.com>';
+    const fromAddress = req.body.from || process.env.VITE_RESEND_FROM || 'Triplooper <onboarding@triplooper.com>';
     console.log(`[Email Server] Sending from: ${fromAddress} to: ${to}`);
 
     const { data, error } = await resend.emails.send({

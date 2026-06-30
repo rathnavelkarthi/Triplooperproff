@@ -149,6 +149,96 @@ p, span, li, td, th, label, input, textarea, select, button {
   scrollbar-width: none;
 }
 
+/* ──────────────────────────────────────────────
+   Sidebar design tokens (brand surface + spec grid)
+   ────────────────────────────────────────────── */
+:root {
+  --sidebar-surface: #0E2A38;          /* brand sidebar surface */
+  --sidebar-surface-raised: #123545;   /* switcher / dropdown panels */
+  --sidebar-bg-deep: #081B26;          /* deep base for gradient foot */
+  --sidebar-accent: #C9A646;           /* brand gold accent */
+  --sidebar-border: rgba(255, 255, 255, 0.05);
+  --sidebar-hover: rgba(255, 255, 255, 0.05);
+  --sidebar-active: rgba(255, 255, 255, 0.08);
+  --sidebar-radius: 10px;
+  --sidebar-width: 280px;
+  --sidebar-width-rail: 72px;
+  --sidebar-ease: cubic-bezier(0.22, 1, 0.36, 1); /* ease-out */
+}
+
+/* ── Auto-hiding custom scrollbar (replaces undefined .custom-scrollbar) ── */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  transition: background-color 200ms var(--sidebar-ease);
+}
+/* Thumb only appears on hover / while scrolling */
+.sidebar-scroll:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+.sidebar-scroll:hover::-webkit-scrollbar-thumb,
+.sidebar-scroll:focus-within::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+/* Radix ScrollArea auto-hide scrollbar */
+.sidebar-scrollarea-thumb {
+  background-color: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  transition: background-color 200ms var(--sidebar-ease);
+}
+.sidebar-scrollarea-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+/* ── Radix Collapsible smooth open/close ── */
+@keyframes sidebar-collapsible-down {
+  from { height: 0; opacity: 0; }
+  to { height: var(--radix-collapsible-content-height); opacity: 1; }
+}
+@keyframes sidebar-collapsible-up {
+  from { height: var(--radix-collapsible-content-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+.sidebar-collapsible-content[data-state="open"] {
+  animation: sidebar-collapsible-down 220ms var(--sidebar-ease);
+}
+.sidebar-collapsible-content[data-state="closed"] {
+  animation: sidebar-collapsible-up 200ms var(--sidebar-ease);
+}
+
+/* ── Radix popper content (dropdown / tooltip / popover) entrance ── */
+@keyframes sidebar-popper-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.sidebar-popper {
+  animation: sidebar-popper-in 150ms var(--sidebar-ease);
+  transform-origin: var(--radix-popper-transform-origin);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-collapsible-content[data-state="open"],
+  .sidebar-collapsible-content[data-state="closed"],
+  .sidebar-popper {
+    animation: none;
+  }
+}
+
 /* Print styles */
 @media print {
   body * {

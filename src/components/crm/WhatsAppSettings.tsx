@@ -16,10 +16,8 @@ interface WhatsAppConfig {
     };
 }
 
-// Default Evolution API server new tenants start with (instance is created per-tenant).
-// NOTE: this global key ships in the frontend bundle and is visible to all users.
-const DEFAULT_EVOLUTION_API_URL = 'http://140.245.217.175:8080';
-const DEFAULT_EVOLUTION_API_KEY = 'desmond@123';
+// Evolution API credentials are held server-side in the whatsapp-connect / send-whatsapp
+// edge functions (EVOLUTION_API_URL / EVOLUTION_API_KEY env). The frontend never holds them.
 
 type ConnectionState = 'idle' | 'creating' | 'scanning' | 'connected' | 'error';
 
@@ -55,9 +53,9 @@ export default function WhatsAppSettings() {
     const { tenant } = useAuth();
     const [config, setConfig] = useState<WhatsAppConfig>({
         whatsapp_enabled: false,
-        evolution_api_url: DEFAULT_EVOLUTION_API_URL,
+        evolution_api_url: '',
         evolution_instance_name: '',
-        evolution_api_key: DEFAULT_EVOLUTION_API_KEY,
+        evolution_api_key: '',
         google_review_url: '',
         whatsapp_templates: DEFAULT_TEMPLATES,
     });
@@ -108,9 +106,9 @@ export default function WhatsAppSettings() {
         if (data) {
             setConfig({
                 whatsapp_enabled: data.whatsapp_enabled ?? false,
-                evolution_api_url: data.evolution_api_url || DEFAULT_EVOLUTION_API_URL,
+                evolution_api_url: data.evolution_api_url ?? '',
                 evolution_instance_name: data.evolution_instance_name ?? '',
-                evolution_api_key: data.evolution_api_key || DEFAULT_EVOLUTION_API_KEY,
+                evolution_api_key: data.evolution_api_key ?? '',
                 google_review_url: data.google_review_url ?? '',
                 whatsapp_templates: data.whatsapp_templates ?? DEFAULT_TEMPLATES,
             });

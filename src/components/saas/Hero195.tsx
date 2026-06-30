@@ -99,7 +99,7 @@ export default function Hero195() {
                             Start Free Trial <ArrowRight size={16} />
                         </Link>
                         <a
-                            href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20EasyStay"
+                            href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20Triplooper"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold border-2 transition-all hover:bg-white"
@@ -139,7 +139,7 @@ export default function Hero195() {
                             </div>
                             <div className="flex-1 flex justify-center">
                                 <span className="bg-white rounded-md px-3 py-1 text-[10px] text-gray-500 font-medium">
-                                    app.esaystay.com/admin/dashboard
+                                    app.triplooper.com/admin/dashboard
                                 </span>
                             </div>
                         </div>

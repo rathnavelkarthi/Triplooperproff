@@ -107,7 +107,11 @@ export default function Login() {
   // Auto-redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      navigate('/admin/dashboard', { replace: true });
+      if (user.role === 'PLATFORM_ADMIN') {
+        navigate('/admin/platform', { replace: true });
+      } else {
+        navigate('/admin/dashboard', { replace: true });
+      }
     }
   }, [user, navigate]);
 
@@ -170,8 +174,8 @@ export default function Login() {
         return;
       }
 
-      // Always run OAuth on the apex domain (e.g. esaystay.com), never a tenant subdomain
-      // (e.g. saffronspice.esaystay.com), because the apex is where /admin/* lives and where
+      // Always run OAuth on the apex domain (e.g. triplooper.com), never a tenant subdomain
+      // (e.g. saffronspice.triplooper.com), because the apex is where /admin/* lives and where
       // Clerk's allowed origins are configured. Otherwise Google → Clerk → subdomain
       // gets stuck redirecting because the apex's signed-in session isn't visible there.
       const apexOrigin = (() => {
@@ -179,7 +183,7 @@ export default function Login() {
         const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
         if (isLocalhost) return window.location.origin;
         const parts = hostname.split('.');
-        // For host like saffronspice.esaystay.com → keep the last two parts (esaystay.com)
+        // For host like saffronspice.triplooper.com → keep the last two parts (triplooper.com)
         const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
         return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
       })();

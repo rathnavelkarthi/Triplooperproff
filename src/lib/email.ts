@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════
-// EasyStay — Premium Transactional Email Service (Resend)
+// Triplooper — Premium Transactional Email Service (Resend)
 // Inspired by Stripe, Airbnb, Linear, Notion
 // ═══════════════════════════════════════════════════════════════════
 
 const RESEND_API_KEY = import.meta.env.VITE_RESENDAPIKEY as string;
 const RESEND_URL = 'https://api.resend.com/emails';
-const FROM = import.meta.env.VITE_RESEND_FROM || 'EasyStay <onboarding@resend.dev>';
+const FROM = import.meta.env.VITE_RESEND_FROM || 'Triplooper <onboarding@resend.dev>';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -112,18 +112,18 @@ async function sendResendEmail(to: string, subject: string, html: string): Promi
         body: JSON.stringify({ to, subject, html, from: FROM })
       });
       if (serverRes.ok) {
-        console.log(`[EasyStay Email] Sent via ${isLocalDev ? 'local' : 'serverless'} proxy`);
+        console.log(`[Triplooper Email] Sent via ${isLocalDev ? 'local' : 'serverless'} proxy`);
         return true;
       }
       const errBody = await serverRes.json().catch(() => ({}));
-      console.error('[EasyStay Email] Server proxy failed:', errBody);
+      console.error('[Triplooper Email] Server proxy failed:', errBody);
     } catch (e) {
-      console.warn('[EasyStay Email] Server proxy unreachable, trying direct...');
+      console.warn('[Triplooper Email] Server proxy unreachable, trying direct...');
     }
 
     // 2. Direct Resend API fallback (may fail due to CORS in browser)
     if (!RESEND_API_KEY) {
-      console.warn('[EasyStay Email] No API key for direct fetch');
+      console.warn('[Triplooper Email] No API key for direct fetch');
       return false;
     }
 
@@ -138,14 +138,14 @@ async function sendResendEmail(to: string, subject: string, html: string): Promi
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      console.error('[EasyStay Email] Direct Resend failed:', err);
+      console.error('[Triplooper Email] Direct Resend failed:', err);
       return false;
     }
 
-    console.log('[EasyStay Email] Sent directly');
+    console.log('[Triplooper Email] Sent directly');
     return true;
   } catch (err) {
-    console.error('[EasyStay Email] Unexpected error:', err);
+    console.error('[Triplooper Email] Unexpected error:', err);
     return false;
   }
 }
@@ -237,7 +237,7 @@ function baseTemplate(opts: {
 
         <!-- HEADER -->
         <tr><td style="padding-bottom:32px;text-align:center">
-          <span style="font-family:${ff};font-size:22px;font-weight:300;color:${T.textPrimary};letter-spacing:3px;text-transform:uppercase;">EASY<strong style="font-weight:700">STAY</strong></span>
+          <span style="font-family:${ff};font-size:22px;font-weight:300;color:${T.textPrimary};letter-spacing:3px;text-transform:uppercase;">TRIP<strong style="font-weight:700">LOOPER</strong></span>
         </td></tr>
 
         <!-- MAIN CARD -->
@@ -254,8 +254,8 @@ function baseTemplate(opts: {
         <tr><td style="padding:40px 20px 0;text-align:center">
           ${opts.footerNote ? `<p style="margin:0 0 16px;font-family:${ff};font-size:13px;color:${T.textTertiary};line-height:1.6">${opts.footerNote}</p>` : ''}
           <div style="height:1px;background:${T.border};width:30px;margin:20px auto;"></div>
-          <p style="margin:0 0 8px;font-family:${ff};font-size:12px;color:${T.textTertiary}">Sent beautifully by <span style="font-weight:500;color:${T.textSecondary}">EasyStay</span> for <span style="font-weight:500;color:${T.textSecondary}">${opts.businessName}</span></p>
-          <p style="margin:0;font-family:${ff};font-size:11px;color:${T.textTertiary};letter-spacing:1px;text-transform:uppercase;">&copy; ${new Date().getFullYear()} EasyStay &middot; Premium Management</p>
+          <p style="margin:0 0 8px;font-family:${ff};font-size:12px;color:${T.textTertiary}">Sent beautifully by <span style="font-weight:500;color:${T.textSecondary}">Triplooper</span> for <span style="font-weight:500;color:${T.textSecondary}">${opts.businessName}</span></p>
+          <p style="margin:0;font-family:${ff};font-size:11px;color:${T.textTertiary};letter-spacing:1px;text-transform:uppercase;">&copy; ${new Date().getFullYear()} Triplooper &middot; Premium Management</p>
         </td></tr>
 
       </table>
@@ -351,7 +351,7 @@ function getStatusPill(status: string): string {
 
 function welcomeEmailHtml(data: WelcomeEmailData): string {
   const body = `
-    ${heading('Welcome to EasyStay')}
+    ${heading('Welcome to Triplooper')}
     ${subtitle(`Your property <strong style="color:${T.textPrimary}">${data.businessName}</strong> is set up and ready. Start managing your ${data.businessType || 'property'} in minutes.`)}
 
     ${sectionLabel('Your property')}
@@ -369,8 +369,8 @@ function welcomeEmailHtml(data: WelcomeEmailData): string {
         <tr>
           <td style="padding:8px 0;font-family:${ff};font-size:13px;color:${T.textTertiary}">Login URL</td>
           <td style="padding:8px 0;font-family:${ff};font-size:13px;color:${T.accent};font-weight:500;text-align:right;word-break:break-all">
-            <a href="https://${data.subdomain ? `${data.subdomain}.` : ''}esaystay.com/admin/login" style="color:${T.accent};text-decoration:none">
-              ${data.subdomain ? `${data.subdomain}.` : ''}esaystay.com
+            <a href="https://${data.subdomain ? `${data.subdomain}.` : ''}triplooper.com/admin/login" style="color:${T.accent};text-decoration:none">
+              ${data.subdomain ? `${data.subdomain}.` : ''}triplooper.com
             </a>
           </td>
         </tr>
@@ -400,8 +400,8 @@ function welcomeEmailHtml(data: WelcomeEmailData): string {
       </td></tr>
       <tr><td style="padding:20px 24px;background:linear-gradient(135deg, #fefce8 0%, #fff7ed 100%);border-radius:12px;border:1px solid #fde68a">
         <p style="margin:0 0 12px;font-family:${ff};font-size:15px;color:${T.textPrimary};line-height:1.7">Hi ${data.businessName} team,</p>
-        <p style="margin:0 0 12px;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7">I'm Rathnavel Karthi, the founder of EasyStay. Thank you for trusting us with your property management.</p>
-        <p style="margin:0 0 12px;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7">We built EasyStay because every property &mdash; whether 5 rooms or 500 &mdash; deserves tools that just work. You're not just a customer; you're part of our story.</p>
+        <p style="margin:0 0 12px;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7">I'm Rathnavel Karthi, the founder of Triplooper. Thank you for trusting us with your property management.</p>
+        <p style="margin:0 0 12px;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7">We built Triplooper because every property &mdash; whether 5 rooms or 500 &mdash; deserves tools that just work. You're not just a customer; you're part of our story.</p>
         <p style="margin:0 0 12px;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7">Need anything? Just reply to this email. I read every one.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px">
           <tr>
@@ -412,7 +412,7 @@ function welcomeEmailHtml(data: WelcomeEmailData): string {
             </td>
             <td style="padding-left:12px;vertical-align:middle">
               <p style="margin:0;font-family:${ff};font-size:14px;font-weight:600;color:${T.textPrimary}">Rathnavel Karthi</p>
-              <p style="margin:0;font-family:${ff};font-size:12px;color:${T.textTertiary}">Founder, EasyStay</p>
+              <p style="margin:0;font-family:${ff};font-size:12px;color:${T.textTertiary}">Founder, Triplooper</p>
             </td>
           </tr>
         </table>
@@ -421,11 +421,11 @@ function welcomeEmailHtml(data: WelcomeEmailData): string {
   `;
 
   return baseTemplate({
-    preheader: `Welcome to EasyStay — ${data.businessName} is ready to go.`,
+    preheader: `Welcome to Triplooper — ${data.businessName} is ready to go.`,
     businessName: data.businessName,
     bodyContent: body,
     ctaText: 'Open Your Dashboard &rarr;',
-    ctaUrl: 'https://esaystay.com/admin/login',
+    ctaUrl: 'https://triplooper.com/admin/login',
     footerNote: 'Set up rooms, configure pricing, and go live — all in under 15 minutes.',
   });
 }
@@ -467,7 +467,7 @@ function bookingConfirmationHtml(data: BookingConfirmationData): string {
     businessName: data.businessName,
     bodyContent: body,
     ctaText: data.guestToken ? 'Access Guest Portal &rarr;' : undefined,
-    ctaUrl: data.guestToken ? `https://esaystay.com/guest/${data.guestToken}` : undefined,
+    ctaUrl: data.guestToken ? `https://triplooper.com/guest/${data.guestToken}` : undefined,
     footerNote: 'For changes or cancellations, please contact the front desk or manage from your dashboard.',
   });
 }
@@ -597,8 +597,8 @@ function checkOutReceiptHtml(data: CheckOutEmailData): string {
 
 function staffCredentialsHtml(data: StaffCredentialsData): string {
   const loginUrl = data.subdomain
-    ? `https://${data.subdomain}.esaystay.com/admin/login`
-    : 'https://esaystay.com/admin/login';
+    ? `https://${data.subdomain}.triplooper.com/admin/login`
+    : 'https://triplooper.com/admin/login';
   const roleName = data.role.replace(/_/g, ' ');
 
   const body = `
@@ -674,7 +674,7 @@ function bookingStatusChangeHtml(data: BookingStatusChangeData): string {
     businessName: data.businessName,
     bodyContent: body,
     accentColor: T.orange,
-    footerNote: 'Manage all reservations from your EasyStay dashboard.',
+    footerNote: 'Manage all reservations from your Triplooper dashboard.',
   });
 }
 
@@ -684,8 +684,8 @@ function bookingStatusChangeHtml(data: BookingStatusChangeData): string {
 
 function businessInviteHtml(data: BusinessInviteData): string {
   const body = `
-    ${heading('You Have Been Invited to EasyStay')}
-    ${subtitle(`You have been invited to manage <strong style="color:${T.textPrimary}">${data.businessName}</strong> on EasyStay, the premium property management platform.`)}
+    ${heading('You Have Been Invited to Triplooper')}
+    ${subtitle(`You have been invited to manage <strong style="color:${T.textPrimary}">${data.businessName}</strong> on Triplooper, the premium property management platform.`)}
 
     ${sectionLabel('Invite details')}
     ${detailCard([
@@ -699,7 +699,7 @@ function businessInviteHtml(data: BusinessInviteData): string {
   `;
 
   return baseTemplate({
-    preheader: `You have been invited to manage ${data.businessName} on EasyStay`,
+    preheader: `You have been invited to manage ${data.businessName} on Triplooper`,
     businessName: data.businessName,
     bodyContent: body,
     accentColor: T.accent,
@@ -715,7 +715,7 @@ function businessInviteHtml(data: BusinessInviteData): string {
 
 export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<boolean> {
   if (!data.email) return false;
-  return sendResendEmail(data.email, `Welcome to EasyStay, ${data.businessName}!`, welcomeEmailHtml(data));
+  return sendResendEmail(data.email, `Welcome to Triplooper, ${data.businessName}!`, welcomeEmailHtml(data));
 }
 
 export async function sendBookingConfirmation(data: BookingConfirmationData): Promise<boolean> {
@@ -740,7 +740,7 @@ export async function sendCheckOutEmail(data: CheckOutEmailData): Promise<boolea
 
 export async function sendStaffCredentials(data: StaffCredentialsData): Promise<boolean> {
   if (!data.email) return false;
-  return sendResendEmail(data.email, `Your login for ${data.businessName} — EasyStay`, staffCredentialsHtml(data));
+  return sendResendEmail(data.email, `Your login for ${data.businessName} — Triplooper`, staffCredentialsHtml(data));
 }
 
 export async function sendBookingStatusChange(data: BookingStatusChangeData): Promise<boolean> {
@@ -752,7 +752,7 @@ export async function sendBusinessInvite(data: BusinessInviteData): Promise<bool
   if (!data.email) return false;
   return sendResendEmail(
     data.email,
-    `You're invited to manage ${data.businessName} on EasyStay`,
+    `You're invited to manage ${data.businessName} on Triplooper`,
     businessInviteHtml(data)
   );
 }

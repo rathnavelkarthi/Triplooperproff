@@ -185,7 +185,7 @@ export default function BusinessPropertyDetail() {
               <span className={`w-2 h-2 rounded-full ${property.is_active ? 'bg-emerald-400' : 'bg-gray-300'}`} />
             </div>
             <p className="text-sm text-gray-400">
-              {config.label} &middot; {property.subdomain ? `${property.subdomain}.esaystay.com` : 'No subdomain'} &middot; Created {new Date(property.created_at).toLocaleDateString()}
+              {config.label} &middot; {property.subdomain ? `${property.subdomain}.triplooper.com` : 'No subdomain'} &middot; Created {new Date(property.created_at).toLocaleDateString()}
             </p>
           </div>
         </div>

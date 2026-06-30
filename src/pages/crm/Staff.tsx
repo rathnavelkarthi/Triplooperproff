@@ -48,7 +48,7 @@ export default function Staff() {
       if (!config?.whatsapp_enabled) return;
 
       const loginUrl = config.subdomain
-        ? `https://${config.subdomain}.esaystay.com/admin/login`
+        ? `https://${config.subdomain}.triplooper.com/admin/login`
         : 'your hotel management portal';
 
       const roleName = staffData.role.replace(/_/g, ' ');

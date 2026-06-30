@@ -94,9 +94,11 @@ export default function CRMApp() {
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <Routes>
             <Route path="dashboard" element={
-              user?.role === 'BUSINESS_ADMIN' && !tenant
-                ? <Navigate to="/admin/business" replace />
-                : (isRestaurantOnly ? <RestaurantDashboard /> : <Dashboard />)
+              user?.role === 'PLATFORM_ADMIN'
+                ? <Navigate to="/admin/platform" replace />
+                : (user?.role === 'BUSINESS_ADMIN' && !tenant
+                    ? <Navigate to="/admin/business" replace />
+                    : (isRestaurantOnly ? <RestaurantDashboard /> : <Dashboard />))
             } />
             <Route path="server-orders" element={
               <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SERVER', 'BUSINESS_ADMIN']}>

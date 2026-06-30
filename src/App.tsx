@@ -49,9 +49,11 @@ if (CLERK_KEY?.startsWith('pk_live_') && typeof window !== 'undefined') {
       element.setAttribute = function(name: string, value: string) {
         if (name.toLowerCase() === 'src' && typeof value === 'string') {
           value = value
-            .replace('clerk.easystay.com', 'clerk.esaystay.com')
-            .replace('clerk..esaystay.com', 'clerk.esaystay.com')
-            .replace('clerk..easystay.com', 'clerk.esaystay.com');
+            .replace('clerk.easystay.com', 'clerk.triplooper.com')
+            .replace('clerk.esaystay.com', 'clerk.triplooper.com')
+            .replace('clerk..esaystay.com', 'clerk.triplooper.com')
+            .replace('clerk..easystay.com', 'clerk.triplooper.com')
+            .replace('clerk..triplooper.com', 'clerk.triplooper.com');
         }
         return originalSetAttribute.call(this, name, value);
       };
@@ -63,9 +65,11 @@ if (CLERK_KEY?.startsWith('pk_live_') && typeof window !== 'undefined') {
         set(value) {
           if (typeof value === 'string') {
             value = value
-              .replace('clerk.easystay.com', 'clerk.esaystay.com')
-              .replace('clerk..esaystay.com', 'clerk.esaystay.com')
-              .replace('clerk..easystay.com', 'clerk.esaystay.com');
+              .replace('clerk.easystay.com', 'clerk.triplooper.com')
+              .replace('clerk.esaystay.com', 'clerk.triplooper.com')
+              .replace('clerk..esaystay.com', 'clerk.triplooper.com')
+              .replace('clerk..easystay.com', 'clerk.triplooper.com')
+              .replace('clerk..triplooper.com', 'clerk.triplooper.com');
           }
           this.setAttribute('src', value);
         },
@@ -78,7 +82,7 @@ if (CLERK_KEY?.startsWith('pk_live_') && typeof window !== 'undefined') {
 
   // 2. Preload Clerk JS from correct URL BEFORE Clerk tries to load it
   const preloadScript = document.createElement('script');
-  preloadScript.setAttribute('src', 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js');
+  preloadScript.setAttribute('src', 'https://clerk.triplooper.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js');
   preloadScript.async = true;
   preloadScript.id = 'clerk-js-preload';
   preloadScript.onload = () => console.log('✅ Clerk JS preloaded successfully');
@@ -88,11 +92,19 @@ if (CLERK_KEY?.startsWith('pk_live_') && typeof window !== 'undefined') {
   // 3. Monkey patch fetch/XMLHttpRequest to intercept Clerk's requests
   const originalFetch = window.fetch;
   window.fetch = function(input, init) {
-    if (typeof input === 'string' && (input.includes('clerk..esaystay.com') || input.includes('clerk.easystay.com') || input.includes('clerk..easystay.com'))) {
+    if (typeof input === 'string' && (
+      input.includes('clerk..esaystay.com') || 
+      input.includes('clerk.easystay.com') || 
+      input.includes('clerk..easystay.com') || 
+      input.includes('clerk.esaystay.com') || 
+      input.includes('clerk..triplooper.com')
+    )) {
       const fixedUrl = input
-        .replace('clerk..esaystay.com', 'clerk.esaystay.com')
-        .replace('clerk.easystay.com', 'clerk.esaystay.com')
-        .replace('clerk..easystay.com', 'clerk.esaystay.com');
+        .replace('clerk..esaystay.com', 'clerk.triplooper.com')
+        .replace('clerk.easystay.com', 'clerk.triplooper.com')
+        .replace('clerk..easystay.com', 'clerk.triplooper.com')
+        .replace('clerk.esaystay.com', 'clerk.triplooper.com')
+        .replace('clerk..triplooper.com', 'clerk.triplooper.com');
       console.log('FIXING fetch URL:', input, '→', fixedUrl);
       return originalFetch.call(this, fixedUrl, init);
     }
@@ -102,11 +114,19 @@ if (CLERK_KEY?.startsWith('pk_live_') && typeof window !== 'undefined') {
   // 4. Monkey patch XMLHttpRequest
   const originalXHROpen = XMLHttpRequest.prototype.open;
   (XMLHttpRequest.prototype as any).open = function(method: string, url: string | URL, ...args: any[]) {
-    if (typeof url === 'string' && (url.includes('clerk..esaystay.com') || url.includes('clerk.easystay.com') || url.includes('clerk..easystay.com'))) {
+    if (typeof url === 'string' && (
+      url.includes('clerk..esaystay.com') || 
+      url.includes('clerk.easystay.com') || 
+      url.includes('clerk..easystay.com') || 
+      url.includes('clerk.esaystay.com') || 
+      url.includes('clerk..triplooper.com')
+    )) {
       const fixedUrl = url
-        .replace('clerk..esaystay.com', 'clerk.esaystay.com')
-        .replace('clerk.easystay.com', 'clerk.esaystay.com')
-        .replace('clerk..easystay.com', 'clerk.esaystay.com');
+        .replace('clerk..esaystay.com', 'clerk.triplooper.com')
+        .replace('clerk.easystay.com', 'clerk.triplooper.com')
+        .replace('clerk..easystay.com', 'clerk.triplooper.com')
+        .replace('clerk.esaystay.com', 'clerk.triplooper.com')
+        .replace('clerk..triplooper.com', 'clerk.triplooper.com');
       console.log('FIXING XHR URL:', url, '→', fixedUrl);
       return originalXHROpen.call(this, method, fixedUrl, ...args);
     }
@@ -118,7 +138,7 @@ if (CLERK_KEY?.startsWith('pk_live_') && typeof window !== 'undefined') {
     load: () => {
       return new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.setAttribute('src', 'https://clerk.esaystay.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js');
+        script.setAttribute('src', 'https://clerk.triplooper.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js');
         script.async = true;
         script.onload = () => {
           console.log('✅ Custom Clerk loader succeeded');

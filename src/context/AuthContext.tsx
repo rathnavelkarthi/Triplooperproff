@@ -7,7 +7,16 @@ import { Session } from '@supabase/supabase-js';
 
 export type Role = 'SUPER_ADMIN' | 'MANAGER' | 'RECEPTION' | 'HOUSEKEEPING' | 'ACCOUNTANT' | 'SERVER' | 'BUSINESS_ADMIN' | 'PLATFORM_ADMIN';
 
-export const PLATFORM_ADMIN_EMAIL = 'rathnavelkarthi1@gmail.com';
+export const PLATFORM_ADMIN_EMAILS = [
+  'rathnavelkarthi1@gmail.com',
+  'admin@triplooper.com'
+];
+export const PLATFORM_ADMIN_EMAIL = PLATFORM_ADMIN_EMAILS[0];
+
+export const isPlatformAdminEmail = (email?: string | null) => {
+  if (!email) return false;
+  return PLATFORM_ADMIN_EMAILS.some(e => e.toLowerCase() === email.toLowerCase());
+};
 
 export interface Business {
   id: string;
@@ -119,14 +128,13 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   // Cache the Supabase ID for a Clerk user's email to avoid repeated listUsers() calls
   const supabaseIdCacheRef = useRef<Record<string, string>>({});
 
-  const isPlatformAdmin = user?.email?.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase();
+  const isPlatformAdmin = isPlatformAdminEmail(user?.email);
 
   const buildUser = (id: string, email: string, name: string, role: Role, type: 'CLERK' | 'SUPABASE', avatarUrl?: string): User => {
-    // Force PLATFORM_ADMIN role for the configured platform-admin email, regardless of
+    // Force PLATFORM_ADMIN role for configured platform-admin emails, regardless of
     // whatever role Supabase / staff / user_properties has for them. This prevents the
     // platform admin from being downgraded to RECEPTION/MANAGER/BUSINESS_ADMIN by stale rows.
-    const effectiveRole: Role =
-      email?.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase() ? 'PLATFORM_ADMIN' : role;
+    const effectiveRole: Role = isPlatformAdminEmail(email) ? 'PLATFORM_ADMIN' : role;
     return {
       id,
       name,
@@ -400,7 +408,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     // Fallback: If we reach here, the user successfully authenticated but has no tenant.
     // Give them a BUSINESS_ADMIN role with no tenant so they can be routed to the business creation page
     // instead of being bounced back to the login screen.
-    const isPlatAdmin = email.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase();
+    const isPlatAdmin = isPlatformAdminEmail(email);
     setUser(buildUser(userId, email, name, isPlatAdmin ? 'PLATFORM_ADMIN' : 'BUSINESS_ADMIN', type, avatarUrl));
     setProperties([]);
     setTenant(null);

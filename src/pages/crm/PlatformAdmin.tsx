@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth, PLATFORM_ADMIN_EMAIL } from '../../context/AuthContext';
+import { useAuth, isPlatformAdminEmail } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendBusinessInvite } from '../../lib/email';
@@ -217,8 +217,8 @@ export default function PlatformAdmin() {
   };
 
   const deleteUser = async (u: PlatformUser) => {
-    if (u.email.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase()) {
-      toast.error("Cannot delete the platform admin account!");
+    if (isPlatformAdminEmail(u.email)) {
+      toast.error("Cannot delete a platform admin account!");
       return;
     }
 
@@ -265,7 +265,7 @@ export default function PlatformAdmin() {
     try {
       let deletedCount = 0;
       for (const u of users) {
-        if (u.email.toLowerCase() === PLATFORM_ADMIN_EMAIL.toLowerCase()) continue;
+        if (isPlatformAdminEmail(u.email)) continue;
         
         // Quietly delete (reuse delete logic without confirmations)
         const tenantIds = u.properties.map(p => p.id);
@@ -514,7 +514,7 @@ export default function PlatformAdmin() {
                           <div className="flex-1 min-w-0">
                             <span className="font-medium text-gray-700">{p.business_name}</span>
                             {p.subdomain && (
-                              <span className="text-xs text-gray-400 ml-2">{p.subdomain}.esaystay.com</span>
+                              <span className="text-xs text-gray-400 ml-2">{p.subdomain}.triplooper.com</span>
                             )}
                           </div>
                           <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">

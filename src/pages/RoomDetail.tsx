@@ -188,10 +188,10 @@ export default function RoomDetail() {
       <Helmet>
         <title>{room.name} - {tenant.business_name} | Book Direct</title>
         <meta name="description" content={`${room.name} at ${tenant.business_name}. ${room.description?.slice(0, 120) || `Sleeps ${room.max_occupancy} guests. Starting at ₹${room.price_per_night}/night.`}`} />
-        <link rel="canonical" href={`https://${tenant.subdomain}.esaystay.com/room/${room.id}`} />
+        <link rel="canonical" href={`https://${tenant.subdomain}.triplooper.com/room/${room.id}`} />
         <meta property="og:title" content={`${room.name} - ${tenant.business_name}`} />
         <meta property="og:description" content={`Sleeps ${room.max_occupancy} guests. Starting at ₹${room.price_per_night}/night. Book direct for best rates.`} />
-        <meta property="og:url" content={`https://${tenant.subdomain}.esaystay.com/room/${room.id}`} />
+        <meta property="og:url" content={`https://${tenant.subdomain}.triplooper.com/room/${room.id}`} />
         <meta property="og:type" content="product" />
         {images[0] && <meta property="og:image" content={images[0]} />}
         <meta name="twitter:card" content="summary_large_image" />

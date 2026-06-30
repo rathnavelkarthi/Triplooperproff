@@ -161,7 +161,7 @@ export default function Signup() {
                 localStorage.setItem('pending_invite_token', inviteToken);
             }
 
-            // Always perform OAuth on the apex domain (e.g. esaystay.com) — not a tenant
+            // Always perform OAuth on the apex domain (e.g. triplooper.com) — not a tenant
             // subdomain — so the signed-in Clerk session lands where /admin/* is served.
             const apexOrigin = (() => {
                 const { protocol, hostname, port } = window.location;
@@ -206,7 +206,7 @@ export default function Signup() {
                         Email verified. Your workspace is set up.
                     </p>
                     <p className="text-[#AAB8C5]/60 text-xs mb-8">
-                        Your subdomain: <span className="text-[#C9A646] font-medium">{subdomain}.esaystay.com</span>
+                        Your subdomain: <span className="text-[#C9A646] font-medium">{subdomain}.triplooper.com</span>
                     </p>
                     <button
                         onClick={() => navigate('/admin/login')}
@@ -337,7 +337,7 @@ export default function Signup() {
                         {businessName && (
                             <div className="mt-5 pt-4 border-t border-[#AAB8C5]/10">
                                 <p className="text-[10px] text-[#AAB8C5]/50 uppercase tracking-widest font-semibold mb-1">Your subdomain</p>
-                                <p className="text-sm text-[#C9A646] font-medium">{subdomain || '...'}.esaystay.com</p>
+                                <p className="text-sm text-[#C9A646] font-medium">{subdomain || '...'}.triplooper.com</p>
                             </div>
                         )}
                     </div>
@@ -485,7 +485,7 @@ export default function Signup() {
                                 {/* Subdomain preview */}
                                 <div className="bg-[#0E2A38]/30 border border-[#AAB8C5]/10 rounded-lg px-4 py-3">
                                     <p className="text-[10px] text-[#AAB8C5]/50 uppercase tracking-widest font-semibold mb-1">Your subdomain</p>
-                                    <p className="text-sm text-[#C9A646] font-mono">{subdomain}.esaystay.com</p>
+                                    <p className="text-sm text-[#C9A646] font-mono">{subdomain}.triplooper.com</p>
                                 </div>
 
                                 <motion.button

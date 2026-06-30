@@ -25,9 +25,9 @@ async function send() {
     );
 
     const { data, error } = await resend.emails.send({
-      from: 'EasyStay <onboarding@resend.dev>',
+      from: 'Triplooper <onboarding@resend.dev>',
       to: [email],
-      subject: `Welcome to EasyStay, ${businessName}!`,
+      subject: `Welcome to Triplooper, ${businessName}!`,
       html: htmlOutput as string
     });
 

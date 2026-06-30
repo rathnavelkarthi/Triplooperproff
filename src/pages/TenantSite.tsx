@@ -551,7 +551,7 @@ export default function TenantSite() {
                     "@context": "https://schema.org",
                     "@type": tenant.business_type === 'restaurant' ? "Restaurant" : "LodgingBusiness",
                     "name": tenant.business_name,
-                    "url": `https://${tenant.subdomain}.esaystay.com/`,
+                    "url": `https://${tenant.subdomain}.triplooper.com/`,
                     ...(tenant.logo_url && { "logo": tenant.logo_url }),
                     ...(tenant.hero_image_url && { "image": tenant.hero_image_url }),
                     ...(rooms.length > 0 && tenant.business_type !== 'restaurant' && {

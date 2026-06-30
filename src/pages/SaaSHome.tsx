@@ -39,26 +39,26 @@ export default function SaaSHome() {
     return (
         <div className="font-sans antialiased overflow-x-hidden" style={{ color: C.textDark }}>
             <Helmet>
-                <title>EasyStay - All-in-One Hotel & Restaurant Management Platform</title>
+                <title>Triplooper - All-in-One Hotel & Restaurant Management Platform</title>
                 <meta name="description" content="Manage your hotel or restaurant from one system. Websites, bookings, POS, inventory, billing, and analytics — all connected, all in real time. Free to start." />
-                <link rel="canonical" href="https://esaystay.com/" />
-                <meta property="og:title" content="EasyStay - All-in-One Hotel & Restaurant Management Platform" />
+                <link rel="canonical" href="https://triplooper.com/" />
+                <meta property="og:title" content="Triplooper - All-in-One Hotel & Restaurant Management Platform" />
                 <meta property="og:description" content="Manage your hotel or restaurant from one system. Websites, bookings, POS, inventory, billing, and analytics — all connected, all in real time." />
-                <meta property="og:url" content="https://esaystay.com/" />
+                <meta property="og:url" content="https://triplooper.com/" />
                 <meta property="og:type" content="website" />
-                <meta property="og:image" content="https://esaystay.com/og-image.png" />
+                <meta property="og:image" content="https://triplooper.com/og-image.png" />
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content="EasyStay - All-in-One Hotel & Restaurant Management" />
+                <meta name="twitter:title" content="Triplooper - All-in-One Hotel & Restaurant Management" />
                 <meta name="twitter:description" content="Bookings, POS, website, inventory, analytics — connected in one platform. Free to start." />
-                <meta name="twitter:image" content="https://esaystay.com/og-image.png" />
+                <meta name="twitter:image" content="https://triplooper.com/og-image.png" />
                 <script type="application/ld+json">{JSON.stringify({
                     "@context": "https://schema.org",
                     "@type": "SoftwareApplication",
-                    "name": "EasyStay",
+                    "name": "Triplooper",
                     "applicationCategory": "BusinessApplication",
                     "operatingSystem": "Web",
                     "description": "All-in-one hotel and restaurant management platform with bookings, POS, website builder, inventory, billing, and analytics.",
-                    "url": "https://esaystay.com",
+                    "url": "https://triplooper.com",
                     "offers": {
                         "@type": "Offer",
                         "price": "0",
@@ -67,9 +67,9 @@ export default function SaaSHome() {
                     },
                     "publisher": {
                         "@type": "Organization",
-                        "name": "EasyStay",
-                        "url": "https://esaystay.com",
-                        "logo": "https://esaystay.com/logo.png"
+                        "name": "Triplooper",
+                        "url": "https://triplooper.com",
+                        "logo": "https://triplooper.com/logo.png"
                     }
                 })}</script>
             </Helmet>
@@ -319,7 +319,7 @@ export default function SaaSHome() {
                         {/* Direct */}
                         <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.1 }} className="rounded-3xl p-10 border relative overflow-hidden" style={{ background: C.forest, borderColor: C.forestLight }}>
                             <div className="absolute top-0 inset-x-0 h-1" style={{ background: C.gold }} />
-                            <p className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: C.gold }}>With EasyStay</p>
+                            <p className="text-sm font-bold uppercase tracking-widest mb-3" style={{ color: C.gold }}>With Triplooper</p>
                             <p className="text-6xl font-display font-bold text-white mb-4">0%</p>
                             <p className="text-sm mb-8" style={{ color: 'rgba(255,255,255,0.55)' }}>Zero commission. You own the guest relationship and revenue.</p>
                             <div className="pt-6 border-t" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
@@ -343,7 +343,7 @@ export default function SaaSHome() {
 
                     <div className="grid md:grid-cols-3 gap-6">
                         {[
-                            { name: 'Rajiv Sharma', role: 'Boutique Hotel, Jaipur', text: "We replaced 5 different tools with EasyStay. Our direct bookings jumped 40% in the first quarter and staff onboarding now takes days instead of weeks." },
+                            { name: 'Rajiv Sharma', role: 'Boutique Hotel, Jaipur', text: "We replaced 5 different tools with Triplooper. Our direct bookings jumped 40% in the first quarter and staff onboarding now takes days instead of weeks." },
                             { name: 'Anita Desai', role: 'Resort Manager, Goa', text: "The occupancy-based pricing engine paid for the software in its first month. During peak season, our ADR increased 25% compared to last year." },
                             { name: 'Vikram Patel', role: 'Homestay Host, Pondicherry', text: "My booking website looks like it cost ₹50,000 to build. Reality: I set it up in 20 minutes. Guests actually trust it more than my OTA listing." }
                         ].map((t, i) => (
@@ -453,7 +453,7 @@ export default function SaaSHome() {
                                 <span className="text-sm ml-1" style={{ color: C.textMuted }}>/ mo</span>
                             </div>
                             <p className="text-xs font-medium mb-6" style={{ color: '#2E7D32' }}>₹95,999/yr — save 20%</p>
-                            <a href="https://wa.me/919345244727?text=Hi%2C%20I%27m%20interested%20in%20the%20Enterprise%20plan%20for%20EasyStay" target="_blank" rel="noopener noreferrer" className="w-full text-center text-sm font-semibold py-3 rounded-full border mb-6 block transition-all hover:bg-white" style={{ borderColor: C.border, color: C.forest }}>
+                            <a href="https://wa.me/919345244727?text=Hi%2C%20I%27m%20interested%20in%20the%20Enterprise%20plan%20for%20Triplooper" target="_blank" rel="noopener noreferrer" className="w-full text-center text-sm font-semibold py-3 rounded-full border mb-6 block transition-all hover:bg-white" style={{ borderColor: C.border, color: C.forest }}>
                                 Contact Sales
                             </a>
                             <ul className="space-y-3 text-sm flex-1" style={{ color: C.textMuted }}>
@@ -480,7 +480,7 @@ export default function SaaSHome() {
                             <Link to="/signup" className="inline-flex items-center justify-center gap-2 px-10 py-5 rounded-full text-lg font-semibold shadow-xl transition-all hover:opacity-90" style={{ background: C.gold, color: C.white }}>
                                 Get started for free <ArrowRight size={20} />
                             </Link>
-                            <a href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20EasyStay" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-10 py-5 rounded-full text-lg font-semibold border-2 transition-all hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.2)', color: C.white }}>
+                            <a href="https://wa.me/919345244727?text=Hi%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20Triplooper" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 px-10 py-5 rounded-full text-lg font-semibold border-2 transition-all hover:bg-white/10" style={{ borderColor: 'rgba(255,255,255,0.2)', color: C.white }}>
                                 Book a demo
                             </a>
                         </div>
@@ -495,14 +495,14 @@ export default function SaaSHome() {
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${C.gold}30` }}>
                             <Zap size={14} style={{ color: C.gold }} />
                         </div>
-                        EasyStay
+                        Triplooper
                     </div>
                     <div className="flex gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>
                         <a href="#" className="hover:text-white/60 transition-colors">Privacy</a>
                         <a href="#" className="hover:text-white/60 transition-colors">Terms</a>
                         <a href="#" className="hover:text-white/60 transition-colors">Contact</a>
                     </div>
-                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>&copy; {new Date().getFullYear()} EasyStay. All rights reserved.</p>
+                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>&copy; {new Date().getFullYear()} Triplooper. All rights reserved.</p>
                 </div>
             </footer>
 

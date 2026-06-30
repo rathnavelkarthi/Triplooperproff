@@ -290,7 +290,7 @@ export default function BusinessPropertyCreate() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none"
               />
               {propName.trim() && (
-                <p className="text-xs text-gray-400 mt-1.5">Subdomain: <span className="font-mono text-gray-500">{generateSubdomain(propName)}.esaystay.com</span></p>
+                <p className="text-xs text-gray-400 mt-1.5">Subdomain: <span className="font-mono text-gray-500">{generateSubdomain(propName)}.triplooper.com</span></p>
               )}
             </div>
 
@@ -504,7 +504,7 @@ export default function BusinessPropertyCreate() {
                 <span className="text-gray-400">Type</span>
                 <span className="text-gray-700 font-medium capitalize">{propType}</span>
                 <span className="text-gray-400">Subdomain</span>
-                <span className="text-gray-700 font-mono text-xs">{generateSubdomain(propName)}.esaystay.com</span>
+                <span className="text-gray-700 font-mono text-xs">{generateSubdomain(propName)}.triplooper.com</span>
                 <span className="text-gray-400">Features enabled</span>
                 <span className="text-gray-700 font-medium">{enabledCount} of {totalCount}</span>
                 <span className="text-gray-400">Owner email</span>

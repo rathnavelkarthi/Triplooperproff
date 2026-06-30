@@ -1,5 +1,5 @@
 /**
- * TripLooper → EasyStay Property Onboarding Script
+ * TripLooper → Triplooper Property Onboarding Script
  * 
  * Reads property data from the triplooper data folder, creates:
  *  - Supabase Auth user (owner account with password)
@@ -291,7 +291,7 @@ async function uploadImage(filePath: string, storagePath: string): Promise<strin
 async function onboardProperty(prop: PropertyDef): Promise<CredentialEntry> {
   const subdomain = slugify(prop.displayName);
   const password = generatePassword();
-  const email = prop.ownerEmail || `${subdomain}@easystay.property`;
+  const email = prop.ownerEmail || `${subdomain}@triplooper.property`;
   const ownerName = prop.ownerName || `${prop.displayName} Owner`;
 
   console.log(`\n━━━ ${prop.displayName} ━━━`);
@@ -515,7 +515,7 @@ async function onboardProperty(prop: PropertyDef): Promise<CredentialEntry> {
 
 async function main() {
   console.log('╔══════════════════════════════════════════════════╗');
-  console.log('║  TripLooper → EasyStay Property Onboarding      ║');
+  console.log('║  TripLooper → Triplooper Property Onboarding    ║');
   console.log('║  11 properties • Ooty, Tamil Nadu               ║');
   console.log('╚══════════════════════════════════════════════════╝');
   console.log(`\nData folder: ${DATA_DIR}`);
@@ -565,7 +565,7 @@ async function main() {
 
   // Also save a human-readable version for WhatsApp/email
   const readablePath = path.resolve(process.cwd(), 'scripts', 'credentials-readable.txt');
-  let readable = 'EasyStay Property Login Credentials\n';
+  let readable = 'Triplooper Property Login Credentials\n';
   readable += '====================================\n\n';
   for (const r of results) {
     if (r.status === 'failed') continue;

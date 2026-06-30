@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const resend = new Resend(apiKey);
-  const fromAddress = from || process.env.VITE_RESEND_FROM || 'EasyStay <onboarding@esaystay.com>';
+  const fromAddress = from || process.env.VITE_RESEND_FROM || 'Triplooper <onboarding@triplooper.com>';
 
   try {
     const { data, error } = await resend.emails.send({

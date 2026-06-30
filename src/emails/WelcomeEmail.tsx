@@ -24,9 +24,9 @@ export interface WelcomeEmailProps {
 export const WelcomeEmail = ({
   businessName = 'Grand Budapest Hotel',
   businessType = 'Hotel',
-  dashboardUrl = 'https://esaystay.com/admin/login',
+  dashboardUrl = 'https://triplooper.com/admin/login',
 }: WelcomeEmailProps) => {
-  const previewText = `Your property ${businessName} is now live on EasyStay.`;
+  const previewText = `Your property ${businessName} is now live on Triplooper.`;
 
   return (
     <Html>
@@ -36,7 +36,7 @@ export const WelcomeEmail = ({
         <Container style={container}>
           {/* Header */}
           <Section style={header}>
-            <Text style={logo}>EASYSTAY</Text>
+            <Text style={logo}>TRIPLOOPER</Text>
           </Section>
 
           {/* Inner Card */}
@@ -48,8 +48,8 @@ export const WelcomeEmail = ({
             </Text>
 
             <Img
-              src="https://dummyimage.com/600x320/000/fff&text=EasyStay+Dashboard"
-              alt="EasyStay Dashboard"
+              src="https://dummyimage.com/600x320/000/fff&text=Triplooper+Dashboard"
+              alt="Triplooper Dashboard"
               style={heroImage}
               width="100%"
               height="auto"
@@ -72,7 +72,7 @@ export const WelcomeEmail = ({
             <Section style={founderNote}>
               <Text style={founderText}>Hi {businessName} team,</Text>
               <Text style={founderText}>
-                I'm Rathnavel, founder of EasyStay.
+                I'm Rathnavel, founder of Triplooper.
               </Text>
               <Text style={founderText}>
                 We built this platform for properties like yours — simple, powerful, and designed to grow with you.
@@ -90,7 +90,7 @@ export const WelcomeEmail = ({
                 </Column>
                 <Column>
                   <Text style={founderName}>Rathnavel Karthi</Text>
-                  <Text style={founderTitle}>Founder, EasyStay</Text>
+                  <Text style={founderTitle}>Founder, Triplooper</Text>
                 </Column>
               </Row>
             </Section>
@@ -110,7 +110,7 @@ export const WelcomeEmail = ({
               Set up rooms, configure pricing, and go live — all in under 15 minutes.
             </Text>
             <Text style={footerCopyright}>
-              &copy; {new Date().getFullYear()} EasyStay &middot; Premium Management
+              &copy; {new Date().getFullYear()} Triplooper &middot; Premium Management
             </Text>
           </Section>
         </Container>

@@ -9,3 +9,15 @@ entrypoint = "./functions/create-staff/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/create-staff/*.html" ]
+
+[functions.whatsapp-connect]
+enabled = true
+verify_jwt = true
+import_map = "./functions/whatsapp-connect/deno.json"
+entrypoint = "./functions/whatsapp-connect/index.ts"
+
+[functions.send-whatsapp]
+enabled = true
+verify_jwt = true
+import_map = "./functions/send-whatsapp/deno.json"
+entrypoint = "./functions/send-whatsapp/index.ts"

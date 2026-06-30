@@ -361,7 +361,7 @@ export default function WebsiteEditor() {
     // Environment-aware live URL
     const liveUrl = window.location.hostname.includes('localhost') || window.location.hostname.includes('vercel.app')
         ? `${window.location.origin}/site/${subdomain}`
-        : `https://${subdomain}.esaystay.com`;
+        : `https://${subdomain}.triplooper.com`;
 
     const previewWidths = { desktop: '100%', tablet: '768px', mobile: '375px' };
 
@@ -375,7 +375,7 @@ export default function WebsiteEditor() {
                     </div>
                     <div>
                         <h1 className="text-sm font-bold text-gray-900">Website editor</h1>
-                        <p className="text-[11px] text-gray-400">{subdomain}.esaystay.com</p>
+                        <p className="text-[11px] text-gray-400">{subdomain}.triplooper.com</p>
                     </div>
                 </div>
 
