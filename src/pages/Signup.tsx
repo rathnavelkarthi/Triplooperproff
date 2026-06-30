@@ -488,6 +488,9 @@ export default function Signup() {
                                     <p className="text-sm text-[#C9A646] font-mono">{subdomain}.triplooper.com</p>
                                 </div>
 
+                                {/* Clerk CAPTCHA container for custom flow */}
+                                <div id="clerk-captcha" className="my-2" />
+
                                 <motion.button
                                     type="submit"
                                     disabled={isLoading}

@@ -102,6 +102,7 @@ create trigger trg_sync_reservation_aadhar_to_profile
   execute function sync_reservation_aadhar_to_profile();
 
 -- 5. Redefine get_guest_session(p_token) RPC function to return new Aadhar fields
+drop function if exists get_guest_session(text);
 create or replace function get_guest_session(p_token text)
 returns table(
   token_id uuid,
