@@ -124,31 +124,91 @@ export default function GuestPortal() {
     setScanning(true);
     setShowConfirmForm(false);
 
-    // 1. Simulate file upload / Read locally
+    // 1. Read locally as Base64
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64Data = reader.result as string;
+      const apiKey = (import.meta.env.VITE_GEMINI_API_KEY || '') as string;
 
-      // 2. Perform OCR process (Simulated AI scanning for 3.5 seconds)
+      if (apiKey) {
+        try {
+          console.log('[OCR] Gemini API Key found. Initiating real AI extraction...');
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: "Extract details from this Indian Aadhaar Card image. Return a JSON object with the following fields: 'name' (full name), 'number' (12-digit number formatted with spaces like 'XXXX XXXX XXXX'), 'dob' (date of birth in DD/MM/YYYY format), 'address' (full address). Return only the raw JSON. Do not include markdown code block syntax." },
+                  {
+                    inlineData: {
+                      mimeType: file.type || 'image/jpeg',
+                      data: base64Data.split(',')[1]
+                    }
+                  }
+                ]
+              }],
+              generationConfig: {
+                responseMimeType: "application/json"
+              }
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Gemini API returned status ${response.status}`);
+          }
+
+          const result = await response.json();
+          const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+          console.log('[OCR] Raw response from Gemini:', rawText);
+          
+          // Clean markdown formatting if any
+          const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(cleanJson);
+
+          setVerifyForm({
+            name: parsed.name || session.guest_name || '',
+            number: parsed.number || '0000 0000 0000',
+            dob: parsed.dob || '01/01/1990',
+            address: parsed.address || session.guest_location || ''
+          });
+          setAadharUrl(base64Data);
+          setScanning(false);
+          setShowConfirmForm(true);
+          toast.success('Real AI OCR scan successful! Please review and confirm.');
+          return;
+        } catch (err) {
+          console.error('[OCR] Gemini AI extraction failed, falling back to smart simulation:', err);
+        }
+      }
+
+      // Fallback: Smart Simulation (scanning for 3 seconds)
       setTimeout(() => {
-        // Fallback intelligent values pulled from the active session context
-        const parsedName = session.guest_name;
+        // Try to guess a name from the file name if it has alphabetical characters and isn't generic
+        let inferredName = session.guest_name || '';
+        const baseName = file.name.split('.')[0].replace(/[-_]+/g, ' ');
+        if (baseName.length > 3 && !/screenshot|image|upload|aadhar/i.test(baseName)) {
+          inferredName = baseName.replace(/\b\w/g, c => c.toUpperCase());
+        }
+
         const parsedNumber = `${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)}`;
         const parsedDob = '15/08/1995'; // Example DOB
         const parsedAddress = session.guest_location || '123 Coastal Highway, Pondicherry, 605001';
 
         setVerifyForm({
-          name: parsedName,
+          name: inferredName,
           number: parsedNumber,
           dob: parsedDob,
           address: parsedAddress
         });
         
-        setAadharUrl(base64Data); // Keep the base64 string as temporary url
+        setAadharUrl(base64Data);
         setScanning(false);
         setShowConfirmForm(true);
-        toast.success('Aadhaar scanned successfully! Please confirm details.');
-      }, 3500);
+        toast.info('Simulated OCR extraction complete. For real AI scanning, configure VITE_GEMINI_API_KEY.');
+      }, 3000);
     };
 
     reader.readAsDataURL(file);

@@ -110,7 +110,7 @@ export default function LandingPage() {
 
   // 20+ Real-looking Property Cards for Live Property Marketplace
   const initialProperties = [
-    { id: 1, name: "Anya Paradise", loc: "Pondicherry", type: "Luxury Beach Villa", price: 6500, rating: "4.95", image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80", tag: "Beachfront", subdomain: "anya-paradise" },
+    { id: 1, name: "Anya Paradise", loc: "Pondicherry", type: "Luxury Beach Villa", price: 6500, rating: "4.95", image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80", tag: "Beachfront", subdomain: "anyaparadise" },
     { id: 2, name: "Coolspot Cottage", loc: "Ooty", type: "Heritage Mountain Retreat", price: 4200, rating: "4.89", image: "https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=800&q=80", tag: "Mountain View", subdomain: "coolspot-cottage" },
     { id: 3, name: "Jayam Castle", loc: "Yercaud", type: "Boutique Forest Lodge", price: 3800, rating: "4.90", image: "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=800&q=80", tag: "Forest Edge", subdomain: "jayam-castle" },
     { id: 4, name: "Green Apple Property", loc: "Madurai", type: "Premium Stay", price: 3500, rating: "4.85", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80", tag: "City Center", subdomain: "green-apple-property" },
