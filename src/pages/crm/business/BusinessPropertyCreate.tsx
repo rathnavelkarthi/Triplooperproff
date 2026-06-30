@@ -119,7 +119,7 @@ export default function BusinessPropertyCreate() {
 
       // Self-healing fallback: If business is missing from context, try direct lookup
       if (!currentBusiness?.id && user?.id) {
-        const { data: bData, error: bError } = await supabaseAdmin
+        const { data: bData, error: bError } = await supabase
           .from('businesses')
           .select('*')
           .eq('owner_id', user.id)

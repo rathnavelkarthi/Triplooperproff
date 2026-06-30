@@ -38,7 +38,7 @@ interface MessageLog {
 }
 
 const DEFAULT_TEMPLATES = {
-    confirmation: `✅ *Booking Confirmed!*\n\nDear {guest_name}, your stay is confirmed.\n\n🏠 Room: {room_type}\n📅 Check-in: {check_in} (after 12:00 PM)\n📅 Check-out: {check_out} (before 11:00 AM)\n🔖 Booking ID: {booking_id}\n\nFor assistance: {hotel_phone}`,
+    confirmation: `✅ *Booking Confirmed!*\n\nDear {guest_name}, your stay is confirmed.\n\n🏠 Room: {room_type}\n📅 Check-in: {check_in} (after 12:00 PM)\n📅 Check-out: {check_out} (before 11:00 AM)\n🔖 Booking ID: {booking_id}\n\n🔗 Guest Portal (Upload Aadhaar & View Stay):\n{guest_portal_url}\n\nFor assistance: {hotel_phone}`,
     reminder: `👋 See you tomorrow, {guest_name}!\n\nReminder: your check-in at {hotel_name} is tomorrow.\n⏰ After 12:00 PM\n📍 {hotel_address}\n\nQuestions? Reply here or call {hotel_phone}.`,
     review: `Thank you for staying with us, {guest_name}! 🙏\n\nWe hope you had a wonderful stay at {hotel_name}.\n\nA Google review would mean a lot to us:\n⭐ {google_review_url}\n\nWe hope to welcome you back soon!`,
 };
@@ -47,6 +47,7 @@ const TEMPLATE_VARS = [
     '{guest_name}', '{hotel_name}', '{room_type}',
     '{check_in}', '{check_out}', '{booking_id}',
     '{hotel_phone}', '{hotel_address}', '{google_review_url}',
+    '{guest_portal_url}',
 ];
 
 export default function WhatsAppSettings() {

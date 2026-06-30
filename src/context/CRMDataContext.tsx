@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 import { mapReservationStatus, mapPaymentStatus, mapUIToDBStatus } from '../lib/booking';
 import { sendBookingConfirmation, sendBookingCancelled, sendBookingStatusChange, sendCheckInEmail, sendCheckOutEmail } from '../lib/email';
+import { sendWhatsAppConfirmation } from '../lib/whatsapp';
 
 // --- Hotel Types ---
 
@@ -33,6 +34,12 @@ export type Reservation = {
     amount?: number;
     gst_amount?: number;
     payment_date?: string;
+    aadhar_url?: string | null;
+    aadhar_number?: string | null;
+    aadhar_extracted_age?: number | null;
+    aadhar_extracted_address?: string | null;
+    aadhar_extracted_name?: string | null;
+    aadhar_dob?: string | null;
 };
 
 export type Room = {
@@ -301,6 +308,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                         amount: r.amount,
                         gst_amount: r.gst_amount,
                         payment_date: r.payment_date,
+                        aadhar_url: r.aadhar_url,
+                        aadhar_number: r.aadhar_number,
+                        aadhar_extracted_age: r.aadhar_extracted_age,
+                        aadhar_extracted_address: r.aadhar_extracted_address,
+                        aadhar_extracted_name: r.aadhar_extracted_name,
+                        aadhar_dob: r.aadhar_dob,
                     })));
                 } else { setReservations([]); }
 
@@ -442,7 +455,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                         guestName: reservation.guest,
                         guestEmail: reservation.guest_email,
                         roomType: reservation.room,
-                        roomNumber: reservation.room_id || '',
+                        roomNumber: reservation.room_id ? String(reservation.room_id) : '',
                         checkIn: reservation.checkIn,
                         checkOut: reservation.checkOut,
                         amount: reservation.amount || 0,
@@ -453,6 +466,20 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                         businessName: tenant?.business_name || 'Our Hotel',
                         guestToken: token || undefined,
                     });
+                }
+
+                if (reservation.guest_phone) {
+                    sendWhatsAppConfirmation({
+                        guestName: reservation.guest,
+                        guestPhone: reservation.guest_phone,
+                        roomType: reservation.room,
+                        roomNumber: reservation.room_id ? String(reservation.room_id) : undefined,
+                        checkIn: reservation.checkIn,
+                        checkOut: reservation.checkOut,
+                        reservationId: newId,
+                        businessName: tenant?.business_name || 'Our Hotel',
+                        guestToken: token || undefined,
+                    }, tid());
                 }
             })();
         }

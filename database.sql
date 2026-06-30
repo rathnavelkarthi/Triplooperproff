@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `reservations` (
 );
 
 -- --------------------------------------------------------
+-- --------------------------------------------------------
 -- Table `settings`
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `settings` (
@@ -47,3 +48,28 @@ INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES
 ('contactPhone', '+91 98765 43210'),
 ('contactEmail', 'reservations@ganeshresidency.com'),
 ('aboutText', 'Perfectly situated to offer tranquility while keeping the vibrant culture of Pondicherry within easy reach.');
+
+-- --------------------------------------------------------
+-- Aadhar & Guest Profile fields (MySQL Compatibility)
+-- --------------------------------------------------------
+ALTER TABLE `reservations` ADD COLUMN IF NOT EXISTS `aadhar_url` text;
+ALTER TABLE `reservations` ADD COLUMN IF NOT EXISTS `aadhar_number` varchar(50);
+ALTER TABLE `reservations` ADD COLUMN IF NOT EXISTS `aadhar_extracted_age` int;
+ALTER TABLE `reservations` ADD COLUMN IF NOT EXISTS `aadhar_extracted_address` text;
+ALTER TABLE `reservations` ADD COLUMN IF NOT EXISTS `aadhar_extracted_name` varchar(100);
+ALTER TABLE `reservations` ADD COLUMN IF NOT EXISTS `aadhar_dob` varchar(50);
+
+CREATE TABLE IF NOT EXISTS `guest_profiles` (
+  `id` varchar(50) NOT NULL PRIMARY KEY,
+  `phone` varchar(20) NOT NULL UNIQUE,
+  `email` varchar(100),
+  `name` varchar(100),
+  `aadhar_url` text,
+  `aadhar_number` varchar(50),
+  `aadhar_extracted_age` int,
+  `aadhar_extracted_address` text,
+  `aadhar_extracted_name` varchar(100),
+  `aadhar_dob` varchar(50),
+  `created_at` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

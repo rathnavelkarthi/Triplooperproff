@@ -19,6 +19,12 @@ export interface GuestSession {
   status: string;
   amount: number;
   is_expired: boolean;
+  aadhar_url?: string | null;
+  aadhar_number?: string | null;
+  aadhar_extracted_age?: number | null;
+  aadhar_extracted_address?: string | null;
+  aadhar_extracted_name?: string | null;
+  aadhar_dob?: string | null;
 }
 
 const GuestContext = createContext<{

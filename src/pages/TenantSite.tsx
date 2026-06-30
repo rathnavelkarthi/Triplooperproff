@@ -13,6 +13,7 @@ import {
     MessageCircle, UtensilsCrossed, Leaf, Wind, Sparkles, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { sendWhatsAppConfirmation } from '../lib/whatsapp';
 
 // --- Types ---
 type Room = {
@@ -55,9 +56,9 @@ function Stars({ count }: { count: number }) {
 }
 
 // --- Booking Modal ---
-function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, initialCheckIn, initialCheckOut }: {
+function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, initialCheckIn, initialCheckOut, tenantId, businessName }: {
     room: Room; subdomain: string; onClose: () => void; onSuccess: (data: any) => void; adjustedPrice: (base: number) => number;
-    initialCheckIn?: string; initialCheckOut?: string;
+    initialCheckIn?: string; initialCheckOut?: string; tenantId?: string; businessName?: string;
 }) {
     const [form, setForm] = useState({ name: '', email: '', phone: '', checkIn: initialCheckIn || '', checkOut: initialCheckOut || '' });
     const [loading, setLoading] = useState(false);
@@ -85,6 +86,22 @@ function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, init
         setLoading(false);
         if (rpcError) { setError(rpcError.message); return; }
         if (data?.error) { setError(data.error); return; }
+
+        // Trigger WhatsApp confirmation
+        if (form.phone && tenantId && businessName) {
+            sendWhatsAppConfirmation({
+                guestName: form.name,
+                guestPhone: form.phone,
+                roomType: room.type,
+                roomNumber: (room as any).room_number || undefined,
+                checkIn: form.checkIn,
+                checkOut: form.checkOut,
+                reservationId: data.booking_id,
+                businessName: businessName,
+                guestToken: data.token,
+            }, tenantId);
+        }
+
         onSuccess(data);
     };
 
@@ -1475,6 +1492,8 @@ export default function TenantSite() {
                         adjustedPrice={adjustedPrice}
                         initialCheckIn={heroCheckIn}
                         initialCheckOut={heroCheckOut}
+                        tenantId={tenant?.id}
+                        businessName={tenant?.business_name}
                     />
                 )}
                 {bookingSuccess && (

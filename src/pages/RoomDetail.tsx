@@ -10,6 +10,7 @@ import {
   Bed, Shield, Sparkles, Tag, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { sendWhatsAppConfirmation } from '../lib/whatsapp';
 
 // Types
 type Room = {
@@ -161,6 +162,22 @@ export default function RoomDetail() {
     setBooking(false);
     if (error) { setBookError(error.message); return; }
     if (data?.error) { setBookError(data.error); return; }
+
+    // Trigger WhatsApp confirmation
+    if (form.phone && tenant?.id) {
+      sendWhatsAppConfirmation({
+        guestName: form.name,
+        guestPhone: form.phone,
+        roomType: room!.type,
+        roomNumber: (room as any).room_number || undefined,
+        checkIn: form.checkIn,
+        checkOut: form.checkOut,
+        reservationId: data.booking_id,
+        businessName: tenant.business_name,
+        guestToken: data.token,
+      }, tenant.id);
+    }
+
     setBookSuccess(data);
   };
 

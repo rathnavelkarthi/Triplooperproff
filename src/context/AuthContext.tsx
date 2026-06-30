@@ -306,14 +306,14 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
             const businessId = (active as Tenant).business_id;
             if (businessId) {
-              const { data: bData } = await supabaseAdmin
+              const { data: bData } = await supabase
                 .from('businesses')
                 .select('*')
                 .eq('id', businessId)
                 .single();
               if (bData) setBusiness(bData as Business);
             } else if (role === 'SUPER_ADMIN' || role === 'BUSINESS_ADMIN') {
-               const { data: bData } = await supabaseAdmin
+               const { data: bData } = await supabase
                 .from('businesses')
                 .select('*')
                 .in('owner_id', lookupIds)
@@ -330,7 +330,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
       // 2. Fallback for Owners (mostly Clerk users)
       if (type === 'CLERK') {
-        const { data: fallback, error: fbError } = await supabaseAdmin
+        const { data: fallback, error: fbError } = await supabase
           .from('tenants').select('*').in('owner_id', lookupIds);
 
         if (fbError) {
@@ -346,7 +346,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           // Check if this Clerk user owns a Business record.
           // If yes → BUSINESS_ADMIN (invited business owner).
           // If no  → SUPER_ADMIN (standalone hotel owner who signed up directly).
-          const { data: bData } = await supabaseAdmin
+          const { data: bData } = await supabase
             .from('businesses')
             .select('*')
             .in('owner_id', lookupIds)
