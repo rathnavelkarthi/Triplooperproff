@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth, isPlatformAdminEmail } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
-import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendBusinessInvite } from '../../lib/email';
 import { toast } from 'sonner';
 import { Navigate } from 'react-router-dom';
@@ -228,24 +227,20 @@ export default function PlatformAdmin() {
 
     setLoading(true);
     try {
-      // 1. Get all tenants owned by this user
-      const tenantIds = u.properties.map(p => p.id);
+      // Privileged cascade delete runs server-side in the delete-user edge function.
+      // Deleting the tenant rows cascades to all tenant-scoped tables via ON DELETE CASCADE.
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: {
+          user_id: u.clerk_id,
+          requester_email: user?.email,
+          tenant_ids: u.properties.map(p => p.id),
+        },
+      });
 
-      // 2. Clear data via Supabase Admin (privileged)
-      // We delete in reverse order of dependencies
-      const { error: propError } = await supabaseAdmin.from('user_properties').delete().eq('user_id', u.clerk_id);
-      if (propError) console.error('Error deleting user_properties', propError);
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
 
-      if (tenantIds.length > 0) {
-        await supabaseAdmin.from('staff').delete().in('tenant_id', tenantIds);
-        await supabaseAdmin.from('subscriptions').delete().in('tenant_id', tenantIds);
-        await supabaseAdmin.from('reservations').delete().in('tenant_id', tenantIds);
-        await supabaseAdmin.from('tenants').delete().in('id', tenantIds);
-      }
-
-      await supabaseAdmin.from('businesses').delete().eq('owner_id', u.clerk_id);
-      
-      toast.success(`User ${u.email} and related data deleted locally from Supabase.`);
+      toast.success(`User ${u.email} and related data deleted.`);
       await loadData();
     } catch (err: any) {
       toast.error(err.message || "Failed to delete user");
@@ -264,22 +259,30 @@ export default function PlatformAdmin() {
     setLoading(true);
     try {
       let deletedCount = 0;
+      let failedCount = 0;
       for (const u of users) {
         if (isPlatformAdminEmail(u.email)) continue;
-        
-        // Quietly delete (reuse delete logic without confirmations)
-        const tenantIds = u.properties.map(p => p.id);
-        await supabaseAdmin.from('user_properties').delete().eq('user_id', u.clerk_id);
-        if (tenantIds.length > 0) {
-          await supabaseAdmin.from('staff').delete().in('tenant_id', tenantIds);
-          await supabaseAdmin.from('subscriptions').delete().in('tenant_id', tenantIds);
-          await supabaseAdmin.from('tenants').delete().in('id', tenantIds);
+
+        const { data, error } = await supabase.functions.invoke('delete-user', {
+          body: {
+            user_id: u.clerk_id,
+            requester_email: user?.email,
+            tenant_ids: u.properties.map(p => p.id),
+          },
+        });
+
+        if (error || data?.error) {
+          failedCount++;
+        } else {
+          deletedCount++;
         }
-        await supabaseAdmin.from('businesses').delete().eq('owner_id', u.clerk_id);
-        deletedCount++;
       }
-      
-      toast.success(`Clean start complete. Removed ${deletedCount} users.`);
+
+      if (failedCount > 0) {
+        toast.warning(`Clean start: removed ${deletedCount} users, ${failedCount} failed.`);
+      } else {
+        toast.success(`Clean start complete. Removed ${deletedCount} users.`);
+      }
       await loadData();
     } catch (err: any) {
       toast.error("Clean start failed partly: " + err.message);
