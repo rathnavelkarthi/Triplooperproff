@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import TripPlannerWizard from '../components/tripPlanner/TripPlannerWizard';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'motion/react';
 import { 
   ArrowRight, Play, ChevronRight, Star, Clock, 
@@ -36,6 +37,73 @@ const masterStyles = `
     z-index: 999;
     pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  /* Ken Burns luxury zoom */
+  @keyframes kenburns {
+    0% { transform: scale(1) translate(0, 0); }
+    50% { transform: scale(1.08) translate(-1%, -0.5%); }
+    100% { transform: scale(1) translate(0, 0); }
+  }
+  .animate-kenburns {
+    animation: kenburns 45s ease-in-out infinite;
+  }
+
+  /* Paper texture overlay style */
+  .luxury-paper-bg {
+    background-color: #FDFBF7;
+    background-image: radial-gradient(circle at 50% 50%, rgba(253, 251, 247, 0.75) 0%, rgba(250, 249, 246, 1) 100%);
+    position: relative;
+  }
+  .luxury-paper-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.015;
+    pointer-events: none;
+    z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  /* Luxury inputs & glass styling */
+  .glassmorphic-search {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(197, 160, 89, 0.35);
+    box-shadow: 0 30px 70px rgba(11, 59, 43, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glassmorphic-search:hover {
+    border-color: rgba(197, 160, 89, 0.55);
+    box-shadow: 0 35px 80px rgba(11, 59, 43, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  }
+  .search-input-group {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .search-input-group:focus-within {
+    background: rgba(197, 160, 89, 0.04);
+  }
+
+  .nav-link {
+    position: relative;
+    transition: color 0.3s ease;
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 1px;
+    bottom: -4px;
+    left: 0;
+    background-color: #C5A059;
+    transform-origin: bottom right;
+    transition: transform 0.25s ease-out;
+  }
+  .nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
   }
 
   /* Custom styling for inputs */
@@ -90,6 +158,20 @@ const masterStyles = `
 export default function LandingPage() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isPlannerOpen, setIsPlannerOpen] = useState(false);
+  const [checkIn, setCheckIn] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [checkOut, setCheckOut] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
+  const [guestDropdownOpen, setGuestDropdownOpen] = useState(false);
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const [rooms, setRooms] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Track scroll parameters for parallax sequence
@@ -162,7 +244,6 @@ export default function LandingPage() {
       return matchCategory && matchSearch;
     });
   }, [activeCategoryFilter, searchDestination]);
-
   return (
     <div 
       ref={containerRef}
@@ -171,8 +252,8 @@ export default function LandingPage() {
       <div className="noise-grain" />
 
       {/* ── NAVBAR ────────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 bg-[#FDFBF7]/85 backdrop-blur-xl border-b border-[#C5A059]/10 z-50 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <nav className="fixed top-4 left-4 right-4 md:left-6 md:right-6 bg-[#FDFBF7]/80 backdrop-blur-xl border border-[#C5A059]/20 z-50 transition-all duration-500 rounded-3xl shadow-[0_15px_40px_rgba(11,59,43,0.06)] max-w-7xl mx-auto">
+        <div className="px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-12">
             <a href="/" className="flex items-center gap-2 group">
               <span className="font-playfair text-xl font-bold tracking-widest text-[#0B3B2B]">
@@ -180,29 +261,29 @@ export default function LandingPage() {
               </span>
             </a>
             
-            <div className="hidden md:flex items-center gap-8 text-xs font-semibold tracking-widest text-[#0B3B2B]/75 uppercase">
-              <a href="#marketplace" className="hover:text-[#C5A059] transition-colors">Marketplace</a>
-              <a href="#categories" className="hover:text-[#C5A059] transition-colors">Categories</a>
-              <a href="#why-switch" className="hover:text-[#C5A059] transition-colors">Owner Story</a>
-              <a href="#os-diagram" className="hover:text-[#C5A059] transition-colors">The Platform</a>
-              <a href="#india-network" className="hover:text-[#C5A059] transition-colors">Our Network</a>
-              <a href="#pricing" className="hover:text-[#C5A059] transition-colors">Pricing</a>
+            <div className="hidden md:flex items-center gap-8 text-[11px] font-semibold tracking-widest text-[#0B3B2B]/75 uppercase">
+              <a href="#marketplace" className="nav-link hover:text-[#C5A059] transition-colors">Marketplace</a>
+              <a href="#categories" className="nav-link hover:text-[#C5A059] transition-colors">Categories</a>
+              <a href="#why-switch" className="nav-link hover:text-[#C5A059] transition-colors">Owner Story</a>
+              <a href="#os-diagram" className="nav-link hover:text-[#C5A059] transition-colors">The Platform</a>
+              <a href="#india-network" className="nav-link hover:text-[#C5A059] transition-colors">Our Network</a>
+              <a href="#pricing" className="nav-link hover:text-[#C5A059] transition-colors">Pricing</a>
             </div>
           </div>
 
           <div className="hidden md:flex items-center gap-5">
             <button 
               onClick={() => navigate('/admin/login')}
-              className="text-xs font-bold tracking-widest uppercase text-[#0B3B2B]/75 hover:text-[#C5A059] transition-colors px-3 py-2"
+              className="text-[11px] font-bold tracking-widest uppercase text-[#0B3B2B]/75 hover:text-[#C5A059] transition-colors px-3 py-2"
             >
               Sign In
             </button>
             <button 
               onClick={() => navigate('/signup')}
-              className="bg-[#0B3B2B] hover:bg-[#115C43] text-white font-bold text-xs tracking-widest uppercase px-6 py-3 rounded-xl transition-all shadow-md shadow-[#0B3B2B]/10 active:scale-95 flex items-center gap-1.5 border border-[#C5A059]/10"
+              className="bg-[#0B3B2B] hover:bg-[#115C43] text-white font-bold text-[11px] tracking-widest uppercase px-6 py-3 rounded-2xl transition-all shadow-md shadow-[#0B3B2B]/10 active:scale-95 flex items-center gap-1.5 border border-[#C5A059]/10"
             >
-              <span>Operator Trial</span>
-              <ArrowRight size={13} className="text-[#C5A059]" />
+              <span>Join Triplooper</span>
+              <ArrowRight size={12} className="text-[#C5A059]" />
             </button>
           </div>
 
@@ -210,7 +291,7 @@ export default function LandingPage() {
             className="md:hidden text-[#0B3B2B]"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </nav>
@@ -222,7 +303,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="md:hidden fixed inset-x-0 top-20 bg-[#FDFBF7] border-b border-[#C5A059]/10 z-40 p-6 flex flex-col gap-6"
+            className="md:hidden fixed inset-x-4 top-24 bg-[#FDFBF7]/95 backdrop-blur-xl border border-[#C5A059]/20 z-40 p-6 flex flex-col gap-6 rounded-3xl shadow-xl"
           >
             <a href="#marketplace" onClick={() => setMobileMenuOpen(false)} className="text-[#0B3B2B] font-bold text-lg">Marketplace</a>
             <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="text-[#0B3B2B] font-bold text-lg">Categories</a>
@@ -244,7 +325,7 @@ export default function LandingPage() {
                 onClick={() => { setMobileMenuOpen(false); navigate('/signup'); }}
                 className="w-full text-center py-3 bg-[#0B3B2B] text-white font-extrabold rounded-xl"
               >
-                Start Free Trial
+                Join Triplooper
               </button>
             </div>
           </motion.div>
@@ -254,14 +335,14 @@ export default function LandingPage() {
       {/* ── HERO SECTION (Cinematic resort dream + search) ── */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden bg-[#FAF9F6]">
         {/* Drone luxury stay backdrop */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <img 
-            src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1600&q=90" 
+            src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1600&q=90" 
             alt="Luxury Maldives Stays" 
-            className="w-full h-full object-cover opacity-85"
+            className="w-full h-full object-cover opacity-85 animate-kenburns"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#FDFBF7] via-[#FAF9F6]/30 to-[#FAF9F6]/20" />
-          <div className="absolute inset-0 bg-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#FDFBF7] via-[#FAF9F6]/20 to-[#FAF9F6]/10" />
+          <div className="absolute inset-0 bg-black/15" />
         </div>
 
         <div className="max-w-5xl mx-auto px-6 text-center relative z-10 space-y-8 pt-16">
@@ -269,9 +350,9 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#C5A059]/40 bg-[#FDFBF7]/90 text-[#0B3B2B] text-xs font-bold tracking-widest uppercase shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#C5A059]/40 bg-[#FDFBF7]/90 text-[#0B3B2B] text-[10px] font-bold tracking-widest uppercase shadow-sm font-mono"
           >
-            <Award size={14} className="text-[#C5A059]" />
+            <Award size={13} className="text-[#C5A059]" />
             Hospitality Commerce Operating System
           </motion.div>
 
@@ -279,10 +360,10 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="font-playfair text-4xl sm:text-6xl lg:text-7xl font-semibold text-[#0B3B2B] leading-[1.08] tracking-tight text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
+            className="font-playfair text-4xl sm:text-6xl lg:text-7xl font-semibold text-white leading-[1.08] tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
           >
-            Run your <span className="italic font-normal text-[#FAF9F6]">entire</span> hospitality <br />
-            business from <span className="italic font-normal text-[#C5A059]">one platform.</span>
+            Explore & book <span className="italic font-playfair font-normal text-[#FAF9F6] drop-shadow-md">boutique stays</span> <br />
+            directly from <span className="italic font-playfair font-normal text-[#C5A059] drop-shadow-md">local hosts.</span>
           </motion.h1>
 
           <motion.p 
@@ -291,66 +372,236 @@ export default function LandingPage() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-[#FAF9F6] text-sm sm:text-base max-w-2xl mx-auto leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] font-light font-inter"
           >
-            A unified booking engine, PMS room planner, POS diner, and automatic WhatsApp messaging core tailored for independent boutique hotels, cottages, and resorts.
+            Find curated hotels, cottages, and villas across India. Secure direct checkout guaranteed.
           </motion.p>
 
-          {/* Airbnb-style Integrated Search Console */}
+          {/* Button row for Book Stays and Join Triplooper */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.25 }}
+            className="flex flex-wrap items-center justify-center gap-4"
+          >
+            <a 
+              href="#marketplace"
+              className="bg-[#C5A059] hover:bg-[#b08b47] text-[#0B3B2B] font-extrabold text-xs tracking-widest uppercase px-8 py-3.5 rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-2 border border-[#C5A059]/10"
+            >
+              <Search size={14} className="text-[#0B3B2B]" />
+              <span>Book a Stay</span>
+            </a>
+            <button 
+              onClick={() => navigate('/signup')}
+              className="bg-white/10 hover:bg-white/20 text-white font-bold text-xs tracking-widest uppercase px-8 py-3.5 rounded-xl transition-all backdrop-blur-md border border-white/20 active:scale-95 flex items-center gap-2"
+            >
+              <span>Join Triplooper (Host Stays)</span>
+              <ArrowRight size={14} className="text-[#C5A059]" />
+            </button>
+          </motion.div>
+
+          {/* Booking.com/Agoda-style High-Density Search Console */}
           <motion.div 
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="max-w-4xl mx-auto bg-white/95 border border-[#C5A059]/20 rounded-3xl p-4.5 shadow-xl grid grid-cols-2 md:grid-cols-4 gap-4 text-left items-center"
+            className="max-w-5xl mx-auto glassmorphic-search rounded-[28px] p-3 grid grid-cols-1 md:grid-cols-12 gap-3 text-left items-center relative font-inter"
           >
-            <div className="p-3 border-r border-[#C5A059]/10">
-              <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#C5A059] block mb-1">Destination</span>
+            {/* Destination */}
+            <div className="p-3 border-b md:border-b-0 md:border-r border-[#C5A059]/10 md:col-span-4 search-input-group rounded-2xl hover:bg-white/40">
+              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C5A059] block mb-1">Destination</span>
               <div className="flex items-center gap-2">
-                <Search size={14} className="text-[#0B3B2B]" />
+                <Search size={14} className="text-[#0B3B2B] shrink-0" />
                 <input 
                   type="text" 
-                  placeholder="e.g. Pondicherry" 
+                  placeholder="Where are you going?" 
                   value={searchDestination}
                   onChange={e => setSearchDestination(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-[#0B3B2B] placeholder-[#0B3B2B]/40 focus:outline-none w-full"
+                  className="bg-transparent text-xs font-bold text-[#0B3B2B] placeholder-zinc-400 focus:outline-none w-full"
                 />
               </div>
             </div>
 
-            <div className="p-3 border-r border-[#C5A059]/10">
-              <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#C5A059] block mb-1">Check In</span>
+            {/* Check In */}
+            <div className="p-3 border-b md:border-b-0 md:border-r border-[#C5A059]/10 md:col-span-2 search-input-group rounded-2xl hover:bg-white/40">
+              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C5A059] block mb-1 font-mono">Check In</span>
               <div className="flex items-center gap-2">
-                <Calendar size={14} className="text-[#0B3B2B]" />
-                <span className="text-xs font-bold text-[#0B3B2B]">26 Jun 2026</span>
+                <Calendar size={14} className="text-[#0B3B2B] shrink-0" />
+                <input 
+                  type="date"
+                  min={new Date().toISOString().split('T')[0]}
+                  value={checkIn}
+                  onChange={e => {
+                    setCheckIn(e.target.value);
+                    const nextDay = new Date(e.target.value);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    if (new Date(checkOut) <= new Date(e.target.value)) {
+                      setCheckOut(nextDay.toISOString().split('T')[0]);
+                    }
+                  }}
+                  className="bg-transparent text-xs font-bold text-[#0B3B2B] focus:outline-none w-full cursor-pointer"
+                />
               </div>
             </div>
 
-            <div className="p-3 border-r border-[#C5A059]/10">
-              <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#C5A059] block mb-1">Stay Category</span>
+            {/* Check Out */}
+            <div className="p-3 border-b md:border-b-0 md:border-r border-[#C5A059]/10 md:col-span-2 search-input-group rounded-2xl hover:bg-white/40">
+              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C5A059] block mb-1 font-mono">Check Out</span>
               <div className="flex items-center gap-2">
-                <Hotel size={14} className="text-[#0B3B2B]" />
-                <span className="text-xs font-bold text-[#0B3B2B]">Beach Villa</span>
+                <Calendar size={14} className="text-[#0B3B2B] shrink-0" />
+                <input 
+                  type="date"
+                  min={checkIn ? (() => {
+                    const next = new Date(checkIn);
+                    next.setDate(next.getDate() + 1);
+                    return next.toISOString().split('T')[0];
+                  })() : new Date().toISOString().split('T')[0]}
+                  value={checkOut}
+                  onChange={e => setCheckOut(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-[#0B3B2B] focus:outline-none w-full cursor-pointer"
+                />
               </div>
             </div>
 
-            <div className="p-2.5">
-              <a 
-                href="#marketplace"
-                className="w-full bg-[#0B3B2B] hover:bg-[#115C43] text-white text-xs font-bold py-3.5 px-5 rounded-2xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-[#0B3B2B]/10 active:scale-98"
+            {/* Guests & Rooms */}
+            <div 
+              className="p-3 border-b md:border-b-0 md:border-r border-[#C5A059]/10 md:col-span-2 relative cursor-pointer select-none search-input-group rounded-2xl hover:bg-white/40"
+              onClick={() => setGuestDropdownOpen(!guestDropdownOpen)}
+            >
+              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C5A059] block mb-1">Guests & Rooms</span>
+              <div className="flex items-center gap-2">
+                <Users size={14} className="text-[#0B3B2B] shrink-0" />
+                <span className="text-xs font-bold text-[#0B3B2B] truncate">
+                  {adults + children} Guests, {rooms} Room{rooms > 1 ? 's' : ''}
+                </span>
+              </div>
+
+              {/* Guest selection popover */}
+              <AnimatePresence>
+                {guestDropdownOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    onClick={e => e.stopPropagation()}
+                    className="absolute top-full mt-3 left-0 right-0 md:left-auto md:-right-6 md:w-80 bg-white border border-[#C5A059]/25 rounded-3xl p-5 shadow-2xl z-50 text-left space-y-4 font-inter border-2 animate-in fade-in duration-200"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs font-bold text-[#0B3B2B]">Adults</p>
+                        <p className="text-[9px] text-zinc-400 font-light mt-0.5">Age 13 or above</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          type="button"
+                          onClick={() => setAdults(prev => Math.max(1, prev - 1))}
+                          className="w-7 h-7 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-650 hover:bg-zinc-50 active:scale-95 transition-all"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs font-bold text-[#0B3B2B] w-4 text-center">{adults}</span>
+                        <button 
+                          type="button"
+                          onClick={() => setAdults(prev => prev + 1)}
+                          className="w-7 h-7 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-650 hover:bg-zinc-50 active:scale-95 transition-all"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs font-bold text-[#0B3B2B]">Children</p>
+                        <p className="text-[9px] text-zinc-400 font-light mt-0.5">Age 0 - 12</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          type="button"
+                          onClick={() => setChildren(prev => Math.max(0, prev - 1))}
+                          className="w-7 h-7 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-650 hover:bg-zinc-50 active:scale-95 transition-all"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs font-bold text-[#0B3B2B] w-4 text-center">{children}</span>
+                        <button 
+                          type="button"
+                          onClick={() => setChildren(prev => prev + 1)}
+                          className="w-7 h-7 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-650 hover:bg-zinc-50 active:scale-95 transition-all"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs font-bold text-[#0B3B2B]">Rooms</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          type="button"
+                          onClick={() => setRooms(prev => Math.max(1, prev - 1))}
+                          className="w-7 h-7 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-650 hover:bg-zinc-50 active:scale-95 transition-all"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs font-bold text-[#0B3B2B] w-4 text-center">{rooms}</span>
+                        <button 
+                          type="button"
+                          onClick={() => setRooms(prev => prev + 1)}
+                          className="w-7 h-7 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-650 hover:bg-zinc-50 active:scale-95 transition-all"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setGuestDropdownOpen(false)}
+                      className="w-full bg-[#0B3B2B] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 rounded-xl hover:bg-[#115C43] transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Buttons */}
+            <div className="p-1 md:col-span-2 flex flex-col gap-2">
+              <button 
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById('marketplace');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="w-full bg-[#0B3B2B] hover:bg-[#115C43] text-white text-[11px] font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-[#0B3B2B]/10 active:scale-98 cursor-pointer"
               >
-                <Search size={14} className="text-[#C5A059]" />
+                <Search size={13} className="text-[#C5A059]" />
                 <span>Search Stays</span>
-              </a>
+              </button>
+              <button 
+                type="button"
+                onClick={() => setIsPlannerOpen(true)}
+                className="w-full bg-gradient-to-r from-[#C5A059] to-[#B89535] hover:opacity-90 text-white text-[10px] font-bold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-1 shadow-md active:scale-98 cursor-pointer uppercase tracking-wider"
+              >
+                <Sparkles size={11} />
+                <span>Plan with AI</span>
+              </button>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* ── SECTION 2: LIVE PROPERTY MARKETPLACE (Airbnb-Style, 20+ stays) ── */}
-      <section id="marketplace" className="py-24 bg-[#FDFBF7] relative grid-light-sand">
+      <section id="marketplace" className="py-24 luxury-paper-bg relative grid-light-sand border-t border-[#C5A059]/15">
         <div className="max-w-7xl mx-auto px-6 space-y-12">
           
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-3">
-              <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Live Marketplace directory</span>
+            <div className="space-y-3 text-left">
+              <span className="text-[10px] text-[#C5A569] font-medium tracking-[0.25em] uppercase font-mono">Live Marketplace directory</span>
               <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B] leading-none">
                 Explore stays powered by <span className="italic font-light text-[#C5A059]">TripLooper</span>
               </h2>
@@ -368,7 +619,7 @@ export default function LandingPage() {
                   className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
                     activeCategoryFilter === tab 
                       ? 'border-[#0B3B2B] bg-[#0B3B2B] text-white shadow-md shadow-[#0B3B2B]/10' 
-                      : 'border-[#C5A059]/20 bg-[#FAF9F6] text-[#0B3B2B]/75 hover:border-[#0B3B2B]/35'
+                      : 'border-[#C5A059]/20 bg-[#FAF9F6] text-[#0B3B2B]/75 hover:border-[#0B3B2B]/35 hover:bg-white'
                   }`}
                 >
                   {tab}
@@ -377,58 +628,235 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Properties Grid */}
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-            {filteredProperties.map(p => (
-              <div 
-                key={p.id}
-                onClick={() => {
-                  if (p.subdomain) {
-                    navigate(`/site/${p.subdomain}`);
-                  } else {
-                    toast.info(`Simulated: Redirecting to direct stay URL for ${p.name}`);
-                  }
-                }}
-                className="group cursor-pointer space-y-3 relative"
-              >
-                {/* Image container */}
-                <div className="relative aspect-[1.1] w-full rounded-2xl overflow-hidden bg-zinc-100 shadow-sm border border-[#C5A059]/10">
-                  <img 
-                    src={p.image} 
-                    alt={p.name} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  
-                  {/* Heart button */}
-                  <button 
-                    onClick={(e) => toggleLike(p.id, e)}
-                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center border border-white/50 shadow-sm hover:scale-105 active:scale-95 transition-all text-zinc-700"
+          {/* Properties Grid with Masonry Variety (Featured Double Cards) */}
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-8">
+            {filteredProperties.map((p, idx) => {
+              const originalPrice = Math.round(p.price * 1.15);
+              const reviewCount = (p.id * 17) % 120 + 30;
+              const ratingText = Number(p.rating) >= 4.9 ? "Exceptional" : Number(p.rating) >= 4.8 ? "Superb" : "Excellent";
+              
+              // Dynamic Host profiles
+              const hostNames = ["Ananya S.", "Karan M.", "Vikram R.", "Priya D.", "Rohan K.", "Aditi V."];
+              const hostPhotos = [
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop&q=80",
+                "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&q=80"
+              ];
+              const hostName = hostNames[p.id % hostNames.length];
+              const hostPhoto = hostPhotos[p.id % hostPhotos.length];
+
+              // Render a Featured Double Card every 5th item
+              if (idx % 5 === 4) {
+                return (
+                  <div 
+                    key={p.id}
+                    onClick={() => {
+                      if (p.subdomain) {
+                        navigate(`/site/${p.subdomain}?checkIn=${checkIn}&checkOut=${checkOut}`);
+                      } else {
+                        toast.info(`Simulated: Redirecting to direct stay URL for ${p.name}`);
+                      }
+                    }}
+                    className="group bg-white border border-[#C5A059]/20 rounded-3xl overflow-hidden shadow-sm hover:shadow-[0_20px_50px_rgba(197,160,89,0.12)] hover:-translate-y-1.5 transition-all duration-350 flex flex-col md:flex-row md:col-span-2 cursor-pointer relative font-inter text-left"
                   >
-                    <Heart size={14} className={likes[p.id] ? "fill-red-500 text-red-500" : "text-zinc-800"} />
-                  </button>
+                    {/* Visual Badge overlay */}
+                    <div className="absolute top-4 left-4 bg-gradient-to-r from-[#C5A059] to-[#B89535] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full z-10 border border-white/20 shadow-md">
+                      Featured Experience
+                    </div>
 
-                  <span className="absolute bottom-3 left-3 bg-[#0B3B2B]/90 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border border-[#C5A059]/30">
-                    {p.tag}
-                  </span>
-                </div>
+                    {/* Image half */}
+                    <div className="relative w-full md:w-1/2 h-64 md:h-auto overflow-hidden bg-zinc-100 border-b md:border-b-0 md:border-r border-[#C5A059]/10">
+                      <img 
+                        src={p.image} 
+                        alt={p.name} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      
+                      {/* Wishlist Heart */}
+                      <button 
+                        onClick={(e) => toggleLike(p.id, e)}
+                        className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center border border-white shadow-sm hover:scale-110 hover:bg-white active:scale-90 transition-all z-10"
+                      >
+                        <Heart size={13} className={likes[p.id] ? "fill-red-500 text-red-500" : "text-zinc-700"} />
+                      </button>
+                    </div>
 
-                {/* Card metadata (Airbnb layout) */}
-                <div className="space-y-1">
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-playfair text-base font-bold text-[#0B3B2B] leading-snug group-hover:text-[#C5A059] transition-colors">{p.name}</h4>
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#0A1612]">
-                      <Star size={12} className="text-[#C5A059] fill-[#C5A059]" />
-                      {p.rating}
+                    {/* Content half */}
+                    <div className="w-full md:w-1/2 p-6 flex flex-col justify-between space-y-6">
+                      <div className="space-y-3.5">
+                        <div className="flex justify-between items-start gap-2">
+                          <div>
+                            <span className="text-[10px] text-[#C5A059] font-bold tracking-wide uppercase">{p.type} · {p.loc}</span>
+                            <h4 className="font-playfair text-xl font-extrabold text-[#0B3B2B] leading-snug group-hover:text-[#C5A059] transition-colors mt-0.5">{p.name}</h4>
+                          </div>
+                          
+                          {/* Rating badge */}
+                          <div className="flex items-center gap-1.5 shrink-0 bg-[#0B3B2B]/5 px-2 py-1 rounded-xl border border-[#C5A059]/20">
+                            <div className="text-right">
+                              <span className="text-[10px] font-black text-[#0B3B2B] block leading-none">{ratingText}</span>
+                              <span className="text-[8px] text-zinc-400 block font-light mt-0.5">{reviewCount} reviews</span>
+                            </div>
+                            <div className="bg-[#0B3B2B] text-white font-extrabold text-[11px] w-7 h-7 rounded-lg border border-[#C5A059]/20 flex items-center justify-center shadow-sm">
+                              {p.rating}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Host Profile */}
+                        <div className="flex items-center gap-2 pt-0.5">
+                          <img 
+                            src={hostPhoto} 
+                            alt={hostName} 
+                            className="w-5 h-5 rounded-full object-cover border border-[#C5A059]/30"
+                          />
+                          <span className="text-[10px] text-zinc-550 font-medium">Hosted by {hostName}</span>
+                          <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
+                          <span className="text-[8px] uppercase tracking-wider text-emerald-600 font-bold">Verified Host</span>
+                        </div>
+
+                        <p className="text-xs text-zinc-500 font-light leading-relaxed">
+                          Experience premium direct-host booking at {p.name}. Located in the heart of scenic {p.loc}, featuring handcrafted hospitality and direct checkout advantages.
+                        </p>
+
+                        {/* Advantages list */}
+                        <div className="space-y-1.5 pt-1 text-[10px] text-left">
+                          <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                            <span>Free Cancellation & Direct Messaging</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[#C5A059] font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#C5A059] shrink-0"></span>
+                            <span>100% Direct Room Folio Invoicing</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Pricing footer */}
+                      <div className="pt-4 border-t border-zinc-100 flex items-end justify-between">
+                        <div>
+                          <span className="text-[10px] text-zinc-400 line-through block leading-none">₹{originalPrice.toLocaleString('en-IN')}</span>
+                          <div className="flex items-baseline gap-1 mt-0.5">
+                            <span className="text-xl font-black text-[#0B3B2B] tracking-tight">₹{p.price.toLocaleString('en-IN')}</span>
+                            <span className="text-xs text-zinc-400 font-normal">/night</span>
+                          </div>
+                          <span className="text-[8px] text-zinc-400 block font-light mt-0.5">Includes taxes & fees</span>
+                        </div>
+
+                        <button className="bg-[#0B3B2B] hover:bg-[#115C43] text-white text-xs font-bold uppercase tracking-wider py-3 px-5 rounded-2xl border border-[#C5A059]/20 transition-all duration-300 shadow-md">
+                          Reserve Direct
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Otherwise render standard high-conversion card
+              return (
+                <div 
+                  key={p.id}
+                  onClick={() => {
+                    if (p.subdomain) {
+                      navigate(`/site/${p.subdomain}?checkIn=${checkIn}&checkOut=${checkOut}`);
+                    } else {
+                      toast.info(`Simulated: Redirecting to direct stay URL for ${p.name}`);
+                    }
+                  }}
+                  className="group bg-white border border-[#C5A059]/15 rounded-3xl overflow-hidden shadow-sm hover:shadow-[0_20px_50px_rgba(11,59,43,0.06)] hover:-translate-y-1.5 transition-all duration-350 flex flex-col h-full cursor-pointer relative font-inter text-left"
+                >
+                  {/* Image banner */}
+                  <div className="relative aspect-[1.2] w-full overflow-hidden bg-zinc-100 border-b border-[#C5A059]/10">
+                    <img 
+                      src={p.image} 
+                      alt={p.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    
+                    {/* Heart button */}
+                    <button 
+                      onClick={(e) => toggleLike(p.id, e)}
+                      className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center border border-white shadow-sm hover:scale-110 hover:bg-white active:scale-90 transition-all z-10 text-zinc-700"
+                    >
+                      <Heart size={13} className={likes[p.id] ? "fill-red-500 text-red-500" : "text-zinc-800"} />
+                    </button>
+
+                    {/* Badge */}
+                    <span className="absolute bottom-3.5 left-3.5 bg-[#0B3B2B]/90 backdrop-blur-sm text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border border-[#C5A059]/30">
+                      {p.tag}
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#C5A059] font-semibold">{p.type} • {p.loc}</p>
-                  <div className="flex justify-between items-baseline pt-1 border-t border-[#C5A059]/5 mt-2">
-                    <span className="text-[12px] font-extrabold text-[#0B3B2B]">₹{p.price.toLocaleString('en-IN')}<span className="text-[9px] font-normal text-zinc-550">/night</span></span>
-                    <span className="text-[9px] bg-emerald-500/10 text-emerald-800 font-bold border border-emerald-500/20 px-2 py-0.5 rounded">Book Direct</span>
+
+                  {/* Details */}
+                  <div className="p-4.5 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2 text-left">
+                      <div className="flex justify-between items-start gap-2">
+                        <h4 className="font-playfair text-base font-extrabold text-[#0B3B2B] leading-tight group-hover:text-[#C5A059] transition-colors line-clamp-1">{p.name}</h4>
+                        
+                        {/* Booking.com Rating */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="text-right">
+                            <span className="text-[10px] font-black text-[#0B3B2B] block leading-none">{ratingText}</span>
+                            <span className="text-[8px] text-zinc-400 block font-light mt-0.5">{reviewCount} reviews</span>
+                          </div>
+                          <div className="bg-[#0B3B2B] text-white font-extrabold text-[11px] w-7 h-7 rounded-lg border border-[#C5A059]/20 flex items-center justify-center shadow-sm">
+                            {p.rating}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <p className="text-[10px] text-[#C5A059] font-bold tracking-wide uppercase">{p.type} · {p.loc}</p>
+
+                      {/* Host details */}
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <img 
+                          src={hostPhoto} 
+                          alt={hostName} 
+                          className="w-4 h-4 rounded-full object-cover border border-[#C5A059]/30"
+                        />
+                        <span className="text-[9px] text-zinc-555 font-light font-inter">Hosted by {hostName}</span>
+                        <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
+                        <span className="text-[8px] uppercase tracking-wider text-emerald-600 font-bold font-inter">Verified</span>
+                      </div>
+                      
+                      {/* Advantages */}
+                      <div className="space-y-1 pt-1.5">
+                        <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                          <span>Free Cancellation</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                          <span>No prepayment needed</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#C5A059] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#C5A059] shrink-0"></span>
+                          <span>100% Direct to Host</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pricing */}
+                    <div className="pt-3 border-t border-zinc-100 flex items-end justify-between text-left">
+                      <div className="space-y-0.5">
+                        <span className="text-[9px] text-zinc-400 line-through block leading-none">₹{originalPrice.toLocaleString('en-IN')}</span>
+                        <div className="flex items-baseline gap-0.5">
+                          <span className="text-base font-black text-[#0B3B2B] tracking-tight">₹{p.price.toLocaleString('en-IN')}</span>
+                          <span className="text-[9px] text-zinc-400 font-normal">/night</span>
+                        </div>
+                        <span className="text-[8px] text-zinc-400 block font-light leading-none">Taxes & fees included</span>
+                      </div>
+                      
+                      <button className="bg-[#0B3B2B] hover:bg-[#115C43] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-3.5 rounded-xl border border-[#C5A059]/20 transition-all duration-300 shadow-sm shadow-[#0B3B2B]/5">
+                        Book Direct
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {filteredProperties.length === 0 && (
@@ -441,11 +869,12 @@ export default function LandingPage() {
       </section>
 
       {/* ── SECTION 3: PROPERTY CATEGORIES ── */}
-      <section id="categories" className="py-24 bg-[#FAF9F6] border-t border-[#C5A059]/10">
-        <div className="max-w-7xl mx-auto px-6 space-y-12">
+      <section id="categories" className="py-24 bg-[#FDFBF7]/95 relative border-t border-[#C5A059]/15 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9F6]/50 via-[#C5A059]/2 to-[#FAF9F6]/50 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 space-y-12 relative z-10">
           
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Stay configurations</span>
+            <span className="text-[10px] text-[#C5A569] font-medium tracking-[0.25em] uppercase font-mono">Stay configurations</span>
             <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
               Handcrafted for every <span className="italic font-light text-[#C5A059]">stay category</span>
             </h2>
@@ -457,16 +886,16 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { title: "Luxury Villas", desc: "Private pools & customizable add-ons", image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80" },
-              { title: "Beach Resorts", desc: "Interactive map beachbeds & beachfront invoicing", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80" },
+              { title: "Beach Resorts", desc: "Interactive beachbeds & beachfront invoicing", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80" },
               { title: "Mountain Retreats", desc: "Room heaters & trail schedule notifications", image: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&q=80" },
-              { title: "Boutique Hotels", desc: "Express check-in & WhatsApp notifications link", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80" }
+              { title: "Boutique Hotels", desc: "Express check-in & WhatsApp notification links", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80" }
             ].map((cat, idx) => (
               <div 
                 key={idx}
-                className="group relative h-[380px] rounded-3xl overflow-hidden shadow-md border border-[#C5A059]/10 cursor-pointer"
+                className="group relative h-[380px] rounded-[28px] overflow-hidden shadow-md border border-[#C5A059]/15 cursor-pointer"
               >
-                <img src={cat.image} alt={cat.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <img src={cat.image} alt={cat.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
                 
                 <div className="absolute bottom-6 left-6 right-6 space-y-1.5 text-left">
                   <h4 className="font-playfair text-xl font-bold text-white leading-tight">{cat.title}</h4>
@@ -482,148 +911,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── SECTION 4: WHY OWNERS SWITCH (Storytelling - DARK EMERALD ACCENT) ── */}
-      <section id="why-switch" className="py-24 bg-[#0B251E] text-[#FAF9F6] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03] grid-bg-dark bg-white" />
-        
-        <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10">
-          
-          <div className="space-y-6">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">The Disconnected Struggle</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold leading-tight">
-              Hospitality is broken <br />
-              by <span className="italic font-light text-[#C5A059]">software silos</span>
-            </h2>
-            <p className="text-sm text-zinc-300 leading-relaxed font-light font-inter">
-              Hotels struggle to balance multiple legacy applications. OTAs charge up to 20% in booking commissions, while manual spreadsheets and offline systems leak profits.
-            </p>
-
-            <div className="space-y-4 pt-4 text-left">
-              <div className="flex gap-4 items-start bg-black/20 p-4.5 rounded-2xl border border-white/5">
-                <span className="w-6 h-6 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center text-[10px] font-bold shrink-0">✕</span>
-                <div>
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Patchwork Solutions</h4>
-                  <p className="text-[11px] text-zinc-400 mt-1 font-light leading-normal">Mismatched inventory logs result in overbookings and billing errors during guest checkout.</p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 items-start bg-black/20 p-4.5 rounded-2xl border border-white/5">
-                <span className="w-6 h-6 rounded-lg bg-[#C5A059]/10 border border-[#C5A059]/20 text-[#C5A059] flex items-center justify-center text-[10px] font-bold shrink-0">✓</span>
-                <div>
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">Unified Direct Commerce</h4>
-                  <p className="text-[11px] text-zinc-400 mt-1 font-light leading-normal">TripLooper routes everything through your direct booking channel, retaining commissions and automating guest touchpoints.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-center">
-            {/* Visual before vs after */}
-            <div className="w-full max-w-[420px] bg-zinc-950/70 border border-white/5 rounded-3xl p-6 shadow-2xl space-y-6 relative overflow-hidden">
-              <span className="text-[9px] text-[#C5A059] font-extrabold uppercase tracking-widest">Operational Contrast</span>
-              
-              <div className="space-y-4 font-mono text-[10px]">
-                <div className="space-y-2 border-b border-white/5 pb-4">
-                  <span className="text-red-400 block font-bold">⚠️ WITHOUT TRIPLOOPER OS</span>
-                  <div className="p-2.5 bg-red-950/10 border border-red-950/40 rounded-xl flex justify-between">
-                    <span className="text-zinc-500">Booking.com Invoices</span>
-                    <span className="text-red-400 font-bold">-₹14,200 (18%)</span>
-                  </div>
-                  <div className="p-2.5 bg-red-950/10 border border-red-950/40 rounded-xl flex justify-between">
-                    <span className="text-zinc-500">Manual billing error</span>
-                    <span className="text-red-400 font-bold">KOT ticket lost</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  <span className="text-emerald-400 block font-bold">✨ WITH TRIPLOOPER OS</span>
-                  <div className="p-2.5 bg-emerald-950/10 border border-emerald-950/40 rounded-xl flex justify-between">
-                    <span className="text-zinc-400">Direct booking payments</span>
-                    <span className="text-emerald-400 font-bold">₹75,000 (0% Loss)</span>
-                  </div>
-                  <div className="p-2.5 bg-emerald-950/10 border border-emerald-950/40 rounded-xl flex justify-between">
-                    <span className="text-zinc-400">WhatsApp check-in links</span>
-                    <span className="text-emerald-400 font-bold">Auto sent ✓</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── SECTION 5: INTERACTIVE BOOKING ENGINE ── */}
-      <section className="py-24 bg-[#FDFBF7] border-y border-[#C5A059]/10">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center">
-          
-          <div className="lg:col-span-5 space-y-6">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Direct conversion engine</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B] leading-tight">
-              Cinematic booking <br />
-              <span className="italic font-light text-[#C5A059]">experience</span>
-            </h2>
-            <p className="text-sm text-zinc-500 leading-relaxed font-light">
-              Make room reservation fast and delightful. An elegant, mobile-responsive checkout flow styled to match luxury stays.
-            </p>
-            <ul className="space-y-3.5 text-xs text-[#0B3B2B]/75 font-medium">
-              <li className="flex gap-2.5"><CheckCircle2 size={16} className="text-[#C5A059] shrink-0 mt-0.5" /> Direct payment splits with customizable packages</li>
-              <li className="flex gap-2.5"><CheckCircle2 size={16} className="text-[#C5A059] shrink-0 mt-0.5" /> Dynamic availability checks prevent room locks</li>
-              <li className="flex gap-2.5"><CheckCircle2 size={16} className="text-[#C5A059] shrink-0 mt-0.5" /> Auto-generates guest check-in portal token</li>
-            </ul>
-          </div>
-
-          <div className="lg:col-span-7 flex justify-center">
-            <InteractiveBookingShowcase />
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── SECTION 6: TRIPLOOPER OS DIAGRAM (DARK EMERALD ACCENT) ── */}
-      <section id="os-diagram" className="py-24 bg-[#0B251E] text-[#FAF9F6] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03] grid-bg-dark bg-white" />
-        
-        <div className="max-w-7xl mx-auto px-6 w-full text-center relative z-10 mb-12 space-y-3">
-          <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase block">Visual OS Architecture</span>
-          <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-white">
-            Unified Hospitality <span className="italic font-light text-[#C5A059]">Engine</span>
-          </h2>
-          <p className="text-zinc-300 text-xs sm:text-sm max-w-xl mx-auto font-light">
-            TripLooper links your bookings database directly to housekeeping grids, restaurant terminals, and automatic messaging bots.
-          </p>
-        </div>
-
-        <div className="max-w-6xl mx-auto flex items-center justify-center relative min-h-[420px]">
-          <ExplodedDashboard />
-        </div>
-      </section>
-
-      {/* ── SECTION 7: GUEST JOURNEY HORIZONTAL TIMELINE ── */}
-      <section className="py-24 bg-[#FDFBF7] border-y border-[#C5A059]/10">
-        <div className="max-w-7xl mx-auto px-6 space-y-16">
-          
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">The Guest Experience</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
-              The connected guest <span className="italic font-light text-[#C5A059]">lifecycle</span>
-            </h2>
-            <p className="text-sm text-zinc-500 font-light leading-relaxed">
-              Track how TripLooper manages guest stays autonomously, from reservation checks to final billing.
-            </p>
-          </div>
-
-          <InteractiveGuestJourney />
-
-        </div>
-      </section>
-
       {/* ── SECTION 8: PROPERTY SHOWCASE MASONRY GALLERY (Dream Travel Stays) ── */}
-      <section className="py-24 bg-[#FAF9F6]">
-        <div className="max-w-7xl mx-auto px-6 space-y-12">
+      <section className="py-24 luxury-paper-bg border-t border-[#C5A059]/15 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 space-y-12 relative z-10">
           
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Luxe Stay Showcase</span>
+            <span className="text-[10px] text-[#C5A569] font-medium tracking-[0.25em] uppercase font-mono">Luxe Stay Showcase</span>
             <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
               Inspiring travel <span className="italic font-light text-[#C5A059]">desire</span>
             </h2>
@@ -632,141 +925,38 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Masonry image stack grid */}
+          {/* Masonry image stack grid with round-28px corners & hover zooms */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-4">
-              <img src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=600&q=80" alt="Resort" className="w-full aspect-[0.75] object-cover rounded-3xl border border-[#C5A059]/10 shadow-sm" />
-              <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80" alt="Suite Loft" className="w-full aspect-square object-cover rounded-3xl border border-[#C5A059]/10 shadow-sm" />
+              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+                <img src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=600&q=80" alt="Resort" className="w-full aspect-[0.75] object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+                <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80" alt="Suite Loft" className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
             </div>
             <div className="space-y-4 pt-8">
-              <img src="https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=600&q=80" alt="Cottage Valleys" className="w-full aspect-square object-cover rounded-3xl border border-[#C5A059]/10 shadow-sm" />
-              <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&q=80" alt="Lodge Orchard" className="w-full aspect-[1.3] object-cover rounded-3xl border border-[#C5A059]/10 shadow-sm" />
+              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+                <img src="https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=600&q=80" alt="Cottage Valleys" className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+                <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&q=80" alt="Lodge Orchard" className="w-full aspect-[1.3] object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
             </div>
             <div className="space-y-4">
-              <img src="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=600&q=80" alt="Beachfront House" className="w-full aspect-[1.1] object-cover rounded-3xl border border-[#C5A059]/10 shadow-sm" />
-              <img src="https://images.unsplash.com/photo-1512915922686-57c11dde9b6b?w=600&q=80" alt="Luxury Villa" className="w-full aspect-[0.7] object-cover rounded-3xl border border-[#C5A059]/10 shadow-sm" />
+              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+                <img src="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=600&q=80" alt="Beachfront House" className="w-full aspect-[1.1] object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
+              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+                <img src="https://images.unsplash.com/photo-1512915922686-57c11dde9b6b?w=600&q=80" alt="Luxury Villa" className="w-full aspect-[0.7] object-cover transition-transform duration-700 group-hover:scale-105" />
+              </div>
             </div>
             <div className="space-y-4 pt-6">
-              <img src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&q=80" alt="Mist resort" className="w-full aspect-square object-cover rounded-3xl border border-[#C5A059]/10 shadow-sm" />
-              <img src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=600&q=80" alt="Farmhouse" className="w-full aspect-[1.2] object-cover rounded-3xl border border-[#C5A059]/10 shadow-sm" />
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── SECTION 9: RESTAURANT POS INTERACTIVE ── */}
-      <section className="py-24 bg-[#FDFBF7] border-y border-[#C5A059]/10">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center">
-          
-          <div className="lg:col-span-5 space-y-6">
-            <div className="w-10 h-10 rounded-2xl bg-[#0B3B2B]/5 border border-[#C5A059]/25 text-[#0B3B2B] flex items-center justify-center">
-              <Coffee size={20} className="text-[#C5A059]" />
-            </div>
-            <h3 className="font-playfair text-3xl font-semibold text-[#0B3B2B] leading-tight">
-              Integrated Food & Beverage <br />
-              <span className="italic font-light text-[#C5A059]">Restaurant POS</span>
-            </h3>
-            <p className="text-sm text-zinc-500 leading-relaxed font-light">
-              Send kitchen order tickets (KOT) directly from rooms or tables. Guests place orders using QR menus, and charges update instantly on their main bill sheet.
-            </p>
-            <ul className="space-y-3.5 text-xs text-[#0B3B2B]/75 font-medium">
-              <li className="flex gap-2.5"><CheckCircle2 size={16} className="text-[#C5A059] shrink-0 mt-0.5" /> Auto prints tickets to the kitchen router</li>
-              <li className="flex gap-2.5"><CheckCircle2 size={16} className="text-[#C5A059] shrink-0 mt-0.5" /> Link menu items to room folios dynamically</li>
-              <li className="flex gap-2.5"><CheckCircle2 size={16} className="text-[#C5A059] shrink-0 mt-0.5" /> Supports split billing & digital UPI codes</li>
-            </ul>
-          </div>
-
-          <div className="lg:col-span-7 flex justify-center">
-            <InteractivePOSShowcase />
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── SECTION 10: INDIA PROPERTY MAP NETWORK ── */}
-      <section id="india-network" className="py-24 bg-[#FAF9F6]">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center">
-          
-          <div className="lg:col-span-5 space-y-8">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Stay networks</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
-              Active properties <br />
-              spanning <span className="italic font-light text-[#C5A059]">South India</span>
-            </h2>
-            <p className="text-sm text-zinc-500 font-light leading-relaxed">
-              We sync inventory across guest cottages, resorts, and city suites daily in Tamil Nadu, Pondicherry, Ooty, and Madurai.
-            </p>
-
-            <div className="grid grid-cols-2 gap-6 pt-4 border-t border-[#C5A059]/10">
-              <div className="space-y-1">
-                <span className="text-3xl font-black text-[#0B3B2B] tracking-tight">10,000+</span>
-                <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Rooms Coordinated</p>
+              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+                <img src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&q=80" alt="Mist resort" className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
-              <div className="space-y-1">
-                <span className="text-3xl font-black text-[#0B3B2B] tracking-tight">₹50Cr+</span>
-                <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Direct revenue processed</p>
-              </div>
-              <div className="space-y-1">
-                <span className="text-3xl font-black text-[#0B3B2B] tracking-tight">100,000+</span>
-                <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Direct Bookings</p>
-              </div>
-              <div className="space-y-1">
-                <span className="text-3xl font-black text-[#0B3B2B] tracking-tight">99.99%</span>
-                <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Uptime guarantee</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-7 flex justify-center">
-            {/* Elegant light map visualization */}
-            <div className="w-full max-w-[480px] aspect-square bg-[#FAF9F6] border border-[#C5A059]/30 rounded-3xl p-6 shadow-md relative overflow-hidden flex flex-col justify-between">
-              <span className="text-[10px] text-[#C5A059] font-extrabold uppercase tracking-widest flex items-center gap-1.5">
-                <Activity size={12} className="animate-pulse" />
-                Live Network Node map
-              </span>
-
-              <div className="relative flex-1 w-full flex items-center justify-center select-none pt-4">
-                <svg viewBox="0 0 400 400" className="w-full h-full opacity-70">
-                  <path 
-                    d="M 120 40 L 250 80 L 320 150 L 340 280 L 280 380 L 210 390 L 190 350 L 160 300 L 120 280 L 100 200 L 110 100 Z" 
-                    fill="none" 
-                    stroke="rgba(11, 59, 43, 0.08)" 
-                    strokeWidth="3" 
-                  />
-                  <path 
-                    d="M 120 40 L 250 80 L 320 150 L 340 280 L 280 380 L 210 390 L 190 350 L 160 300 L 120 280 L 100 200 L 110 100 Z" 
-                    fill="none" 
-                    stroke="#0B3B2B" 
-                    strokeWidth="1.2" 
-                    strokeOpacity="0.3" 
-                    strokeDasharray="5, 8" 
-                  />
-                  
-                  {/* Pulse stay pins */}
-                  {properties.map((p, idx) => (
-                    <g key={idx}>
-                      <circle cx={p.x} cy={p.y} r="3" fill="#C5A059" />
-                      <circle cx={p.x} cy={p.y} r="7" fill="none" stroke="#C5A059" strokeWidth="0.5" className="animate-ping" style={{ animationDuration: `${2.5 + (idx % 3)}s` }} />
-                    </g>
-                  ))}
-                </svg>
-
-                {/* Map labels */}
-                <div className="absolute top-12 right-12 bg-white/95 border border-[#C5A059]/30 p-2.5 rounded-xl text-left shadow-sm">
-                  <p className="text-[10px] font-bold text-[#0B3B2B]">Anya Paradise</p>
-                  <p className="text-[8px] text-[#C5A059] font-bold">15 Rooms • Direct Invoicing On</p>
-                </div>
-                
-                <div className="absolute bottom-16 left-16 bg-white/95 border border-[#C5A059]/30 p-2.5 rounded-xl text-left shadow-sm">
-                  <p className="text-[10px] font-bold text-[#0B3B2B]">Coolspot Cottage</p>
-                  <p className="text-[8px] text-zinc-500">9 Rooms • Ooty stay</p>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center text-[10px] text-zinc-400 border-t border-[#C5A059]/10 pt-3 mt-4">
-                <span>Active direct bookings metrics</span>
-                <span>South region nodes</span>
+              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+                <img src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=600&q=80" alt="Farmhouse" className="w-full aspect-[1.2] object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
             </div>
           </div>
@@ -774,287 +964,107 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── SECTION 11: REVENUE CALCULATOR ── */}
-      <section className="py-24 bg-[#FDFBF7] border-y border-[#C5A059]/10">
-        <div className="max-w-4xl mx-auto px-6">
-          
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Savings & Margin calculator</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
-              Calculate your <span className="italic font-light text-[#C5A059]">recovered yields</span>
-            </h2>
-            <p className="text-sm text-zinc-500 font-light">
-              Drag the sliders below to estimate direct channel profit gains and commissions saved.
-            </p>
-          </div>
 
-          <RevenueSimulator />
-
-        </div>
-      </section>
-
-      {/* ── SECTION 12: TRIPLOOPER AI (Apple-Style, LIGHT MINIMALIST) ── */}
-      <section className="py-24 bg-[#FAF9F6]">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-          
-          {/* AI Interface Box */}
-          <div className="relative flex justify-center items-center h-[380px]">
-            <div className="absolute w-[300px] h-[300px] border border-[#C5A059]/20 rounded-full animate-spin [animation-duration:40s] flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-[#C5A059] absolute -top-1.5" />
-            </div>
-
-            <div className="relative w-[340px] bg-white border border-[#C5A059]/20 rounded-3xl p-5.5 shadow-xl space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-100">
-                <span className="text-[10px] font-extrabold text-[#0B3B2B] tracking-wider flex items-center gap-1.5 uppercase">
-                  <Bot size={13} className="text-[#C5A059]" />
-                  TripLooper AI
-                </span>
-                <span className="text-[9px] text-[#C5A059] font-bold">ACTIVE FORECAST</span>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="p-3 bg-[#FDFBF7] rounded-xl text-[10.5px] border border-[#C5A059]/10 text-left">
-                  <span className="text-[8px] text-[#C5A059] font-black uppercase tracking-wider block mb-1">Occupancy Forecast</span>
-                  <p className="text-[#0B3B2B] font-light leading-normal">
-                    "Ooty festival dates detected. Occupancy gap is forecasted to drop to 8% next week. Suggest launching target WhatsApp concierge upsell for <b>Coolspot Cottage</b> keys."
-                  </p>
-                </div>
-                
-                <button 
-                  onClick={() => toast.success("TripLooper AI dynamic recommendation applied")}
-                  className="w-full bg-[#0B3B2B] hover:bg-[#115C43] text-white text-xs font-bold py-2.5 rounded-lg transition-colors uppercase tracking-wider shadow-sm"
-                >
-                  Apply AI pricing rule
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Intelligence engine</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B] leading-tight">
-              Hospitality Intelligence, <br />
-              <span className="italic font-light text-[#C5A059]">Fully Automated</span>
-            </h2>
-            <p className="text-sm text-zinc-500 leading-relaxed font-light">
-              TripLooper AI runs in the background. It models local stay demand vectors, guest query reviews, and schedules WhatsApp messages to secure room reservations.
-            </p>
-            
-            <div className="grid sm:grid-cols-2 gap-5 pt-4">
-              {[
-                { title: "Review Sentiment Mining", desc: "Monitors guest feedback logs automatically" },
-                { title: "WhatsApp AI Concierge", desc: "Answers guest check-in questions instantly" },
-                { title: "Revenue Yield Optimizations", desc: "Adjusts ADR according to regional stay demands" },
-                { title: "In-stay Upsell Engine", desc: "Triggers room service coffee offers during stays" }
-              ].map((item, idx) => (
-                <div key={idx} className="space-y-1">
-                  <h4 className="text-xs font-bold text-[#0B3B2B]">{item.title}</h4>
-                  <p className="text-[11px] text-zinc-400 font-light leading-normal">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── SECTION 13: SUCCESS STORIES WITH REAL PROPERTIES ── */}
-      <section className="py-24 bg-[#FDFBF7] border-t border-[#C5A059]/10">
-        <div className="max-w-6xl mx-auto px-6 space-y-20">
-          
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Operator feedback</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
-              Proven growth from <span className="italic font-light text-[#C5A059]">active stays</span>
-            </h2>
-            <p className="text-sm text-zinc-500 font-light">
-              Real case studies from hotel owners coordinating their stays with TripLooper.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                quote: "Direct bookings increased by 35% in our first month. The WhatsApp magic check-in link means our reception is practically hands-off now.",
-                owner: "Saravanan Sk",
-                stay: "Coolspot Cottage",
-                rooms: "9 Rooms",
-                stat: "+35% Direct Bookings"
-              },
-              {
-                quote: "Room service used to require dedicated servers answering phones. Now guests scan the QR code, order, and the charges drop on their bill instantly.",
-                owner: "Ramdas",
-                stay: "Sai Residency",
-                rooms: "11 Rooms",
-                stat: "Saved 18 Hours / Wk"
-              },
-              {
-                quote: "No double booking issues since setup. The real-time synchronization is fast, and our P&L reports are exportable for taxation in one click.",
-                owner: "Nest N Rest Operator",
-                stay: "Nest N Rest Cottage",
-                rooms: "6 Rooms",
-                stat: "Zero Overbookings"
-              }
-            ].map((story, idx) => (
-              <div 
-                key={idx}
-                className="bg-white border border-[#C5A059]/10 p-7 rounded-3xl shadow-sm hover:border-[#0B3B2B]/30 transition-all flex flex-col justify-between space-y-6"
-              >
-                <div className="space-y-4">
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={13} className="text-[#C5A059] fill-[#C5A059]" />
-                    ))}
-                  </div>
-                  <p className="text-xs text-zinc-600 leading-relaxed italic font-light">"{story.quote}"</p>
-                </div>
-                
-                <div className="flex justify-between items-center pt-4 border-t border-[#C5A059]/10">
-                  <div>
-                    <h4 className="text-xs font-bold text-[#0B3B2B]">{story.owner}</h4>
-                    <p className="text-[10px] text-zinc-400">{story.stay} • {story.rooms}</p>
-                  </div>
-                  <span className="text-[10px] bg-[#0B3B2B]/5 text-[#0B3B2B] font-extrabold px-2.5 py-1 rounded-full border border-[#C5A059]/20">
-                    {story.stat}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-        </div>
-      </section>
-
-      {/* ── SECTION 14: PRICING (WARM WHITE GLASSMORPHISM) ── */}
-      <section id="pricing" className="py-24 bg-[#FAF9F6] border-y border-[#C5A059]/10">
-        <div className="max-w-6xl mx-auto px-6">
-          
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Transparent Pricing</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
-              Bespoke value-driven <span className="italic font-light text-[#C5A059]">plans</span>
-            </h2>
-            <p className="text-sm text-zinc-500 font-light">
-              No complex setup fees or locking agreements. Choose annual billing to save 20%.
-            </p>
-          </div>
-
-          <PricingPlan />
-
-        </div>
-      </section>
-
-      {/* ── SECTION 15: FAQ Accordion ── */}
-      <section className="py-24 bg-[#FDFBF7]">
-        <div className="max-w-3xl mx-auto px-6 space-y-12">
-          
-          <div className="text-center space-y-3">
-            <span className="text-xs text-[#C5A059] font-extrabold tracking-widest uppercase">Hospitality Questions</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
-              Frequently Asked <span className="italic font-light text-[#C5A059]">Queries</span>
-            </h2>
-          </div>
-
-          <HospitalityFAQ />
-
-        </div>
-      </section>
-
-      {/* ── SECTION 16: FINAL CTA (Luxury Resort Visual Backdrop) ── */}
-      <section className="relative py-32 overflow-hidden bg-[#0A1612]">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=1600&q=90" 
-            alt="Luxury Aman Resort Pool" 
-            className="w-full h-full object-cover opacity-75"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0A1612] via-black/30 to-black/20" />
-        </div>
-
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-8 relative z-10">
-          <h2 className="font-playfair text-3xl sm:text-6xl font-semibold text-white leading-tight">
-            Your resort deserves better <br />
-            than <span className="italic font-normal text-[#C5A059]">disconnected software.</span>
-          </h2>
-          
-          <p className="text-sm sm:text-base text-zinc-300 max-w-xl mx-auto leading-relaxed font-light font-inter">
-            Scale direct reservations, automate check-ins, and orchestrate food orderings from a single direct-commerce operating system.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-            <button 
-              onClick={() => navigate('/signup')}
-              className="bg-[#C5A059] hover:bg-[#D4AF37] text-white font-bold text-xs tracking-widest uppercase px-8 py-4.5 rounded-2xl transition-all shadow-xl hover:scale-[1.01] active:scale-[0.98] flex items-center gap-2 border border-[#C5A059]/20"
-            >
-              <span>Start Free Trial</span>
-              <ArrowRight size={14} />
-            </button>
-            <button 
-              onClick={() => {
-                toast.success("We'll reach out to schedule a custom demo shortly!");
-              }}
-              className="bg-white/10 hover:bg-white/15 text-white border border-white/15 px-8 py-4.5 rounded-2xl transition-all active:scale-[0.98] text-xs font-bold tracking-widest uppercase"
-            >
-              Book Custom Demo
-            </button>
-          </div>
-
-          <div className="flex justify-center items-center gap-8 pt-8 text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">
-            <span>Setup in under 15 min</span>
-            <span>•</span>
-            <span>No credit card needed</span>
-            <span>•</span>
-            <span>Cancel anytime</span>
-          </div>
-        </div>
-      </section>
 
       {/* ── FOOTER ─────────────────────────────────────────── */}
-      <footer className="bg-[#FAF9F6] border-t border-[#C5A059]/20 py-16 text-xs text-zinc-500 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-10">
+      <footer className="bg-[#0B3B2B] border-t border-[#C5A059]/30 pt-20 pb-12 text-xs text-zinc-300 relative z-10 font-inter">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-[#C5A059]/10">
           
-          <div className="space-y-4 col-span-2 md:col-span-1">
-            <span className="font-playfair text-base font-black tracking-widest text-[#0B3B2B]">
+          {/* Logo & Description */}
+          <div className="space-y-4 md:col-span-4 text-left">
+            <span className="font-playfair text-xl font-bold tracking-widest text-white block font-inter">
               TRIP<span className="text-[#C5A059]">LOOPER</span>
             </span>
-            <p className="leading-relaxed text-zinc-500 font-light">
-              The operating system for independent boutique hotels, cottages, and resorts.
+            <p className="leading-relaxed text-zinc-400 font-light max-w-sm">
+              Collapsing fragmented pipelines into a single source of direct-booking truth. The direct commerce platform for independent luxury properties, villas, and boutique hotels.
             </p>
+            <div className="flex gap-4.5 items-center pt-2">
+              {/* Trust emblems */}
+              <span className="text-[9px] tracking-widest uppercase text-[#C5A059] border border-[#C5A059]/40 px-3 py-1.5 rounded-full font-mono font-bold">
+                Condé Nast Partner
+              </span>
+              <span className="text-[9px] tracking-widest uppercase text-zinc-400 border border-zinc-700 px-3 py-1.5 rounded-full font-mono">
+                Direct Host Trust
+              </span>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="font-bold text-[#0B3B2B] uppercase tracking-wider text-[10px]">Product</h4>
-            <ul className="space-y-2 font-light">
-              <li><a href="#marketplace" className="hover:text-[#C5A059]">Marketplace</a></li>
-              <li><a href="#simulator" className="hover:text-[#C5A059]">ROI Calculator</a></li>
-              <li><a href="#pricing" className="hover:text-[#C5A059]">Pricing</a></li>
+          {/* Featured Locations */}
+          <div className="space-y-4 md:col-span-2 text-left">
+            <h4 className="font-bold text-white uppercase tracking-wider text-[9px] font-mono">Luxe Locations</h4>
+            <ul className="space-y-2.5 text-zinc-400 font-light">
+              <li><a href="#marketplace" onClick={() => setSearchDestination('Pondicherry')} className="hover:text-[#C5A059] transition-colors">Pondicherry Coast</a></li>
+              <li><a href="#marketplace" onClick={() => setSearchDestination('Ooty')} className="hover:text-[#C5A059] transition-colors">Ooty Pine Valleys</a></li>
+              <li><a href="#marketplace" onClick={() => setSearchDestination('Kodaikanal')} className="hover:text-[#C5A059] transition-colors">Kodaikanal Valley</a></li>
+              <li><a href="#marketplace" onClick={() => setSearchDestination('Madurai')} className="hover:text-[#C5A059] transition-colors">Madurai Heritage</a></li>
             </ul>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="font-bold text-[#0B3B2B] uppercase tracking-wider text-[10px]">Legal</h4>
-            <ul className="space-y-2 font-light">
-              <li><a href="#" className="hover:text-[#C5A059]">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-[#C5A059]">Terms of Service</a></li>
+          {/* Product Links */}
+          <div className="space-y-4 md:col-span-2 text-left">
+            <h4 className="font-bold text-white uppercase tracking-wider text-[9px] font-mono">Platform</h4>
+            <ul className="space-y-2.5 text-zinc-400 font-light">
+              <li><a href="#marketplace" className="hover:text-[#C5A059] transition-colors">Stays Directory</a></li>
+              <li><a href="/pricing" className="hover:text-[#C5A059] transition-colors">B2B Core System</a></li>
+              <li><a href="/signup" className="hover:text-[#C5A059] transition-colors">Partner Signup</a></li>
+              <li><a href="#" className="hover:text-[#C5A059] transition-colors">Owner Story</a></li>
             </ul>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="font-bold text-[#0B3B2B] uppercase tracking-wider text-[10px]">Contact</h4>
-            <ul className="space-y-2 text-[#0B3B2B]/75 font-mono">
-              <li>support@triplooper.com</li>
-              <li>+91 90427 37424</li>
-            </ul>
+          {/* Newsletter Signup */}
+          <div className="space-y-4 md:col-span-4 text-left font-inter">
+            <h4 className="font-bold text-white uppercase tracking-wider text-[9px] font-mono">Triplooper Club</h4>
+            <p className="text-zinc-400 font-light leading-relaxed">
+              Subscribe to unlock private catalogs and 15% direct booking savings alerts.
+            </p>
+            <form onSubmit={e => { e.preventDefault(); toast.success("Subscribed to Triplooper Club!"); }} className="space-y-2.5">
+              <input 
+                type="email" 
+                required 
+                placeholder="Enter email address" 
+                className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-[#C5A059] transition-all placeholder-zinc-500"
+              />
+              <button 
+                type="submit" 
+                className="w-full h-11 bg-[#C5A059] hover:bg-[#b08b47] text-[#0B3B2B] font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98"
+              >
+                Join Private Club
+              </button>
+            </form>
           </div>
 
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 mt-12 pt-6 border-t border-[#C5A059]/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
-          <p>© {new Date().getFullYear()} TripLooper. All rights reserved.</p>
-          <p>Handcrafted for luxury stay operators.</p>
+        {/* Bottom footer credit bar */}
+        <div className="max-w-7xl mx-auto px-6 mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
+          <div className="flex gap-6 items-center flex-wrap justify-center sm:justify-start">
+            <p>© {new Date().getFullYear()} TripLooper. All rights reserved.</p>
+            <a href="#" className="hover:text-zinc-300 transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-zinc-300 transition-colors">Terms of Service</a>
+          </div>
+          <p className="text-zinc-650">Handcrafted for premium independent stay operators.</p>
         </div>
       </footer>
 
+      {/* Floating Plan with AI Button */}
+      <button
+        type="button"
+        onClick={() => setIsPlannerOpen(true)}
+        className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 bg-[#0B3B2B] hover:bg-[#115C43] text-white px-5 py-4 rounded-full border border-[#C5A059]/20 shadow-[0_10px_30px_rgba(11,59,43,0.3)] transition-all duration-300 font-bold text-xs uppercase tracking-wider font-mono hover:scale-105 active:scale-95 group cursor-pointer"
+      >
+        <div className="relative">
+          <Calendar size={16} className="text-white shrink-0 group-hover:rotate-6 transition-transform" />
+          <Sparkles size={9} className="absolute -top-1 -right-1 text-[#C5A059] animate-bounce" />
+        </div>
+        <span>Plan with AI</span>
+      </button>
+
+      {/* AI Trip Planner Full-Screen Wizard Overlay */}
+      <AnimatePresence>
+        {isPlannerOpen && (
+          <TripPlannerWizard onClose={() => setIsPlannerOpen(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1233,7 +1243,7 @@ function ScrollStoryVisual({ scrollYProgress }: { scrollYProgress: any }) {
 }
 
 // 3D Exploded Dashboard Component (Scroll linked modules splitting)
-function ExplodedDashboard() {
+export function ExplodedDashboard() {
   const modules = [
     { id: 'engine', name: 'Booking Engine', desc: 'Direct Conversion', icon: Zap, x: -260, y: -90, color: 'from-[#FAF9F6]/20 to-transparent', border: 'border-white/10' },
     { id: 'pms', name: 'PMS System', desc: 'Room Allocation Grid', icon: BedDouble, x: 0, y: -130, color: 'from-[#FAF9F6]/20 to-transparent', border: 'border-white/10' },
@@ -1318,7 +1328,7 @@ function ExplodedDashboard() {
 }
 
 // Interactive Direct Booking Engine Showcase (Airbnb style)
-function InteractiveBookingShowcase() {
+export function InteractiveBookingShowcase() {
   const [step, setStep] = useState(0);
   const [roomType, setRoomType] = useState('Deluxe Villa');
   const [days, setDays] = useState(3);
@@ -1435,7 +1445,7 @@ function InteractiveBookingShowcase() {
 }
 
 // Interactive Guest Journey Component
-function InteractiveGuestJourney() {
+export function InteractiveGuestJourney() {
   const [activeNode, setActiveNode] = useState(0);
 
   const journey = [
@@ -1502,7 +1512,7 @@ function InteractiveGuestJourney() {
 }
 
 // Interactive POS Dine-In Order Showcase
-function InteractivePOSShowcase() {
+export function InteractivePOSShowcase() {
   const [selectedItems, setSelectedItems] = useState<{name: string, price: number}[]>([]);
   const [orderSent, setOrderSent] = useState(false);
 
@@ -1597,7 +1607,7 @@ function InteractivePOSShowcase() {
 }
 
 // Interactive Revenue Simulator Component
-function RevenueSimulator() {
+export function RevenueSimulator() {
   const [rooms, setRooms] = useState(30);
   const [adr, setAdr] = useState(3500);
   const [occupancy, setOccupancy] = useState(70);
@@ -1753,73 +1763,42 @@ function AnimatedNumber({ value }: { value: number }) {
 }
 
 // Pricing plan component
-function PricingPlan() {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
-
-  const basePrice = billingCycle === 'annual' ? 3999 : 4999;
-  const roomSurcharge = billingCycle === 'annual' ? 120 : 150;
-
+export function PricingPlan() {
   return (
     <div className="space-y-10 max-w-xl mx-auto">
       
-      {/* Toggle */}
-      <div className="flex justify-center">
-        <div className="bg-[#FAF9F6]/60 border border-[#C5A059]/20 p-1.5 rounded-2xl flex gap-1.5 backdrop-blur-md shadow-inner">
-          <button
-            onClick={() => setBillingCycle('monthly')}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-              billingCycle === 'monthly'
-                ? 'bg-[#0B3B2B] text-white shadow-sm'
-                : 'text-zinc-550 hover:text-zinc-700'
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setBillingCycle('annual')}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              billingCycle === 'annual'
-                ? 'bg-[#0B3B2B] text-white shadow-sm'
-                : 'text-zinc-550 hover:text-zinc-700'
-            }`}
-          >
-            Annual
-            <span className="text-[8px] bg-[#C5A059] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Save 20%</span>
-          </button>
-        </div>
-      </div>
-
       {/* Deluxe Package Card */}
       <div className="relative bg-white border border-[#C5A059]/20 rounded-3xl p-8 shadow-md flex flex-col justify-between space-y-6 overflow-hidden">
         <div className="absolute top-0 right-6 -translate-y-1/2 bg-[#C5A059] text-white font-extrabold text-[9px] uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md border border-[#FAF9F6]/20">
-          Super Operator Pack
+          Commission Only
         </div>
 
         <div className="space-y-4 text-left">
           <div>
-            <h3 className="text-xl font-bold text-[#0B3B2B] tracking-tight">Enterprise Operating System</h3>
-            <p className="text-xs text-zinc-500 mt-1 font-light leading-normal">Unified hospitality commerce software for boutique stays, cottages, resorts, and residencies.</p>
+            <h3 className="text-xl font-bold text-[#0B3B2B] tracking-tight">Full Enterprise Operating System</h3>
+            <p className="text-xs text-[#0B3B2B] mt-2 font-bold leading-normal">For a flat 12% commission, you get all of these premium features unlocked with zero upfront cost:</p>
           </div>
 
           <div className="flex items-baseline gap-1 pt-2">
-            <span className="text-4xl font-black text-[#0B3B2B] tracking-tight">₹{basePrice.toLocaleString('en-IN')}</span>
-            <span className="text-xs text-zinc-400">/month base</span>
+            <span className="text-4xl font-black text-[#0B3B2B] tracking-tight">12%</span>
+            <span className="text-xs text-zinc-400">commission per booking</span>
           </div>
           
-          <p className="text-[10px] text-zinc-450 font-mono">+ ₹{roomSurcharge}/room per month (pay only for active rooms in PMS)</p>
+          <p className="text-[10px] text-zinc-450 font-mono">₹0 Upfront Setup Cost. Pay only as you receive bookings through Triplooper.</p>
 
           <div className="h-px bg-zinc-100 my-4" />
 
           {/* Core features */}
           <ul className="space-y-3.5 text-xs text-zinc-650 font-light">
             {[
-              'Unlimited direct booking engine bookings',
+              'Direct Booking Engine & Custom Website',
               'Real-time Channel Manager (2-way OTA sync)',
-              'Guest Portal with magic checkout and billing links',
+              'Guest Portal with magic Aadhaar verification & check-in',
               'Restaurant POS (dine-in, table order, room service)',
               'WhatsApp message reminders & verification alerts',
               'Multi-user operational permission access roles',
-              'Exportable Profit & Loss reports for tax filing'
+              'Exportable Profit & Loss reports for tax filing',
+              'Unlimited active room keys & staff accounts'
             ].map((f, i) => (
               <li key={i} className="flex gap-2.5 items-start">
                 <CheckCircle2 size={16} className="text-[#C5A059] shrink-0 mt-0.5" />
@@ -1834,38 +1813,37 @@ function PricingPlan() {
             href="/signup"
             className="w-full bg-[#0B3B2B] hover:bg-[#115C43] text-white font-black h-13 rounded-2xl text-xs tracking-wider uppercase transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
           >
-            <span>Start 14-Day Free Trial</span>
+            <span>Get Started for Free</span>
             <ArrowRight size={14} />
           </a>
-          <p className="text-center text-[10px] text-zinc-400">Cancel or scale down your active keys at any point.</p>
+          <p className="text-center text-[10px] text-zinc-400">Zero upfront fees. Create multiple properties under one account.</p>
         </div>
 
       </div>
-
     </div>
   );
 }
 
 // FAQ Accordion subcomponent
-function HospitalityFAQ() {
+export function HospitalityFAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs = [
     {
-      q: "Can TripLooper sync with Booking.com and Airbnb in real-time?",
+      q: "Can Triplooper sync with Booking.com and Airbnb in real-time?",
       a: "Yes, our built-in 2-way Channel Manager keeps your rooms inventory synced across all major OTAs (Booking.com, Agoda, Airbnb, and Expedia) automatically in under 5 seconds to prevent overbookings."
     },
     {
       q: "How does the guest self check-in link work?",
-      a: "As soon as a direct reservation is placed or imported, TripLooper's WhatsApp bot triggers a pre-arrival message containing a magic link token. Guests upload their IDs and register on their phones, updating room housekeeping status to Checked In instantly."
+      a: "As soon as a direct reservation is placed or imported, Triplooper's WhatsApp bot triggers a pre-arrival message containing a magic link token. Guests upload their IDs and register on their phones, updating room housekeeping status to Checked In instantly."
     },
     {
       q: "Can room service charges be posted directly to room bills?",
       a: "Absolutely. When guests scan their room's dine-in QR menu, they select items and click order. The KOT compiles in the kitchen, and POS charges drop onto their guest bill folio immediately."
     },
     {
-      q: "Is there a long-term contract or setup fee?",
-      a: "No long contracts. We offer a simple 14-day free trial. After that, you pay a flat monthly or annual base fee + a surcharge per room key. You only pay for active rooms you manage."
+      q: "Is there a monthly subscription fee or setup charge?",
+      a: "No. Triplooper has zero monthly fees, setup costs, or licensing surcharges. We operate strictly on a 12% commission of the revenue generated by the hotel through bookings placed on the platform."
     }
   ];
 
