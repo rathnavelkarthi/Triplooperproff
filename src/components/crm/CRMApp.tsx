@@ -35,6 +35,7 @@ import Billing from '../../pages/crm/Billing';
 import ServerOrders from '../../pages/crm/ServerOrders';
 import Expenses from '../../pages/crm/Expenses';
 import ProfitLoss from '../../pages/crm/ProfitLoss';
+import SavingsMargin from '../../pages/crm/SavingsMargin';
 
 // Business module
 import BusinessDashboard from '../../pages/crm/business/BusinessDashboard';
@@ -231,6 +232,13 @@ export default function CRMApp() {
             <Route path="billing" element={
               <RoleGuard allowedRoles={['SUPER_ADMIN']}>
                 <Billing />
+              </RoleGuard>
+            } />
+
+            {/* Savings & Margin */}
+            <Route path="savings" element={
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'ACCOUNTANT', 'BUSINESS_ADMIN']}>
+                <SavingsMargin />
               </RoleGuard>
             } />
 

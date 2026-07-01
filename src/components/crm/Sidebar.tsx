@@ -73,6 +73,7 @@ const navItems: NavItem[] = [
 
   // Finance (removed: Payments, Invoices, Expenses, Profit & Loss)
   { name: 'Reports', path: '/admin/reports', icon: BarChart3, roles: ['SUPER_ADMIN', 'ACCOUNTANT'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance', featureKey: 'reports' },
+  { name: 'Savings & Margin', path: '/admin/savings', icon: TrendingUp, roles: ['SUPER_ADMIN', 'MANAGER', 'ACCOUNTANT', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance' },
 
   // Settings
   { name: 'Website Editor', path: '/admin/website-editor', icon: Globe, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Settings', featureKey: 'website_editor' },
