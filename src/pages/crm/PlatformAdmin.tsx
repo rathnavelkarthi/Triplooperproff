@@ -489,6 +489,7 @@ export default function PlatformAdmin() {
   }
 
   return (
+    <>
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
       <div>
@@ -925,7 +926,7 @@ export default function PlatformAdmin() {
           ))}
         </div>
       </div>
-    </div>
+      </div>
 
       {/* Property Revenue Drawer */}
       <AnimatePresence>
@@ -1037,5 +1038,6 @@ export default function PlatformAdmin() {
           </>
         )}
       </AnimatePresence>
+    </>
   );
 }
