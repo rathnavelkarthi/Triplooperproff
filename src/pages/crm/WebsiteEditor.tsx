@@ -5,7 +5,8 @@ import { toast } from 'sonner';
 import {
     Eye, Save, Upload, Trash2, Plus, GripVertical, ChevronDown, ChevronUp,
     Image as ImageIcon, Type, MapPin, Phone, Mail, Star, Quote, Globe,
-    EyeOff, ExternalLink, Loader2, Check, Sparkles, X, UtensilsCrossed, Clock, Camera
+    EyeOff, ExternalLink, Loader2, Check, Sparkles, X, UtensilsCrossed, Clock, Camera,
+    Palette, Sliders
 } from 'lucide-react';
 
 // --- Types ---
@@ -770,6 +771,160 @@ export default function WebsiteEditor() {
                                             <MapPin size={10} /> Preview on Google Maps
                                         </a>
                                     )}
+                                </div>
+                            </div>
+                        </SectionPanel>
+
+                        {/* ═══ DESIGN & BRANDING ═══ */}
+                        <SectionPanel title="Design & Branding" icon={Palette} isOpen={!!openSections.design} onToggle={() => toggleOpen('design')}
+                            isVisible={true} onToggleVisibility={() => { }}>
+                            <div className="space-y-5">
+
+                                {/* Color pickers */}
+                                <div>
+                                    <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3">Brand colours</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <p className="text-[11px] text-gray-400 mb-1.5">Primary colour</p>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="color"
+                                                    value={settings.brandColor || '#0E2A38'}
+                                                    onChange={e => updateSetting('brandColor', e.target.value)}
+                                                    className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5 bg-white"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={settings.brandColor || '#0E2A38'}
+                                                    onChange={e => updateSetting('brandColor', e.target.value)}
+                                                    className="flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs font-mono focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none"
+                                                    placeholder="#0E2A38"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] text-gray-400 mb-1.5">Accent colour</p>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="color"
+                                                    value={settings.accentColor || '#C9A646'}
+                                                    onChange={e => updateSetting('accentColor', e.target.value)}
+                                                    className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5 bg-white"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={settings.accentColor || '#C9A646'}
+                                                    onChange={e => updateSetting('accentColor', e.target.value)}
+                                                    className="flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs font-mono focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none"
+                                                    placeholder="#C9A646"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Preset palettes */}
+                                    <div className="mt-3">
+                                        <p className="text-[11px] text-gray-400 mb-2">Quick palettes</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {[
+                                                { name: 'Ocean', primary: '#0E2A38', accent: '#C9A646' },
+                                                { name: 'Forest', primary: '#1B4332', accent: '#95D5B2' },
+                                                { name: 'Coral', primary: '#C0392B', accent: '#F39C12' },
+                                                { name: 'Indigo', primary: '#312E81', accent: '#A78BFA' },
+                                                { name: 'Rose', primary: '#881337', accent: '#FDA4AF' },
+                                                { name: 'Slate', primary: '#1E293B', accent: '#38BDF8' },
+                                            ].map(p => (
+                                                <button
+                                                    key={p.name}
+                                                    onClick={() => { updateSetting('brandColor', p.primary); updateSetting('accentColor', p.accent); }}
+                                                    title={p.name}
+                                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-100 hover:border-gray-300 transition-colors text-[10px] font-semibold text-gray-600 bg-white"
+                                                >
+                                                    <span className="flex gap-0.5">
+                                                        <span className="w-3 h-3 rounded-full" style={{ background: p.primary }} />
+                                                        <span className="w-3 h-3 rounded-full" style={{ background: p.accent }} />
+                                                    </span>
+                                                    {p.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Font family */}
+                                <div className="border-t border-gray-100 pt-4">
+                                    <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Font family</label>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        {[
+                                            { value: 'inter', label: 'Inter', desc: 'Clean & modern' },
+                                            { value: 'playfair', label: 'Playfair Display', desc: 'Elegant & serif' },
+                                            { value: 'poppins', label: 'Poppins', desc: 'Friendly & rounded' },
+                                            { value: 'merriweather', label: 'Merriweather', desc: 'Editorial & refined' },
+                                            { value: 'montserrat', label: 'Montserrat', desc: 'Bold & geometric' },
+                                            { value: 'lora', label: 'Lora', desc: 'Warm & literary' },
+                                        ].map(font => (
+                                            <label
+                                                key={font.value}
+                                                className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                                                    (settings.fontFamily || 'inter') === font.value
+                                                        ? 'border-[#0E2A38] bg-[#0E2A38]/5'
+                                                        : 'border-gray-100 hover:border-gray-200 bg-white'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="fontFamily"
+                                                    value={font.value}
+                                                    checked={(settings.fontFamily || 'inter') === font.value}
+                                                    onChange={() => updateSetting('fontFamily', font.value)}
+                                                    className="shrink-0"
+                                                />
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-semibold text-gray-900">{font.label}</p>
+                                                    <p className="text-[10px] text-gray-400">{font.desc}</p>
+                                                </div>
+                                                <span
+                                                    className="text-xs text-gray-500 font-bold"
+                                                    style={{
+                                                        fontFamily: (font.value === 'playfair' || font.value === 'merriweather' || font.value === 'lora')
+                                                            ? 'Georgia, serif' : 'system-ui, sans-serif'
+                                                    }}
+                                                >Aa</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Button style */}
+                                <div className="border-t border-gray-100 pt-4">
+                                    <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Button style</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[
+                                            { value: 'rounded', label: 'Rounded', cls: 'rounded-lg' },
+                                            { value: 'pill', label: 'Pill', cls: 'rounded-full' },
+                                            { value: 'square', label: 'Square', cls: 'rounded-none' },
+                                        ].map(style => (
+                                            <button
+                                                key={style.value}
+                                                onClick={() => updateSetting('buttonStyle', style.value)}
+                                                className={`py-2 text-xs font-semibold border transition-all ${style.cls} ${
+                                                    (settings.buttonStyle || 'rounded') === style.value
+                                                        ? 'bg-[#0E2A38] text-white border-[#0E2A38]'
+                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                                                }`}
+                                            >
+                                                {style.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Info note */}
+                                <div className="bg-blue-50/60 border border-blue-100 rounded-lg p-2.5 flex items-start gap-2">
+                                    <Sliders size={12} className="text-blue-400 mt-0.5 shrink-0" />
+                                    <p className="text-[11px] text-blue-700 leading-relaxed">
+                                        Colour and font changes apply site-wide. Hit <strong>Publish changes</strong> to make them live.
+                                    </p>
                                 </div>
                             </div>
                         </SectionPanel>
