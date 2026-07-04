@@ -16,14 +16,14 @@ import { toast } from 'sonner';
 
 // Inject luxury fonts and bespoke design system styles
 const masterStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
-  
   .font-playfair {
     font-family: 'Playfair Display', Georgia, serif;
   }
-  
+
+  /* Body face unified with the rest of the app (Plus Jakarta Sans).
+     Class name kept as .font-inter to avoid churning every call site. */
   .font-inter {
-    font-family: 'Inter', -apple-system, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
   }
 
   .noise-grain {
@@ -70,19 +70,19 @@ const masterStyles = `
     background: rgba(255, 255, 255, 0.88);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1.5px solid rgba(197, 160, 89, 0.35);
-    box-shadow: 0 30px 70px rgba(11, 59, 43, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border: 1.5px solid rgba(201, 166, 70, 0.35);
+    box-shadow: 0 30px 70px rgba(14, 42, 56, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .glassmorphic-search:hover {
-    border-color: rgba(197, 160, 89, 0.55);
-    box-shadow: 0 35px 80px rgba(11, 59, 43, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    border-color: rgba(201, 166, 70, 0.55);
+    box-shadow: 0 35px 80px rgba(14, 42, 56, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   }
   .search-input-group {
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .search-input-group:focus-within {
-    background: rgba(197, 160, 89, 0.04);
+    background: rgba(201, 166, 70, 0.04);
   }
 
   .nav-link {
@@ -97,7 +97,7 @@ const masterStyles = `
     height: 1px;
     bottom: -4px;
     left: 0;
-    background-color: #C5A059;
+    background-color: #C9A646;
     transform-origin: bottom right;
     transition: transform 0.25s ease-out;
   }
@@ -119,15 +119,15 @@ const masterStyles = `
     width: 100%;
     height: 3px;
     cursor: pointer;
-    background: rgba(11, 60, 43, 0.1);
+    background: rgba(14, 42, 56, 0.1);
     border-radius: 2px;
   }
   .luxury-slider::-webkit-slider-thumb {
     height: 14px;
     width: 14px;
     border-radius: 50%;
-    background: #0B3B2B;
-    border: 2px solid #C5A059;
+    background: #0E2A38;
+    border: 2px solid #C9A646;
     cursor: pointer;
     -webkit-appearance: none;
     margin-top: -5px;
@@ -247,48 +247,48 @@ export default function LandingPage() {
   return (
     <div 
       ref={containerRef}
-      className="font-inter bg-[#FDFBF7] text-[#0A1612] min-h-screen antialiased selection:bg-[#C5A059] selection:text-white overflow-x-hidden"
+      className="font-inter bg-[#FDFBF7] text-[#0A1612] min-h-screen antialiased selection:bg-[#C9A646] selection:text-white overflow-x-hidden"
     >
       <div className="noise-grain" />
 
       {/* ── NAVBAR ────────────────────────────────────────── */}
-      <nav className="fixed top-4 left-4 right-4 md:left-6 md:right-6 bg-[#FDFBF7]/80 backdrop-blur-xl border border-[#C5A059]/20 z-50 transition-all duration-500 rounded-3xl shadow-[0_15px_40px_rgba(11,59,43,0.06)] max-w-7xl mx-auto">
+      <nav className="fixed top-4 left-4 right-4 md:left-6 md:right-6 bg-[#FDFBF7]/80 backdrop-blur-xl border border-[#C9A646]/20 z-50 transition-all duration-500 rounded-3xl shadow-[0_15px_40px_rgba(11,59,43,0.06)] max-w-7xl mx-auto">
         <div className="px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-12">
             <a href="/" className="flex items-center gap-2 group">
-              <span className="font-playfair text-xl font-bold tracking-widest text-[#0B3B2B]">
-                TRIP<span className="text-[#C5A059] font-extrabold">LOOPER</span>
+              <span className="font-playfair text-xl font-bold tracking-widest text-[#0E2A38]">
+                TRIP<span className="text-[#C9A646] font-extrabold">LOOPER</span>
               </span>
             </a>
             
-            <div className="hidden md:flex items-center gap-8 text-[11px] font-semibold tracking-widest text-[#0B3B2B]/75 uppercase">
-              <a href="#marketplace" className="nav-link hover:text-[#C5A059] transition-colors">Marketplace</a>
-              <a href="#categories" className="nav-link hover:text-[#C5A059] transition-colors">Categories</a>
-              <a href="#why-switch" className="nav-link hover:text-[#C5A059] transition-colors">Owner Story</a>
-              <a href="#os-diagram" className="nav-link hover:text-[#C5A059] transition-colors">The Platform</a>
-              <a href="#india-network" className="nav-link hover:text-[#C5A059] transition-colors">Our Network</a>
-              <a href="#pricing" className="nav-link hover:text-[#C5A059] transition-colors">Pricing</a>
+            <div className="hidden md:flex items-center gap-8 text-[11px] font-semibold tracking-widest text-[#0E2A38]/75 uppercase">
+              <a href="#marketplace" className="nav-link hover:text-[#C9A646] transition-colors">Marketplace</a>
+              <a href="#categories" className="nav-link hover:text-[#C9A646] transition-colors">Categories</a>
+              <a href="#why-switch" className="nav-link hover:text-[#C9A646] transition-colors">Owner Story</a>
+              <a href="#os-diagram" className="nav-link hover:text-[#C9A646] transition-colors">The Platform</a>
+              <a href="#india-network" className="nav-link hover:text-[#C9A646] transition-colors">Our Network</a>
+              <a href="#pricing" className="nav-link hover:text-[#C9A646] transition-colors">Pricing</a>
             </div>
           </div>
 
           <div className="hidden md:flex items-center gap-5">
             <button 
               onClick={() => navigate('/admin/login')}
-              className="text-[11px] font-bold tracking-widest uppercase text-[#0B3B2B]/75 hover:text-[#C5A059] transition-colors px-3 py-2"
+              className="text-[11px] font-bold tracking-widest uppercase text-[#0E2A38]/75 hover:text-[#C9A646] transition-colors px-3 py-2"
             >
               Sign In
             </button>
             <button 
               onClick={() => navigate('/signup')}
-              className="bg-[#0B3B2B] hover:bg-[#115C43] text-white font-bold text-[11px] tracking-widest uppercase px-6 py-3 rounded-2xl transition-all shadow-md shadow-[#0B3B2B]/10 active:scale-95 flex items-center gap-1.5 border border-[#C5A059]/10"
+              className="bg-[#0E2A38] hover:bg-[#123545] text-white font-bold text-[11px] tracking-widest uppercase px-6 py-3 rounded-2xl transition-all shadow-md shadow-[#0E2A38]/10 active:scale-95 flex items-center gap-1.5 border border-[#C9A646]/10"
             >
               <span>Join Triplooper</span>
-              <ArrowRight size={12} className="text-[#C5A059]" />
+              <ArrowRight size={12} className="text-[#C9A646]" />
             </button>
           </div>
 
           <button 
-            className="md:hidden text-[#0B3B2B]"
+            className="md:hidden text-[#0E2A38]"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -303,27 +303,27 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="md:hidden fixed inset-x-4 top-24 bg-[#FDFBF7]/95 backdrop-blur-xl border border-[#C5A059]/20 z-40 p-6 flex flex-col gap-6 rounded-3xl shadow-xl"
+            className="md:hidden fixed inset-x-4 top-24 bg-[#FDFBF7]/95 backdrop-blur-xl border border-[#C9A646]/20 z-40 p-6 flex flex-col gap-6 rounded-3xl shadow-xl"
           >
-            <a href="#marketplace" onClick={() => setMobileMenuOpen(false)} className="text-[#0B3B2B] font-bold text-lg">Marketplace</a>
-            <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="text-[#0B3B2B] font-bold text-lg">Categories</a>
-            <a href="#why-switch" onClick={() => setMobileMenuOpen(false)} className="text-[#0B3B2B] font-bold text-lg">Owner Story</a>
-            <a href="#os-diagram" onClick={() => setMobileMenuOpen(false)} className="text-[#0B3B2B] font-bold text-lg">The Platform</a>
-            <a href="#india-network" onClick={() => setMobileMenuOpen(false)} className="text-[#0B3B2B] font-bold text-lg">Our Network</a>
-            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-[#0B3B2B] font-bold text-lg">Pricing</a>
+            <a href="#marketplace" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Marketplace</a>
+            <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Categories</a>
+            <a href="#why-switch" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Owner Story</a>
+            <a href="#os-diagram" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">The Platform</a>
+            <a href="#india-network" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Our Network</a>
+            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Pricing</a>
             
-            <div className="h-px bg-[#C5A059]/10 my-1" />
+            <div className="h-px bg-[#C9A646]/10 my-1" />
             
             <div className="flex flex-col gap-3">
               <button 
                 onClick={() => { setMobileMenuOpen(false); navigate('/admin/login'); }}
-                className="w-full text-center py-3 text-[#0B3B2B] font-bold border border-[#C5A059]/20 rounded-xl"
+                className="w-full text-center py-3 text-[#0E2A38] font-bold border border-[#C9A646]/20 rounded-xl"
               >
                 Sign In
               </button>
               <button 
                 onClick={() => { setMobileMenuOpen(false); navigate('/signup'); }}
-                className="w-full text-center py-3 bg-[#0B3B2B] text-white font-extrabold rounded-xl"
+                className="w-full text-center py-3 bg-[#0E2A38] text-white font-extrabold rounded-xl"
               >
                 Join Triplooper
               </button>
@@ -350,9 +350,9 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#C5A059]/40 bg-[#FDFBF7]/90 text-[#0B3B2B] text-[10px] font-bold tracking-widest uppercase shadow-sm font-mono"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#C9A646]/40 bg-[#FDFBF7]/90 text-[#0E2A38] text-[10px] font-bold tracking-widest uppercase shadow-sm font-mono"
           >
-            <Award size={13} className="text-[#C5A059]" />
+            <Award size={13} className="text-[#C9A646]" />
             Hospitality Commerce Operating System
           </motion.div>
 
@@ -363,7 +363,7 @@ export default function LandingPage() {
             className="font-playfair text-4xl sm:text-6xl lg:text-7xl font-semibold text-white leading-[1.08] tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
           >
             Explore & book <span className="italic font-playfair font-normal text-[#FAF9F6] drop-shadow-md">boutique stays</span> <br />
-            directly from <span className="italic font-playfair font-normal text-[#C5A059] drop-shadow-md">local hosts.</span>
+            directly from <span className="italic font-playfair font-normal text-[#C9A646] drop-shadow-md">local hosts.</span>
           </motion.h1>
 
           <motion.p 
@@ -384,9 +384,9 @@ export default function LandingPage() {
           >
             <a 
               href="#marketplace"
-              className="bg-[#C5A059] hover:bg-[#b08b47] text-[#0B3B2B] font-extrabold text-xs tracking-widest uppercase px-8 py-3.5 rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-2 border border-[#C5A059]/10"
+              className="bg-[#C9A646] hover:bg-[#b08b47] text-[#0E2A38] font-extrabold text-xs tracking-widest uppercase px-8 py-3.5 rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-2 border border-[#C9A646]/10"
             >
-              <Search size={14} className="text-[#0B3B2B]" />
+              <Search size={14} className="text-[#0E2A38]" />
               <span>Book a Stay</span>
             </a>
             <button 
@@ -394,7 +394,7 @@ export default function LandingPage() {
               className="bg-white/10 hover:bg-white/20 text-white font-bold text-xs tracking-widest uppercase px-8 py-3.5 rounded-xl transition-all backdrop-blur-md border border-white/20 active:scale-95 flex items-center gap-2"
             >
               <span>Join Triplooper (Host Stays)</span>
-              <ArrowRight size={14} className="text-[#C5A059]" />
+              <ArrowRight size={14} className="text-[#C9A646]" />
             </button>
           </motion.div>
 
@@ -406,25 +406,25 @@ export default function LandingPage() {
             className="max-w-5xl mx-auto glassmorphic-search rounded-[28px] p-3 grid grid-cols-1 md:grid-cols-12 gap-3 text-left items-center relative font-inter"
           >
             {/* Destination */}
-            <div className="p-3 border-b md:border-b-0 md:border-r border-[#C5A059]/10 md:col-span-4 search-input-group rounded-2xl hover:bg-white/40">
-              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C5A059] block mb-1">Destination</span>
+            <div className="p-3 border-b md:border-b-0 md:border-r border-[#C9A646]/10 md:col-span-4 search-input-group rounded-2xl hover:bg-white/40">
+              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C9A646] block mb-1">Destination</span>
               <div className="flex items-center gap-2">
-                <Search size={14} className="text-[#0B3B2B] shrink-0" />
+                <Search size={14} className="text-[#0E2A38] shrink-0" />
                 <input 
                   type="text" 
                   placeholder="Where are you going?" 
                   value={searchDestination}
                   onChange={e => setSearchDestination(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-[#0B3B2B] placeholder-zinc-400 focus:outline-none w-full"
+                  className="bg-transparent text-xs font-bold text-[#0E2A38] placeholder-zinc-400 focus:outline-none w-full"
                 />
               </div>
             </div>
 
             {/* Check In */}
-            <div className="p-3 border-b md:border-b-0 md:border-r border-[#C5A059]/10 md:col-span-2 search-input-group rounded-2xl hover:bg-white/40">
-              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C5A059] block mb-1 font-mono">Check In</span>
+            <div className="p-3 border-b md:border-b-0 md:border-r border-[#C9A646]/10 md:col-span-2 search-input-group rounded-2xl hover:bg-white/40">
+              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C9A646] block mb-1 font-mono">Check In</span>
               <div className="flex items-center gap-2">
-                <Calendar size={14} className="text-[#0B3B2B] shrink-0" />
+                <Calendar size={14} className="text-[#0E2A38] shrink-0" />
                 <input 
                   type="date"
                   min={new Date().toISOString().split('T')[0]}
@@ -437,16 +437,16 @@ export default function LandingPage() {
                       setCheckOut(nextDay.toISOString().split('T')[0]);
                     }
                   }}
-                  className="bg-transparent text-xs font-bold text-[#0B3B2B] focus:outline-none w-full cursor-pointer"
+                  className="bg-transparent text-xs font-bold text-[#0E2A38] focus:outline-none w-full cursor-pointer"
                 />
               </div>
             </div>
 
             {/* Check Out */}
-            <div className="p-3 border-b md:border-b-0 md:border-r border-[#C5A059]/10 md:col-span-2 search-input-group rounded-2xl hover:bg-white/40">
-              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C5A059] block mb-1 font-mono">Check Out</span>
+            <div className="p-3 border-b md:border-b-0 md:border-r border-[#C9A646]/10 md:col-span-2 search-input-group rounded-2xl hover:bg-white/40">
+              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C9A646] block mb-1 font-mono">Check Out</span>
               <div className="flex items-center gap-2">
-                <Calendar size={14} className="text-[#0B3B2B] shrink-0" />
+                <Calendar size={14} className="text-[#0E2A38] shrink-0" />
                 <input 
                   type="date"
                   min={checkIn ? (() => {
@@ -456,20 +456,20 @@ export default function LandingPage() {
                   })() : new Date().toISOString().split('T')[0]}
                   value={checkOut}
                   onChange={e => setCheckOut(e.target.value)}
-                  className="bg-transparent text-xs font-bold text-[#0B3B2B] focus:outline-none w-full cursor-pointer"
+                  className="bg-transparent text-xs font-bold text-[#0E2A38] focus:outline-none w-full cursor-pointer"
                 />
               </div>
             </div>
 
             {/* Guests & Rooms */}
             <div 
-              className="p-3 border-b md:border-b-0 md:border-r border-[#C5A059]/10 md:col-span-2 relative cursor-pointer select-none search-input-group rounded-2xl hover:bg-white/40"
+              className="p-3 border-b md:border-b-0 md:border-r border-[#C9A646]/10 md:col-span-2 relative cursor-pointer select-none search-input-group rounded-2xl hover:bg-white/40"
               onClick={() => setGuestDropdownOpen(!guestDropdownOpen)}
             >
-              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C5A059] block mb-1">Guests & Rooms</span>
+              <span className="text-[9px] uppercase tracking-[0.1em] font-extrabold text-[#C9A646] block mb-1">Guests & Rooms</span>
               <div className="flex items-center gap-2">
-                <Users size={14} className="text-[#0B3B2B] shrink-0" />
-                <span className="text-xs font-bold text-[#0B3B2B] truncate">
+                <Users size={14} className="text-[#0E2A38] shrink-0" />
+                <span className="text-xs font-bold text-[#0E2A38] truncate">
                   {adults + children} Guests, {rooms} Room{rooms > 1 ? 's' : ''}
                 </span>
               </div>
@@ -482,11 +482,11 @@ export default function LandingPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
                     onClick={e => e.stopPropagation()}
-                    className="absolute top-full mt-3 left-0 right-0 md:left-auto md:-right-6 md:w-80 bg-white border border-[#C5A059]/25 rounded-3xl p-5 shadow-2xl z-50 text-left space-y-4 font-inter border-2 animate-in fade-in duration-200"
+                    className="absolute top-full mt-3 left-0 right-0 md:left-auto md:-right-6 md:w-80 bg-white border border-[#C9A646]/25 rounded-3xl p-5 shadow-2xl z-50 text-left space-y-4 font-inter border-2 animate-in fade-in duration-200"
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-xs font-bold text-[#0B3B2B]">Adults</p>
+                        <p className="text-xs font-bold text-[#0E2A38]">Adults</p>
                         <p className="text-[9px] text-zinc-400 font-light mt-0.5">Age 13 or above</p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -497,7 +497,7 @@ export default function LandingPage() {
                         >
                           -
                         </button>
-                        <span className="text-xs font-bold text-[#0B3B2B] w-4 text-center">{adults}</span>
+                        <span className="text-xs font-bold text-[#0E2A38] w-4 text-center">{adults}</span>
                         <button 
                           type="button"
                           onClick={() => setAdults(prev => prev + 1)}
@@ -510,7 +510,7 @@ export default function LandingPage() {
 
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-xs font-bold text-[#0B3B2B]">Children</p>
+                        <p className="text-xs font-bold text-[#0E2A38]">Children</p>
                         <p className="text-[9px] text-zinc-400 font-light mt-0.5">Age 0 - 12</p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -521,7 +521,7 @@ export default function LandingPage() {
                         >
                           -
                         </button>
-                        <span className="text-xs font-bold text-[#0B3B2B] w-4 text-center">{children}</span>
+                        <span className="text-xs font-bold text-[#0E2A38] w-4 text-center">{children}</span>
                         <button 
                           type="button"
                           onClick={() => setChildren(prev => prev + 1)}
@@ -534,7 +534,7 @@ export default function LandingPage() {
 
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-xs font-bold text-[#0B3B2B]">Rooms</p>
+                        <p className="text-xs font-bold text-[#0E2A38]">Rooms</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <button 
@@ -544,7 +544,7 @@ export default function LandingPage() {
                         >
                           -
                         </button>
-                        <span className="text-xs font-bold text-[#0B3B2B] w-4 text-center">{rooms}</span>
+                        <span className="text-xs font-bold text-[#0E2A38] w-4 text-center">{rooms}</span>
                         <button 
                           type="button"
                           onClick={() => setRooms(prev => prev + 1)}
@@ -558,7 +558,7 @@ export default function LandingPage() {
                     <button
                       type="button"
                       onClick={() => setGuestDropdownOpen(false)}
-                      className="w-full bg-[#0B3B2B] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 rounded-xl hover:bg-[#115C43] transition-colors"
+                      className="w-full bg-[#0E2A38] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 rounded-xl hover:bg-[#123545] transition-colors"
                     >
                       Apply
                     </button>
@@ -577,15 +577,15 @@ export default function LandingPage() {
                     el.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
-                className="w-full bg-[#0B3B2B] hover:bg-[#115C43] text-white text-[11px] font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-[#0B3B2B]/10 active:scale-98 cursor-pointer"
+                className="w-full bg-[#0E2A38] hover:bg-[#123545] text-white text-[11px] font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-[#0E2A38]/10 active:scale-98 cursor-pointer"
               >
-                <Search size={13} className="text-[#C5A059]" />
+                <Search size={13} className="text-[#C9A646]" />
                 <span>Search Stays</span>
               </button>
               <button 
                 type="button"
                 onClick={() => setIsPlannerOpen(true)}
-                className="w-full bg-gradient-to-r from-[#C5A059] to-[#B89535] hover:opacity-90 text-white text-[10px] font-bold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-1 shadow-md active:scale-98 cursor-pointer uppercase tracking-wider"
+                className="w-full bg-gradient-to-r from-[#C9A646] to-[#B08B47] hover:opacity-90 text-white text-[10px] font-bold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-1 shadow-md active:scale-98 cursor-pointer uppercase tracking-wider"
               >
                 <Sparkles size={11} />
                 <span>Plan with AI</span>
@@ -596,14 +596,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── SECTION 2: LIVE PROPERTY MARKETPLACE (Airbnb-Style, 20+ stays) ── */}
-      <section id="marketplace" className="py-24 luxury-paper-bg relative grid-light-sand border-t border-[#C5A059]/15">
+      <section id="marketplace" className="py-24 luxury-paper-bg relative grid-light-sand border-t border-[#C9A646]/15">
         <div className="max-w-7xl mx-auto px-6 space-y-12">
           
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-3 text-left">
-              <span className="text-[10px] text-[#C5A569] font-medium tracking-[0.25em] uppercase font-mono">Live Marketplace directory</span>
-              <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B] leading-none">
-                Explore stays powered by <span className="italic font-light text-[#C5A059]">TripLooper</span>
+              <span className="text-[10px] text-[#C9A646] font-medium tracking-[0.25em] uppercase font-mono">Live Marketplace directory</span>
+              <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0E2A38] leading-none">
+                Explore stays powered by <span className="italic font-light text-[#C9A646]">TripLooper</span>
               </h2>
               <p className="text-zinc-500 text-xs sm:text-sm font-light">
                 Secure direct checkout guaranteed. Every booking on these cards goes 100% direct to the stay operator.
@@ -618,8 +618,8 @@ export default function LandingPage() {
                   onClick={() => setActiveCategoryFilter(tab)}
                   className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
                     activeCategoryFilter === tab 
-                      ? 'border-[#0B3B2B] bg-[#0B3B2B] text-white shadow-md shadow-[#0B3B2B]/10' 
-                      : 'border-[#C5A059]/20 bg-[#FAF9F6] text-[#0B3B2B]/75 hover:border-[#0B3B2B]/35 hover:bg-white'
+                      ? 'border-[#0E2A38] bg-[#0E2A38] text-white shadow-md shadow-[#0E2A38]/10' 
+                      : 'border-[#C9A646]/20 bg-[#FAF9F6] text-[#0E2A38]/75 hover:border-[#0E2A38]/35 hover:bg-white'
                   }`}
                 >
                   {tab}
@@ -660,15 +660,15 @@ export default function LandingPage() {
                         toast.info(`Simulated: Redirecting to direct stay URL for ${p.name}`);
                       }
                     }}
-                    className="group bg-white border border-[#C5A059]/20 rounded-3xl overflow-hidden shadow-sm hover:shadow-[0_20px_50px_rgba(197,160,89,0.12)] hover:-translate-y-1.5 transition-all duration-350 flex flex-col md:flex-row md:col-span-2 cursor-pointer relative font-inter text-left"
+                    className="group bg-white border border-[#C9A646]/20 rounded-3xl overflow-hidden shadow-sm hover:shadow-[0_20px_50px_rgba(197,160,89,0.12)] hover:-translate-y-1.5 transition-all duration-350 flex flex-col md:flex-row md:col-span-2 cursor-pointer relative font-inter text-left"
                   >
                     {/* Visual Badge overlay */}
-                    <div className="absolute top-4 left-4 bg-gradient-to-r from-[#C5A059] to-[#B89535] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full z-10 border border-white/20 shadow-md">
+                    <div className="absolute top-4 left-4 bg-gradient-to-r from-[#C9A646] to-[#B08B47] text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full z-10 border border-white/20 shadow-md">
                       Featured Experience
                     </div>
 
                     {/* Image half */}
-                    <div className="relative w-full md:w-1/2 h-64 md:h-auto overflow-hidden bg-zinc-100 border-b md:border-b-0 md:border-r border-[#C5A059]/10">
+                    <div className="relative w-full md:w-1/2 h-64 md:h-auto overflow-hidden bg-zinc-100 border-b md:border-b-0 md:border-r border-[#C9A646]/10">
                       <img 
                         src={p.image} 
                         alt={p.name} 
@@ -689,17 +689,17 @@ export default function LandingPage() {
                       <div className="space-y-3.5">
                         <div className="flex justify-between items-start gap-2">
                           <div>
-                            <span className="text-[10px] text-[#C5A059] font-bold tracking-wide uppercase">{p.type} · {p.loc}</span>
-                            <h4 className="font-playfair text-xl font-extrabold text-[#0B3B2B] leading-snug group-hover:text-[#C5A059] transition-colors mt-0.5">{p.name}</h4>
+                            <span className="text-[10px] text-[#C9A646] font-bold tracking-wide uppercase">{p.type} · {p.loc}</span>
+                            <h4 className="font-playfair text-xl font-extrabold text-[#0E2A38] leading-snug group-hover:text-[#C9A646] transition-colors mt-0.5">{p.name}</h4>
                           </div>
                           
                           {/* Rating badge */}
-                          <div className="flex items-center gap-1.5 shrink-0 bg-[#0B3B2B]/5 px-2 py-1 rounded-xl border border-[#C5A059]/20">
+                          <div className="flex items-center gap-1.5 shrink-0 bg-[#0E2A38]/5 px-2 py-1 rounded-xl border border-[#C9A646]/20">
                             <div className="text-right">
-                              <span className="text-[10px] font-black text-[#0B3B2B] block leading-none">{ratingText}</span>
+                              <span className="text-[10px] font-black text-[#0E2A38] block leading-none">{ratingText}</span>
                               <span className="text-[8px] text-zinc-400 block font-light mt-0.5">{reviewCount} reviews</span>
                             </div>
-                            <div className="bg-[#0B3B2B] text-white font-extrabold text-[11px] w-7 h-7 rounded-lg border border-[#C5A059]/20 flex items-center justify-center shadow-sm">
+                            <div className="bg-[#0E2A38] text-white font-extrabold text-[11px] w-7 h-7 rounded-lg border border-[#C9A646]/20 flex items-center justify-center shadow-sm">
                               {p.rating}
                             </div>
                           </div>
@@ -710,7 +710,7 @@ export default function LandingPage() {
                           <img 
                             src={hostPhoto} 
                             alt={hostName} 
-                            className="w-5 h-5 rounded-full object-cover border border-[#C5A059]/30"
+                            className="w-5 h-5 rounded-full object-cover border border-[#C9A646]/30"
                           />
                           <span className="text-[10px] text-zinc-550 font-medium">Hosted by {hostName}</span>
                           <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
@@ -727,8 +727,8 @@ export default function LandingPage() {
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                             <span>Free Cancellation & Direct Messaging</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-[#C5A059] font-bold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#C5A059] shrink-0"></span>
+                          <div className="flex items-center gap-1.5 text-[#C9A646] font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#C9A646] shrink-0"></span>
                             <span>100% Direct Room Folio Invoicing</span>
                           </div>
                         </div>
@@ -739,13 +739,13 @@ export default function LandingPage() {
                         <div>
                           <span className="text-[10px] text-zinc-400 line-through block leading-none">₹{originalPrice.toLocaleString('en-IN')}</span>
                           <div className="flex items-baseline gap-1 mt-0.5">
-                            <span className="text-xl font-black text-[#0B3B2B] tracking-tight">₹{p.price.toLocaleString('en-IN')}</span>
+                            <span className="text-xl font-black text-[#0E2A38] tracking-tight">₹{p.price.toLocaleString('en-IN')}</span>
                             <span className="text-xs text-zinc-400 font-normal">/night</span>
                           </div>
                           <span className="text-[8px] text-zinc-400 block font-light mt-0.5">Includes taxes & fees</span>
                         </div>
 
-                        <button className="bg-[#0B3B2B] hover:bg-[#115C43] text-white text-xs font-bold uppercase tracking-wider py-3 px-5 rounded-2xl border border-[#C5A059]/20 transition-all duration-300 shadow-md">
+                        <button className="bg-[#0E2A38] hover:bg-[#123545] text-white text-xs font-bold uppercase tracking-wider py-3 px-5 rounded-2xl border border-[#C9A646]/20 transition-all duration-300 shadow-md">
                           Reserve Direct
                         </button>
                       </div>
@@ -765,10 +765,10 @@ export default function LandingPage() {
                       toast.info(`Simulated: Redirecting to direct stay URL for ${p.name}`);
                     }
                   }}
-                  className="group bg-white border border-[#C5A059]/15 rounded-3xl overflow-hidden shadow-sm hover:shadow-[0_20px_50px_rgba(11,59,43,0.06)] hover:-translate-y-1.5 transition-all duration-350 flex flex-col h-full cursor-pointer relative font-inter text-left"
+                  className="group bg-white border border-[#C9A646]/15 rounded-3xl overflow-hidden shadow-sm hover:shadow-[0_20px_50px_rgba(11,59,43,0.06)] hover:-translate-y-1.5 transition-all duration-350 flex flex-col h-full cursor-pointer relative font-inter text-left"
                 >
                   {/* Image banner */}
-                  <div className="relative aspect-[1.2] w-full overflow-hidden bg-zinc-100 border-b border-[#C5A059]/10">
+                  <div className="relative aspect-[1.2] w-full overflow-hidden bg-zinc-100 border-b border-[#C9A646]/10">
                     <img 
                       src={p.image} 
                       alt={p.name} 
@@ -784,7 +784,7 @@ export default function LandingPage() {
                     </button>
 
                     {/* Badge */}
-                    <span className="absolute bottom-3.5 left-3.5 bg-[#0B3B2B]/90 backdrop-blur-sm text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border border-[#C5A059]/30">
+                    <span className="absolute bottom-3.5 left-3.5 bg-[#0E2A38]/90 backdrop-blur-sm text-white text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border border-[#C9A646]/30">
                       {p.tag}
                     </span>
                   </div>
@@ -793,28 +793,28 @@ export default function LandingPage() {
                   <div className="p-4.5 flex-1 flex flex-col justify-between space-y-4">
                     <div className="space-y-2 text-left">
                       <div className="flex justify-between items-start gap-2">
-                        <h4 className="font-playfair text-base font-extrabold text-[#0B3B2B] leading-tight group-hover:text-[#C5A059] transition-colors line-clamp-1">{p.name}</h4>
+                        <h4 className="font-playfair text-base font-extrabold text-[#0E2A38] leading-tight group-hover:text-[#C9A646] transition-colors line-clamp-1">{p.name}</h4>
                         
                         {/* Booking.com Rating */}
                         <div className="flex items-center gap-1.5 shrink-0">
                           <div className="text-right">
-                            <span className="text-[10px] font-black text-[#0B3B2B] block leading-none">{ratingText}</span>
+                            <span className="text-[10px] font-black text-[#0E2A38] block leading-none">{ratingText}</span>
                             <span className="text-[8px] text-zinc-400 block font-light mt-0.5">{reviewCount} reviews</span>
                           </div>
-                          <div className="bg-[#0B3B2B] text-white font-extrabold text-[11px] w-7 h-7 rounded-lg border border-[#C5A059]/20 flex items-center justify-center shadow-sm">
+                          <div className="bg-[#0E2A38] text-white font-extrabold text-[11px] w-7 h-7 rounded-lg border border-[#C9A646]/20 flex items-center justify-center shadow-sm">
                             {p.rating}
                           </div>
                         </div>
                       </div>
                       
-                      <p className="text-[10px] text-[#C5A059] font-bold tracking-wide uppercase">{p.type} · {p.loc}</p>
+                      <p className="text-[10px] text-[#C9A646] font-bold tracking-wide uppercase">{p.type} · {p.loc}</p>
 
                       {/* Host details */}
                       <div className="flex items-center gap-2 pt-0.5">
                         <img 
                           src={hostPhoto} 
                           alt={hostName} 
-                          className="w-4 h-4 rounded-full object-cover border border-[#C5A059]/30"
+                          className="w-4 h-4 rounded-full object-cover border border-[#C9A646]/30"
                         />
                         <span className="text-[9px] text-zinc-555 font-light font-inter">Hosted by {hostName}</span>
                         <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
@@ -831,8 +831,8 @@ export default function LandingPage() {
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                           <span>No prepayment needed</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10px] text-[#C5A059] font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#C5A059] shrink-0"></span>
+                        <div className="flex items-center gap-1.5 text-[10px] text-[#C9A646] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#C9A646] shrink-0"></span>
                           <span>100% Direct to Host</span>
                         </div>
                       </div>
@@ -843,13 +843,13 @@ export default function LandingPage() {
                       <div className="space-y-0.5">
                         <span className="text-[9px] text-zinc-400 line-through block leading-none">₹{originalPrice.toLocaleString('en-IN')}</span>
                         <div className="flex items-baseline gap-0.5">
-                          <span className="text-base font-black text-[#0B3B2B] tracking-tight">₹{p.price.toLocaleString('en-IN')}</span>
+                          <span className="text-base font-black text-[#0E2A38] tracking-tight">₹{p.price.toLocaleString('en-IN')}</span>
                           <span className="text-[9px] text-zinc-400 font-normal">/night</span>
                         </div>
                         <span className="text-[8px] text-zinc-400 block font-light leading-none">Taxes & fees included</span>
                       </div>
                       
-                      <button className="bg-[#0B3B2B] hover:bg-[#115C43] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-3.5 rounded-xl border border-[#C5A059]/20 transition-all duration-300 shadow-sm shadow-[#0B3B2B]/5">
+                      <button className="bg-[#0E2A38] hover:bg-[#123545] text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-3.5 rounded-xl border border-[#C9A646]/20 transition-all duration-300 shadow-sm shadow-[#0E2A38]/5">
                         Book Direct
                       </button>
                     </div>
@@ -860,7 +860,7 @@ export default function LandingPage() {
           </div>
 
           {filteredProperties.length === 0 && (
-            <div className="text-center py-20 border border-dashed border-[#C5A059]/20 rounded-3xl bg-[#FAF9F6]">
+            <div className="text-center py-20 border border-dashed border-[#C9A646]/20 rounded-3xl bg-[#FAF9F6]">
               <span className="text-zinc-400 text-xs italic">No stays matching search keywords found in marketplace.</span>
             </div>
           )}
@@ -869,14 +869,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── SECTION 3: PROPERTY CATEGORIES ── */}
-      <section id="categories" className="py-24 bg-[#FDFBF7]/95 relative border-t border-[#C5A059]/15 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9F6]/50 via-[#C5A059]/2 to-[#FAF9F6]/50 pointer-events-none" />
+      <section id="categories" className="py-24 bg-[#FDFBF7]/95 relative border-t border-[#C9A646]/15 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF9F6]/50 via-[#C9A646]/2 to-[#FAF9F6]/50 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-6 space-y-12 relative z-10">
           
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-[10px] text-[#C5A569] font-medium tracking-[0.25em] uppercase font-mono">Stay configurations</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
-              Handcrafted for every <span className="italic font-light text-[#C5A059]">stay category</span>
+            <span className="text-[10px] text-[#C9A646] font-medium tracking-[0.25em] uppercase font-mono">Stay configurations</span>
+            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0E2A38]">
+              Handcrafted for every <span className="italic font-light text-[#C9A646]">stay category</span>
             </h2>
             <p className="text-sm text-zinc-500 font-light leading-relaxed">
               We sync inventory, bookings, and billing folios with optimized layouts for all property categories.
@@ -892,7 +892,7 @@ export default function LandingPage() {
             ].map((cat, idx) => (
               <div 
                 key={idx}
-                className="group relative h-[380px] rounded-[28px] overflow-hidden shadow-md border border-[#C5A059]/15 cursor-pointer"
+                className="group relative h-[380px] rounded-[28px] overflow-hidden shadow-md border border-[#C9A646]/15 cursor-pointer"
               >
                 <img src={cat.image} alt={cat.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
@@ -900,7 +900,7 @@ export default function LandingPage() {
                 <div className="absolute bottom-6 left-6 right-6 space-y-1.5 text-left">
                   <h4 className="font-playfair text-xl font-bold text-white leading-tight">{cat.title}</h4>
                   <p className="text-zinc-300 text-xs font-light">{cat.desc}</p>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#C5A059] uppercase tracking-widest pt-2.5">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#C9A646] uppercase tracking-widest pt-2.5">
                     Explore stays <ChevronRight size={10} />
                   </span>
                 </div>
@@ -912,13 +912,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── SECTION 8: PROPERTY SHOWCASE MASONRY GALLERY (Dream Travel Stays) ── */}
-      <section className="py-24 luxury-paper-bg border-t border-[#C5A059]/15 relative overflow-hidden">
+      <section className="py-24 luxury-paper-bg border-t border-[#C9A646]/15 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 space-y-12 relative z-10">
           
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-[10px] text-[#C5A569] font-medium tracking-[0.25em] uppercase font-mono">Luxe Stay Showcase</span>
-            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0B3B2B]">
-              Inspiring travel <span className="italic font-light text-[#C5A059]">desire</span>
+            <span className="text-[10px] text-[#C9A646] font-medium tracking-[0.25em] uppercase font-mono">Luxe Stay Showcase</span>
+            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0E2A38]">
+              Inspiring travel <span className="italic font-light text-[#C9A646]">desire</span>
             </h2>
             <p className="text-sm text-zinc-500 font-light">
               See the outstanding properties that trust TripLooper to coordinate their guest rooms.
@@ -928,34 +928,34 @@ export default function LandingPage() {
           {/* Masonry image stack grid with round-28px corners & hover zooms */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-4">
-              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+              <div className="overflow-hidden rounded-[28px] border border-[#C9A646]/15 shadow-sm group">
                 <img src="https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=600&q=80" alt="Resort" className="w-full aspect-[0.75] object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
-              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+              <div className="overflow-hidden rounded-[28px] border border-[#C9A646]/15 shadow-sm group">
                 <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80" alt="Suite Loft" className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
             </div>
             <div className="space-y-4 pt-8">
-              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+              <div className="overflow-hidden rounded-[28px] border border-[#C9A646]/15 shadow-sm group">
                 <img src="https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=600&q=80" alt="Cottage Valleys" className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
-              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+              <div className="overflow-hidden rounded-[28px] border border-[#C9A646]/15 shadow-sm group">
                 <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&q=80" alt="Lodge Orchard" className="w-full aspect-[1.3] object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
             </div>
             <div className="space-y-4">
-              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+              <div className="overflow-hidden rounded-[28px] border border-[#C9A646]/15 shadow-sm group">
                 <img src="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=600&q=80" alt="Beachfront House" className="w-full aspect-[1.1] object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
-              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+              <div className="overflow-hidden rounded-[28px] border border-[#C9A646]/15 shadow-sm group">
                 <img src="https://images.unsplash.com/photo-1512915922686-57c11dde9b6b?w=600&q=80" alt="Luxury Villa" className="w-full aspect-[0.7] object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
             </div>
             <div className="space-y-4 pt-6">
-              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+              <div className="overflow-hidden rounded-[28px] border border-[#C9A646]/15 shadow-sm group">
                 <img src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&q=80" alt="Mist resort" className="w-full aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
-              <div className="overflow-hidden rounded-[28px] border border-[#C5A059]/15 shadow-sm group">
+              <div className="overflow-hidden rounded-[28px] border border-[#C9A646]/15 shadow-sm group">
                 <img src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=600&q=80" alt="Farmhouse" className="w-full aspect-[1.2] object-cover transition-transform duration-700 group-hover:scale-105" />
               </div>
             </div>
@@ -967,20 +967,20 @@ export default function LandingPage() {
 
 
       {/* ── FOOTER ─────────────────────────────────────────── */}
-      <footer className="bg-[#0B3B2B] border-t border-[#C5A059]/30 pt-20 pb-12 text-xs text-zinc-300 relative z-10 font-inter">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-[#C5A059]/10">
+      <footer className="bg-[#0E2A38] border-t border-[#C9A646]/30 pt-20 pb-12 text-xs text-zinc-300 relative z-10 font-inter">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-[#C9A646]/10">
           
           {/* Logo & Description */}
           <div className="space-y-4 md:col-span-4 text-left">
             <span className="font-playfair text-xl font-bold tracking-widest text-white block font-inter">
-              TRIP<span className="text-[#C5A059]">LOOPER</span>
+              TRIP<span className="text-[#C9A646]">LOOPER</span>
             </span>
             <p className="leading-relaxed text-zinc-400 font-light max-w-sm">
               Collapsing fragmented pipelines into a single source of direct-booking truth. The direct commerce platform for independent luxury properties, villas, and boutique hotels.
             </p>
             <div className="flex gap-4.5 items-center pt-2">
               {/* Trust emblems */}
-              <span className="text-[9px] tracking-widest uppercase text-[#C5A059] border border-[#C5A059]/40 px-3 py-1.5 rounded-full font-mono font-bold">
+              <span className="text-[9px] tracking-widest uppercase text-[#C9A646] border border-[#C9A646]/40 px-3 py-1.5 rounded-full font-mono font-bold">
                 Condé Nast Partner
               </span>
               <span className="text-[9px] tracking-widest uppercase text-zinc-400 border border-zinc-700 px-3 py-1.5 rounded-full font-mono">
@@ -993,10 +993,10 @@ export default function LandingPage() {
           <div className="space-y-4 md:col-span-2 text-left">
             <h4 className="font-bold text-white uppercase tracking-wider text-[9px] font-mono">Luxe Locations</h4>
             <ul className="space-y-2.5 text-zinc-400 font-light">
-              <li><a href="#marketplace" onClick={() => setSearchDestination('Pondicherry')} className="hover:text-[#C5A059] transition-colors">Pondicherry Coast</a></li>
-              <li><a href="#marketplace" onClick={() => setSearchDestination('Ooty')} className="hover:text-[#C5A059] transition-colors">Ooty Pine Valleys</a></li>
-              <li><a href="#marketplace" onClick={() => setSearchDestination('Kodaikanal')} className="hover:text-[#C5A059] transition-colors">Kodaikanal Valley</a></li>
-              <li><a href="#marketplace" onClick={() => setSearchDestination('Madurai')} className="hover:text-[#C5A059] transition-colors">Madurai Heritage</a></li>
+              <li><a href="#marketplace" onClick={() => setSearchDestination('Pondicherry')} className="hover:text-[#C9A646] transition-colors">Pondicherry Coast</a></li>
+              <li><a href="#marketplace" onClick={() => setSearchDestination('Ooty')} className="hover:text-[#C9A646] transition-colors">Ooty Pine Valleys</a></li>
+              <li><a href="#marketplace" onClick={() => setSearchDestination('Kodaikanal')} className="hover:text-[#C9A646] transition-colors">Kodaikanal Valley</a></li>
+              <li><a href="#marketplace" onClick={() => setSearchDestination('Madurai')} className="hover:text-[#C9A646] transition-colors">Madurai Heritage</a></li>
             </ul>
           </div>
 
@@ -1004,10 +1004,10 @@ export default function LandingPage() {
           <div className="space-y-4 md:col-span-2 text-left">
             <h4 className="font-bold text-white uppercase tracking-wider text-[9px] font-mono">Platform</h4>
             <ul className="space-y-2.5 text-zinc-400 font-light">
-              <li><a href="#marketplace" className="hover:text-[#C5A059] transition-colors">Stays Directory</a></li>
-              <li><a href="/pricing" className="hover:text-[#C5A059] transition-colors">B2B Core System</a></li>
-              <li><a href="/signup" className="hover:text-[#C5A059] transition-colors">Partner Signup</a></li>
-              <li><a href="#" className="hover:text-[#C5A059] transition-colors">Owner Story</a></li>
+              <li><a href="#marketplace" className="hover:text-[#C9A646] transition-colors">Stays Directory</a></li>
+              <li><a href="/pricing" className="hover:text-[#C9A646] transition-colors">B2B Core System</a></li>
+              <li><a href="/signup" className="hover:text-[#C9A646] transition-colors">Partner Signup</a></li>
+              <li><a href="#" className="hover:text-[#C9A646] transition-colors">Owner Story</a></li>
             </ul>
           </div>
 
@@ -1022,11 +1022,11 @@ export default function LandingPage() {
                 type="email" 
                 required 
                 placeholder="Enter email address" 
-                className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-[#C5A059] transition-all placeholder-zinc-500"
+                className="w-full h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-4 text-xs font-bold text-white outline-none focus:border-[#C9A646] transition-all placeholder-zinc-500"
               />
               <button 
                 type="submit" 
-                className="w-full h-11 bg-[#C5A059] hover:bg-[#b08b47] text-[#0B3B2B] font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98"
+                className="w-full h-11 bg-[#C9A646] hover:bg-[#b08b47] text-[#0E2A38] font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98"
               >
                 Join Private Club
               </button>
@@ -1050,11 +1050,11 @@ export default function LandingPage() {
       <button
         type="button"
         onClick={() => setIsPlannerOpen(true)}
-        className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 bg-[#0B3B2B] hover:bg-[#115C43] text-white px-5 py-4 rounded-full border border-[#C5A059]/20 shadow-[0_10px_30px_rgba(11,59,43,0.3)] transition-all duration-300 font-bold text-xs uppercase tracking-wider font-mono hover:scale-105 active:scale-95 group cursor-pointer"
+        className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 bg-[#0E2A38] hover:bg-[#123545] text-white px-5 py-4 rounded-full border border-[#C9A646]/20 shadow-[0_10px_30px_rgba(11,59,43,0.3)] transition-all duration-300 font-bold text-xs uppercase tracking-wider font-mono hover:scale-105 active:scale-95 group cursor-pointer"
       >
         <div className="relative">
           <Calendar size={16} className="text-white shrink-0 group-hover:rotate-6 transition-transform" />
-          <Sparkles size={9} className="absolute -top-1 -right-1 text-[#C5A059] animate-bounce" />
+          <Sparkles size={9} className="absolute -top-1 -right-1 text-[#C9A646] animate-bounce" />
         </div>
         <span>Plan with AI</span>
       </button>
@@ -1119,7 +1119,7 @@ function ScrollStoryText({ scrollYProgress }: { scrollYProgress: any }) {
         transition={{ duration: 0.4 }}
         className="space-y-4 text-left"
       >
-        <span className="text-[10px] bg-[#C5A059]/10 text-[#C5A059] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border border-[#C5A059]/20">
+        <span className="text-[10px] bg-[#C9A646]/10 text-[#C9A646] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border border-[#C9A646]/20">
           {current.badge}
         </span>
         <h3 className="font-playfair text-2xl font-bold text-white">{current.title}</h3>
@@ -1263,13 +1263,13 @@ export function ExplodedDashboard() {
         className="w-[280px] sm:w-[320px] aspect-[1.7] bg-white/5 border border-white/10 p-5 rounded-2xl shadow-2xl relative z-10 flex flex-col justify-between backdrop-blur-md"
       >
         <div className="flex items-center gap-2 pb-2.5 border-b border-white/5">
-          <Database className="text-[#C5A059]" size={16} />
+          <Database className="text-[#C9A646]" size={16} />
           <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Master Database Core</span>
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-1">
             <span className="text-[18px] font-bold text-white tracking-tight">100% Synced</span>
-            <p className="text-[9px] text-[#C5A059] font-mono">11 stays coordinated</p>
+            <p className="text-[9px] text-[#C9A646] font-mono">11 stays coordinated</p>
           </div>
         </div>
         <div className="flex justify-between items-center text-[9px] text-zinc-500 pt-2 border-t border-white/5">
@@ -1290,7 +1290,7 @@ export function ExplodedDashboard() {
             <path 
               key={i}
               d={`M ${startX} ${startY} L ${targetX} ${targetY}`}
-              stroke="rgba(197, 160, 89, 0.2)"
+              stroke="rgba(201, 166, 70, 0.2)"
               strokeWidth="1.2"
               strokeDasharray="4, 4"
               fill="none"
@@ -1309,11 +1309,11 @@ export function ExplodedDashboard() {
             style={{
               transform: `translate3d(${m.x}px, ${m.y}px, 0px)`,
             }}
-            className="absolute w-[180px] bg-zinc-950/70 border border-white/10 p-4 rounded-xl shadow-xl z-20 flex gap-3 items-center backdrop-blur-md cursor-pointer hover:border-[#C5A059] transition-colors duration-300"
+            className="absolute w-[180px] bg-zinc-950/70 border border-white/10 p-4 rounded-xl shadow-xl z-20 flex gap-3 items-center backdrop-blur-md cursor-pointer hover:border-[#C9A646] transition-colors duration-300"
             onClick={() => toast.info(`Explored Module: ${m.name}`)}
           >
             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
-              <Icon className="text-[#C5A059]" size={16} />
+              <Icon className="text-[#C9A646]" size={16} />
             </div>
             <div className="text-left">
               <h4 className="text-[11px] font-bold text-white leading-tight">{m.name}</h4>
@@ -1343,36 +1343,36 @@ export function InteractiveBookingShowcase() {
   }, [roomType, days, extras]);
 
   return (
-    <div className="w-full max-w-[440px] bg-white border border-[#C5A059]/20 rounded-3xl p-5 shadow-xl relative text-left">
-      <div className="flex justify-between items-center pb-3.5 border-b border-[#C5A059]/10">
-        <span className="text-[10px] text-[#0B3B2B] font-extrabold uppercase tracking-widest">Anya Paradise Engine</span>
+    <div className="w-full max-w-[440px] bg-white border border-[#C9A646]/20 rounded-3xl p-5 shadow-xl relative text-left">
+      <div className="flex justify-between items-center pb-3.5 border-b border-[#C9A646]/10">
+        <span className="text-[10px] text-[#0E2A38] font-extrabold uppercase tracking-widest">Anya Paradise Engine</span>
         <span className="text-[10px] text-zinc-400">Secure Direct Checkout</span>
       </div>
 
       {step === 0 && (
         <div className="space-y-4 pt-4">
-          <label className="text-[10px] text-[#0B3B2B] uppercase font-black">Select Stay Category</label>
+          <label className="text-[10px] text-[#0E2A38] uppercase font-black">Select Stay Category</label>
           <div className="grid grid-cols-2 gap-3">
             {['Deluxe Villa', 'Luxury Suite'].map(c => (
               <button 
                 key={c}
                 onClick={() => setRoomType(c)}
-                className={`p-3 text-xs font-bold rounded-xl border text-left transition-all ${roomType === c ? 'border-[#0B3B2B] bg-[#0B3B2B]/5 text-[#0B3B2B]' : 'border-zinc-100 bg-[#FAF9F6] text-zinc-500'}`}
+                className={`p-3 text-xs font-bold rounded-xl border text-left transition-all ${roomType === c ? 'border-[#0E2A38] bg-[#0E2A38]/5 text-[#0E2A38]' : 'border-zinc-100 bg-[#FAF9F6] text-zinc-500'}`}
               >
                 {c}
-                <span className="block text-[10px] text-[#C5A059] font-normal mt-0.5">{c === 'Deluxe Villa' ? '₹4,500/N' : '₹7,500/N'}</span>
+                <span className="block text-[10px] text-[#C9A646] font-normal mt-0.5">{c === 'Deluxe Villa' ? '₹4,500/N' : '₹7,500/N'}</span>
               </button>
             ))}
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] text-[#0B3B2B] uppercase font-black">Stay Days</label>
+            <label className="text-[10px] text-[#0E2A38] uppercase font-black">Stay Days</label>
             <div className="flex items-center gap-3">
               {[2, 3, 5].map(d => (
                 <button
                   key={d}
                   onClick={() => setDays(d)}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg border text-center transition-all ${days === d ? 'border-[#0B3B2B] bg-[#0B3B2B]/5 text-[#0B3B2B]' : 'border-zinc-100 bg-[#FAF9F6] text-zinc-500'}`}
+                  className={`flex-1 py-2 text-xs font-bold rounded-lg border text-center transition-all ${days === d ? 'border-[#0E2A38] bg-[#0E2A38]/5 text-[#0E2A38]' : 'border-zinc-100 bg-[#FAF9F6] text-zinc-500'}`}
                 >
                   {d} Nights
                 </button>
@@ -1382,7 +1382,7 @@ export function InteractiveBookingShowcase() {
 
           <button 
             onClick={() => setStep(1)}
-            className="w-full bg-[#0B3B2B] hover:bg-[#115C43] text-white font-bold text-xs tracking-wider uppercase py-3.5 rounded-xl transition-all flex items-center justify-center gap-1.5"
+            className="w-full bg-[#0E2A38] hover:bg-[#123545] text-white font-bold text-xs tracking-wider uppercase py-3.5 rounded-xl transition-all flex items-center justify-center gap-1.5"
           >
             Configure add-ons <ArrowRight size={14} />
           </button>
@@ -1391,34 +1391,34 @@ export function InteractiveBookingShowcase() {
 
       {step === 1 && (
         <div className="space-y-4 pt-4">
-          <label className="text-[10px] text-[#0B3B2B] uppercase font-black">Add-on Experiences</label>
+          <label className="text-[10px] text-[#0E2A38] uppercase font-black">Add-on Experiences</label>
           <div className="space-y-2">
             <div 
               onClick={() => setExtras({ ...extras, spa: !extras.spa })}
-              className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${extras.spa ? 'border-[#0B3B2B] bg-[#0B3B2B]/5' : 'border-zinc-100 bg-[#FAF9F6]'}`}
+              className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${extras.spa ? 'border-[#0E2A38] bg-[#0E2A38]/5' : 'border-zinc-100 bg-[#FAF9F6]'}`}
             >
               <div>
-                <p className="text-xs font-bold text-[#0B3B2B]">Full Body Aromatherapy</p>
+                <p className="text-xs font-bold text-[#0E2A38]">Full Body Aromatherapy</p>
                 <p className="text-[9px] text-zinc-500">1 Session • Spa Wellness</p>
               </div>
-              <span className="text-xs font-bold text-[#C5A059]">+₹2,000</span>
+              <span className="text-xs font-bold text-[#C9A646]">+₹2,000</span>
             </div>
 
             <div 
               onClick={() => setExtras({ ...extras, dinner: !extras.dinner })}
-              className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${extras.dinner ? 'border-[#0B3B2B] bg-[#0B3B2B]/5' : 'border-zinc-100 bg-[#FAF9F6]'}`}
+              className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${extras.dinner ? 'border-[#0E2A38] bg-[#0E2A38]/5' : 'border-zinc-100 bg-[#FAF9F6]'}`}
             >
               <div>
-                <p className="text-xs font-bold text-[#0B3B2B]">Gourmet Dinner Package</p>
+                <p className="text-xs font-bold text-[#0E2A38]">Gourmet Dinner Package</p>
                 <p className="text-[9px] text-zinc-500">Buffet Dinners daily</p>
               </div>
-              <span className="text-xs font-bold text-[#C5A059]">+₹1,200/N</span>
+              <span className="text-xs font-bold text-[#C9A646]">+₹1,200/N</span>
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-3 border-t border-[#C5A059]/10">
+          <div className="flex justify-between items-center pt-3 border-t border-[#C9A646]/10">
             <span className="text-xs text-zinc-400 font-semibold">Total Amount</span>
-            <span className="text-lg font-black text-[#0B3B2B]">₹{price.toLocaleString('en-IN')}</span>
+            <span className="text-lg font-black text-[#0E2A38]">₹{price.toLocaleString('en-IN')}</span>
           </div>
 
           <div className="flex gap-3">
@@ -1433,7 +1433,7 @@ export function InteractiveBookingShowcase() {
                 toast.success(`Booking simulated! Direct folio total: ₹${price.toLocaleString('en-IN')}`);
                 setStep(0);
               }}
-              className="flex-1 bg-[#0B3B2B] text-white py-3 text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#115C43]"
+              className="flex-1 bg-[#0E2A38] text-white py-3 text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#123545]"
             >
               Checkout Direct
             </button>
@@ -1477,8 +1477,8 @@ export function InteractiveGuestJourney() {
   ];
 
   return (
-    <div className="w-full max-w-[520px] mx-auto bg-white border border-[#C5A059]/20 rounded-3xl p-6 shadow-md relative flex flex-col justify-between text-left">
-      <span className="text-[10px] text-[#C5A059] font-extrabold uppercase tracking-widest flex items-center gap-1.5 mb-6">
+    <div className="w-full max-w-[520px] mx-auto bg-white border border-[#C9A646]/20 rounded-3xl p-6 shadow-md relative flex flex-col justify-between text-left">
+      <span className="text-[10px] text-[#C9A646] font-extrabold uppercase tracking-widest flex items-center gap-1.5 mb-6">
         <Activity size={12} /> Guest Lifecycle logs
       </span>
 
@@ -1487,17 +1487,17 @@ export function InteractiveGuestJourney() {
           <div 
             key={idx}
             onClick={() => setActiveNode(idx)}
-            className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-4 ${activeNode === idx ? 'border-[#0B3B2B]/40 bg-[#0B3B2B]/5' : 'border-zinc-100 bg-[#FAF9F6]/40 hover:border-zinc-200'}`}
+            className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-4 ${activeNode === idx ? 'border-[#0E2A38]/40 bg-[#0E2A38]/5' : 'border-zinc-100 bg-[#FAF9F6]/40 hover:border-zinc-200'}`}
           >
             <div className="flex flex-col items-center shrink-0">
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${activeNode === idx ? 'bg-[#0B3B2B] text-white' : 'bg-zinc-100 text-zinc-400'}`}>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${activeNode === idx ? 'bg-[#0E2A38] text-white' : 'bg-zinc-100 text-zinc-400'}`}>
                 {idx + 1}
               </span>
               {idx < journey.length - 1 && <div className="w-px h-10 bg-zinc-100 mt-2" />}
             </div>
             <div>
               <div className="flex justify-between items-baseline gap-2">
-                <h4 className="text-xs font-bold text-[#0B3B2B] leading-none">{node.title}</h4>
+                <h4 className="text-xs font-bold text-[#0E2A38] leading-none">{node.title}</h4>
                 <span className="text-[9px] text-zinc-400 font-mono">{node.timestamp}</span>
               </div>
               {activeNode === idx && (
@@ -1542,10 +1542,10 @@ export function InteractivePOSShowcase() {
   };
 
   return (
-    <div className="w-full max-w-[440px] bg-white border border-[#C5A059]/20 rounded-3xl p-5 shadow-xl relative text-left">
-      <div className="flex justify-between items-center pb-3.5 border-b border-[#C5A059]/10">
-        <span className="text-[10px] text-[#0B3B2B] font-extrabold uppercase tracking-widest flex items-center gap-1">
-          <Coffee size={12} className="text-[#C5A059]" /> Table 04 POS Terminal
+    <div className="w-full max-w-[440px] bg-white border border-[#C9A646]/20 rounded-3xl p-5 shadow-xl relative text-left">
+      <div className="flex justify-between items-center pb-3.5 border-b border-[#C9A646]/10">
+        <span className="text-[10px] text-[#0E2A38] font-extrabold uppercase tracking-widest flex items-center gap-1">
+          <Coffee size={12} className="text-[#C9A646]" /> Table 04 POS Terminal
         </span>
         <span className="text-[9px] text-zinc-400">Room Folio Link: On</span>
       </div>
@@ -1555,7 +1555,7 @@ export function InteractivePOSShowcase() {
           <button
             key={i}
             onClick={() => addItem(m)}
-            className="p-3 text-[11px] font-bold text-zinc-650 border border-zinc-100 bg-[#FAF9F6] rounded-xl hover:border-[#0B3B2B]/30 hover:bg-[#0B3B2B]/2 text-left transition-colors"
+            className="p-3 text-[11px] font-bold text-zinc-650 border border-zinc-100 bg-[#FAF9F6] rounded-xl hover:border-[#0E2A38]/30 hover:bg-[#0E2A38]/2 text-left transition-colors"
           >
             {m.name}
             <span className="block text-[9px] text-zinc-400 font-normal mt-0.5">₹{m.price}</span>
@@ -1578,7 +1578,7 @@ export function InteractivePOSShowcase() {
               <div key={idx} className="flex justify-between items-center text-[11px]">
                 <span className="text-zinc-600 font-medium">{item.name}</span>
                 <div className="flex items-center gap-3">
-                  <span className="font-bold text-[#0B3B2B]">₹{item.price}</span>
+                  <span className="font-bold text-[#0E2A38]">₹{item.price}</span>
                   <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-300 font-black text-xs">×</button>
                 </div>
               </div>
@@ -1590,12 +1590,12 @@ export function InteractivePOSShowcase() {
           <>
             <div className="flex justify-between items-center text-xs pt-2 border-t border-zinc-100">
               <span className="text-zinc-450">Total POS charge</span>
-              <span className="font-black text-[#0B3B2B]">₹{total}</span>
+              <span className="font-black text-[#0E2A38]">₹{total}</span>
             </div>
             
             <button 
               onClick={sendOrder}
-              className="w-full bg-[#0B3B2B] text-white py-3 text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#115C43]"
+              className="w-full bg-[#0E2A38] text-white py-3 text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#123545]"
             >
               Print KOT & Charge Folio
             </button>
@@ -1633,19 +1633,19 @@ export function RevenueSimulator() {
   }, [rooms, adr, occupancy]);
 
   return (
-    <div className="bg-white border border-[#C5A059]/20 rounded-3xl p-6 md:p-8 grid md:grid-cols-12 gap-8 shadow-md text-left">
+    <div className="bg-white border border-[#C9A646]/20 rounded-3xl p-6 md:p-8 grid md:grid-cols-12 gap-8 shadow-md text-left">
       
       {/* Sliders Left */}
       <div className="md:col-span-7 space-y-6">
-        <h3 className="text-base font-bold text-[#0B3B2B] flex items-center gap-2 uppercase tracking-wider text-xs border-b border-zinc-100 pb-3">
-          <Calculator size={14} className="text-[#C5A059]" /> Adjust stay indicators
+        <h3 className="text-base font-bold text-[#0E2A38] flex items-center gap-2 uppercase tracking-wider text-xs border-b border-zinc-100 pb-3">
+          <Calculator size={14} className="text-[#C9A646]" /> Adjust stay indicators
         </h3>
         
         {/* Rooms Slider */}
         <div className="space-y-2">
           <div className="flex justify-between text-xs">
             <span className="text-zinc-400 font-medium">Total Keys / Rooms</span>
-            <span className="text-[#0B3B2B] font-bold">{rooms} Rooms</span>
+            <span className="text-[#0E2A38] font-bold">{rooms} Rooms</span>
           </div>
           <input
             type="range"
@@ -1661,7 +1661,7 @@ export function RevenueSimulator() {
         <div className="space-y-2">
           <div className="flex justify-between text-xs">
             <span className="text-zinc-400 font-medium">Average Daily Rate (ADR)</span>
-            <span className="text-[#0B3B2B] font-bold">₹{adr.toLocaleString('en-IN')}</span>
+            <span className="text-[#0E2A38] font-bold">₹{adr.toLocaleString('en-IN')}</span>
           </div>
           <input
             type="range"
@@ -1678,7 +1678,7 @@ export function RevenueSimulator() {
         <div className="space-y-2">
           <div className="flex justify-between text-xs">
             <span className="text-zinc-400 font-medium">Occupancy Ratio</span>
-            <span className="text-[#0B3B2B] font-bold">{occupancy}%</span>
+            <span className="text-[#0E2A38] font-bold">{occupancy}%</span>
           </div>
           <input
             type="range"
@@ -1692,16 +1692,16 @@ export function RevenueSimulator() {
       </div>
 
       {/* Calculations Right */}
-      <div className="md:col-span-5 bg-[#FAF9F6] border border-[#C5A059]/10 p-6 rounded-2xl flex flex-col justify-between space-y-6">
+      <div className="md:col-span-5 bg-[#FAF9F6] border border-[#C9A646]/10 p-6 rounded-2xl flex flex-col justify-between space-y-6">
         <div className="space-y-4 text-left">
           <div>
-            <span className="text-[9px] text-[#C5A059] uppercase tracking-widest font-extrabold">Estimated annual revenue</span>
-            <p className="text-2xl font-black text-[#0B3B2B] tracking-tight mt-0.5">
+            <span className="text-[9px] text-[#C9A646] uppercase tracking-widest font-extrabold">Estimated annual revenue</span>
+            <p className="text-2xl font-black text-[#0E2A38] tracking-tight mt-0.5">
               ₹<AnimatedNumber value={stats.annualBaseRevenue} />
             </p>
           </div>
 
-          <div className="pt-4 border-t border-[#C5A059]/10 flex justify-between items-center text-xs">
+          <div className="pt-4 border-t border-[#C9A646]/10 flex justify-between items-center text-xs">
             <span className="text-zinc-400">OTA Commission Leakage</span>
             <span className="font-semibold text-red-500">
               -₹<AnimatedNumber value={stats.otaCommissionsLost} />
@@ -1716,9 +1716,9 @@ export function RevenueSimulator() {
           </div>
         </div>
 
-        <div className="bg-[#0B3B2B]/5 border border-[#C5A059]/20 p-4.5 rounded-xl text-center space-y-1">
-          <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#0B3B2B]">Net direct channel savings</span>
-          <p className="text-xl font-black text-[#0B3B2B] tracking-tight">
+        <div className="bg-[#0E2A38]/5 border border-[#C9A646]/20 p-4.5 rounded-xl text-center space-y-1">
+          <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#0E2A38]">Net direct channel savings</span>
+          <p className="text-xl font-black text-[#0E2A38] tracking-tight">
             ₹<AnimatedNumber value={stats.directRecoveredSavings} />/yr
           </p>
         </div>
@@ -1768,19 +1768,19 @@ export function PricingPlan() {
     <div className="space-y-10 max-w-xl mx-auto">
       
       {/* Deluxe Package Card */}
-      <div className="relative bg-white border border-[#C5A059]/20 rounded-3xl p-8 shadow-md flex flex-col justify-between space-y-6 overflow-hidden">
-        <div className="absolute top-0 right-6 -translate-y-1/2 bg-[#C5A059] text-white font-extrabold text-[9px] uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md border border-[#FAF9F6]/20">
+      <div className="relative bg-white border border-[#C9A646]/20 rounded-3xl p-8 shadow-md flex flex-col justify-between space-y-6 overflow-hidden">
+        <div className="absolute top-0 right-6 -translate-y-1/2 bg-[#C9A646] text-white font-extrabold text-[9px] uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md border border-[#FAF9F6]/20">
           Commission Only
         </div>
 
         <div className="space-y-4 text-left">
           <div>
-            <h3 className="text-xl font-bold text-[#0B3B2B] tracking-tight">Full Enterprise Operating System</h3>
-            <p className="text-xs text-[#0B3B2B] mt-2 font-bold leading-normal">For a flat 12% commission, you get all of these premium features unlocked with zero upfront cost:</p>
+            <h3 className="text-xl font-bold text-[#0E2A38] tracking-tight">Full Enterprise Operating System</h3>
+            <p className="text-xs text-[#0E2A38] mt-2 font-bold leading-normal">For a flat 12% commission, you get all of these premium features unlocked with zero upfront cost:</p>
           </div>
 
           <div className="flex items-baseline gap-1 pt-2">
-            <span className="text-4xl font-black text-[#0B3B2B] tracking-tight">12%</span>
+            <span className="text-4xl font-black text-[#0E2A38] tracking-tight">12%</span>
             <span className="text-xs text-zinc-400">commission per booking</span>
           </div>
           
@@ -1801,7 +1801,7 @@ export function PricingPlan() {
               'Unlimited active room keys & staff accounts'
             ].map((f, i) => (
               <li key={i} className="flex gap-2.5 items-start">
-                <CheckCircle2 size={16} className="text-[#C5A059] shrink-0 mt-0.5" />
+                <CheckCircle2 size={16} className="text-[#C9A646] shrink-0 mt-0.5" />
                 <span>{f}</span>
               </li>
             ))}
@@ -1811,7 +1811,7 @@ export function PricingPlan() {
         <div className="space-y-3">
           <a
             href="/signup"
-            className="w-full bg-[#0B3B2B] hover:bg-[#115C43] text-white font-black h-13 rounded-2xl text-xs tracking-wider uppercase transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full bg-[#0E2A38] hover:bg-[#123545] text-white font-black h-13 rounded-2xl text-xs tracking-wider uppercase transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
           >
             <span>Get Started for Free</span>
             <ArrowRight size={14} />
@@ -1852,16 +1852,16 @@ export function HospitalityFAQ() {
       {faqs.map((faq, idx) => (
         <div 
           key={idx} 
-          className="border border-[#C5A059]/20 rounded-2xl bg-white shadow-sm overflow-hidden"
+          className="border border-[#C9A646]/20 rounded-2xl bg-white shadow-sm overflow-hidden"
         >
           <button
             onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
-            className="w-full px-6 py-4.5 text-left font-playfair font-bold text-sm sm:text-base text-[#0B3B2B] flex justify-between items-center hover:text-[#C5A059] transition-colors"
+            className="w-full px-6 py-4.5 text-left font-playfair font-bold text-sm sm:text-base text-[#0E2A38] flex justify-between items-center hover:text-[#C9A646] transition-colors"
           >
             <span>{faq.q}</span>
             <ChevronDown 
               size={18} 
-              className={`text-[#C5A059] transition-transform duration-350 ${openIndex === idx ? 'rotate-180' : ''}`} 
+              className={`text-[#C9A646] transition-transform duration-350 ${openIndex === idx ? 'rotate-180' : ''}`} 
             />
           </button>
           

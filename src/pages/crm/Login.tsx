@@ -89,21 +89,6 @@ export default function Login() {
   signInRef.current = signIn;
   signInLoadedRef.current = signInLoaded;
 
-  // Debugging: Log Clerk status and environment
-  React.useEffect(() => {
-    console.log('=== CLERK DEBUG INFO ===');
-    console.log('Environment:', import.meta.env.MODE);
-    console.log('Clerk Key exists:', !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-    console.log('Clerk Key (first 10 chars):', import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.substring(0, 10) + '...');
-    console.log('Clerk loaded:', clerk.loaded);
-    console.log('Clerk instance:', clerk);
-    console.log('SignIn loaded:', signInLoaded);
-    console.log('SignIn instance:', signIn);
-    console.log('Current URL:', window.location.href);
-    console.log('Current origin:', window.location.origin);
-    console.log('========================');
-  }, [clerk, signIn, signInLoaded]);
-
   // Auto-redirect if already logged in
   React.useEffect(() => {
     if (user) {
@@ -117,36 +102,20 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('=== LOGIN BUTTON CLICKED ===');
-    console.log('Email:', email);
-    console.log('Clerk status before login:', {
-      loaded: clerk.loaded,
-      signInLoaded: signInLoaded,
-      signIn: !!signIn
-    });
-    
     setError('');
     setIsLoading(true);
 
     const result = await login(email, password);
-    console.log('Login result:', result);
 
     if (result.error) {
       setError(result.error);
       setIsLoading(false);
     } else {
-      console.log('Login successful, navigating to dashboard');
       navigate('/admin/dashboard');
     }
   };
 
   const handleGoogleLogin = async () => {
-    console.log('=== GOOGLE LOGIN BUTTON CLICKED ===');
-    console.log('Current origin:', window.location.origin);
-    console.log('SignIn available:', !!signIn);
-    console.log('Clerk loaded:', clerk.loaded);
-    console.log('Clerk instance:', clerk);
-    
     setError('');
     setGoogleLoading(true);
     try {
@@ -158,9 +127,8 @@ export default function Login() {
           else if (Date.now() - start > 10000) { clearInterval(iv); resolve(false); }
         }, 100);
       });
-      
+
       if (!ready || !signIn) {
-        console.error('SignIn not ready after waiting');
         setError('Authentication service failed to load. Please refresh the page.');
         setGoogleLoading(false);
         return;
@@ -168,7 +136,6 @@ export default function Login() {
 
       // Check if Google OAuth is configured
       if (!clerk.loaded) {
-        console.error('Clerk not loaded');
         setError('Authentication service not ready. Please wait a moment and try again.');
         setGoogleLoading(false);
         return;
@@ -187,11 +154,7 @@ export default function Login() {
         const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
         return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
       })();
-      
-      console.log('Apex origin calculated:', apexOrigin);
-      console.log('Redirect URL:', `${apexOrigin}/admin/dashboard`);
-      console.log('Callback URL:', `${apexOrigin}/sso-callback`);
-      
+
       // Try alternative approach if main one fails
       try {
         await signIn.sso({
@@ -200,8 +163,6 @@ export default function Login() {
           redirectCallbackUrl: `${apexOrigin}/sso-callback`,
         });
       } catch (ssoError: any) {
-        console.error('SSO error, trying alternative:', ssoError);
-        
         // Alternative: Use Clerk's built-in OAuth
         if (clerk.openSignIn) {
           await clerk.openSignIn({
@@ -212,13 +173,6 @@ export default function Login() {
         }
       }
     } catch (err: any) {
-      console.error('Google login error details:', {
-        message: err?.message,
-        errors: err?.errors,
-        status: err?.status,
-        code: err?.code
-      });
-      
       // User-friendly error messages
       let errorMessage = 'Google sign in failed.';
       if (err?.code === 'oauth_provider_not_configured') {
@@ -264,11 +218,11 @@ export default function Login() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <h1 className="text-[36px] md:text-[48px] font-extrabold text-[#F7F4EF] leading-tight mb-2 tracking-tight">
-              Hospitality<span className="text-[#C9A646]">OS</span>
+            <h1 className="font-playfair text-[36px] md:text-[48px] font-black text-[#F7F4EF] leading-tight mb-2 tracking-tight">
+              TRIP<span className="text-[#C9A646]">LOOPER</span>
             </h1>
             <h2 className="text-[#AAB8C5] font-light text-[18px] md:text-[22px] tracking-wide mb-8">
-              Hotel & Restaurant Management Platform
+              Hotel & Restaurant Operations Portal
             </h2>
 
             <p className="text-[#AAB8C5] text-[15px] max-w-[400px] leading-relaxed mb-12 font-light">
@@ -307,12 +261,12 @@ export default function Login() {
             to="/"
             className="text-[12px] md:text-[13px] font-medium text-[#C9A646] hover:text-[#F7F4EF] tracking-wide text-left transition-colors self-start"
           >
-            ← Back to HospitalityOS.com
+            ← Back to triplooper.com
           </Link>
 
           <div className="pt-6 border-t border-[#AAB8C5]/10">
             <p className="text-[10px] md:text-[11px] font-semibold text-[#AAB8C5] tracking-[0.2em] uppercase leading-relaxed text-left opacity-60 m-0">
-              &copy; 2026 HospitalityOS<br />
+              &copy; {new Date().getFullYear()} Triplooper<br />
               Secure hotel and restaurant infrastructure
             </p>
           </div>
@@ -330,7 +284,7 @@ export default function Login() {
           <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/5 pointer-events-none" />
 
           <div className="mb-10">
-            <h2 className="text-[28px] font-bold text-[#F7F4EF] tracking-tight m-0">
+            <h2 className="font-playfair text-[30px] font-bold text-[#F7F4EF] tracking-tight m-0">
               Welcome back
             </h2>
             <p className="text-[#AAB8C5] mt-2 text-[14px] font-light tracking-wide m-0">
@@ -339,21 +293,6 @@ export default function Login() {
           </div>
 
           <form className="space-y-5" onSubmit={handleLogin}>
-            {/* Debug Panel - Only show in development */}
-            {import.meta.env.DEV && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-3 rounded-lg text-[11px] font-mono"
-              >
-                <div className="font-bold mb-1">Debug Info:</div>
-                <div>Clerk Loaded: {clerk.loaded ? '✅' : '❌'}</div>
-                <div>SignIn Ready: {signInLoaded ? '✅' : '❌'}</div>
-                <div>Env Key: {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ? '✅' : '❌'}</div>
-                <div className="text-xs opacity-70 mt-1">Check console for details</div>
-              </motion.div>
-            )}
-
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -383,7 +322,12 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
               />
               <div className="flex justify-start px-1">
-                <a href="#" className="text-[12px] font-medium text-[#AAB8C5] hover:text-[#F7F4EF] transition-colors duration-200">
+                <a
+                  href="https://wa.me/919345244727?text=Hi%2C%20I%20need%20help%20resetting%20my%20Triplooper%20password"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[12px] font-medium text-[#AAB8C5] hover:text-[#F7F4EF] transition-colors duration-200"
+                >
                   Forgot password?
                 </a>
               </div>
@@ -431,7 +375,7 @@ export default function Login() {
               whileTap={{ scale: 0.98 }}
               className="w-full py-3 rounded-lg border border-[#C9A646]/30 bg-[#C9A646]/5 hover:bg-[#C9A646]/10 text-[#C9A646] text-sm font-semibold tracking-wide transition-all shadow-sm"
             >
-              🚀 Try Demo Experience (Instant Access)
+              Try the demo — instant access
             </motion.button>
             <p className="mt-3 text-[11px] text-[#AAB8C5]/50 text-center uppercase tracking-widest font-medium">
               No account required for demo
