@@ -3,8 +3,9 @@
 // Inspired by Stripe, Airbnb, Linear, Notion
 // ═══════════════════════════════════════════════════════════════════
 
-const RESEND_API_KEY = import.meta.env.VITE_RESENDAPIKEY as string;
-const RESEND_URL = 'https://api.resend.com/emails';
+// WEB-001: the Resend API key must NEVER be in the browser. Email is sent only
+// via the server proxy (api/send-email.ts on Vercel / local express), which
+// holds RESEND_API_KEY server-side. No VITE_RESENDAPIKEY, no direct browser call.
 const FROM = import.meta.env.VITE_RESEND_FROM || 'Triplooper <onboarding@resend.dev>';
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -104,48 +105,21 @@ async function sendResendEmail(to: string, subject: string, html: string): Promi
       ? 'http://localhost:3001/api/send-email'
       : '/api/send-email';
 
-    // 1. Try server-side proxy (local express or Vercel serverless)
-    try {
-      const serverRes = await fetch(emailEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to, subject, html, from: FROM })
-      });
-      if (serverRes.ok) {
-        console.log(`[Triplooper Email] Sent via ${isLocalDev ? 'local' : 'serverless'} proxy`);
-        return true;
-      }
-      const errBody = await serverRes.json().catch(() => ({}));
-      console.error('[Triplooper Email] Server proxy failed:', errBody);
-    } catch (e) {
-      console.warn('[Triplooper Email] Server proxy unreachable, trying direct...');
-    }
-
-    // 2. Direct Resend API fallback (may fail due to CORS in browser)
-    if (!RESEND_API_KEY) {
-      console.warn('[Triplooper Email] No API key for direct fetch');
-      return false;
-    }
-
-    const res = await fetch(RESEND_URL, {
+    // Send ONLY via the server-side proxy (local express or Vercel serverless),
+    // which holds the Resend key. No browser-side Resend fallback (WEB-001).
+    const serverRes = await fetch(emailEndpoint, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from: FROM, to: [to], subject, html }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, html, from: FROM })
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.error('[Triplooper Email] Direct Resend failed:', err);
-      return false;
+    if (serverRes.ok) {
+      return true;
     }
-
-    console.log('[Triplooper Email] Sent directly');
-    return true;
+    const errBody = await serverRes.json().catch(() => ({}));
+    console.error('[Triplooper Email] Server proxy failed:', errBody);
+    return false;
   } catch (err) {
-    console.error('[Triplooper Email] Unexpected error:', err);
+    console.error('[Triplooper Email] Email send error:', err);
     return false;
   }
 }

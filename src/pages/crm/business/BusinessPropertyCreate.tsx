@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { supabase } from '../../../lib/supabaseClient';
+import { supabase, supabaseAuth } from '../../../lib/supabaseClient';
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { generateSubdomain } from '../../../lib/booking';
@@ -155,7 +155,7 @@ export default function BusinessPropertyCreate() {
       }
 
       // 3. Create Supabase auth user for the property owner
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabaseAuth.auth.signUp({
         email: ownerEmail.trim(),
         password: ownerPassword,
         options: {

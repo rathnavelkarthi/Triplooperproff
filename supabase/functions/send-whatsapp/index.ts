@@ -1,17 +1,41 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// WEB-008: restrict CORS to known origins instead of "*".
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ||
+  "https://triplooper.com,https://www.triplooper.com")
+  .split(",").map((s) => s.trim());
+
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") || "";
+  const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
+
+// ⚠️ WEB-005 (partial): this function is invoked by BOTH authenticated CRM staff
+// (arbitrary recipient) AND the PUBLIC trip-planner lead flow (submitLead.ts),
+// which sends to a live tenant's own WhatsApp. Because of the public path we do
+// NOT require caller-owns-tenant here. Remaining abuse risk: an attacker can
+// trigger messages via any tenant's Evolution instance to arbitrary numbers.
+// RECOMMENDED follow-up (needs product decision — see WEBAPP-PENTEST-REPORT.md):
+//   * Split into two functions: authenticated `send-whatsapp` (verify_jwt + caller
+//     tenant check) and public `send-lead-whatsapp` (recipient constrained to the
+//     tenant's own number + rate limited), OR
+//   * Add per-tenant/per-IP rate limiting + recipient allowlist for the public path.
 
 const DEFAULT_EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "";
 const DEFAULT_EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") || "";
 
+// Set per-request in serve() so json() emits the correct CORS origin.
+let activeCors: Record<string, string> = {};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...activeCors, "Content-Type": "application/json" },
     status,
   });
 }
@@ -22,6 +46,8 @@ function normalizePhone(raw: string): string {
 }
 
 serve(async (req) => {
+  const corsHeaders = corsFor(req);
+  activeCors = corsHeaders;
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }

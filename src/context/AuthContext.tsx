@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
-import { useUser, useClerk, useSignIn, useSignUp } from '@clerk/react';
-import { supabase } from '../lib/supabaseClient';
+import { useUser, useClerk, useSignIn, useSignUp, useSession } from '@clerk/react';
+import { supabase, supabaseAuth, setSupabaseTokenGetter } from '../lib/supabaseClient';
 import { supabaseAdmin } from '../lib/supabaseAdmin';
 import { generateSubdomain, hasPermission as checkPermission, DEMO_EMAIL } from '../lib/booking';
 import { Session } from '@supabase/supabase-js';
@@ -78,6 +78,7 @@ const ACTIVE_PROPERTY_KEY = 'active_property_id';
 
 function AuthProviderInner({ children }: { children: ReactNode }) {
   const { user: clerkUser, isLoaded: userLoaded } = useUser();
+  const { session: clerkSession } = useSession();
   const clerk = useClerk();
   const { signIn, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, fetchStatus: signUpFetchStatus } = useSignUp();
@@ -429,16 +430,37 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 1. Supabase Auth Listener
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseAuth.auth.getSession().then(({ data: { session } }) => {
       setSupabaseSession(session);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabaseAuth.auth.onAuthStateChange((_event, session) => {
       setSupabaseSession(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // 1b. Register the Clerk session token with the Supabase client so RLS can
+  // scope by the Clerk user id (auth.jwt() ->> 'sub'). See supabaseClient.ts.
+  //
+  // ⚠️ Staff accounts authenticate via Supabase Auth (signInWithPassword). The
+  // supabase-js `accessToken` option takes precedence over the built-in session,
+  // so we fall back to the Supabase session token when there is no Clerk session,
+  // keeping staff login working until staff are migrated to Clerk or moved to a
+  // dedicated client. See docs/CLERK-SUPABASE-SETUP.md.
+  useEffect(() => {
+    setSupabaseTokenGetter(async () => {
+      if (clerkSession) {
+        try {
+          const t = await clerkSession.getToken();
+          if (t) return t;
+        } catch { /* fall through to supabase session */ }
+      }
+      return supabaseSession?.access_token ?? null;
+    });
+    return () => setSupabaseTokenGetter(null);
+  }, [clerkSession, supabaseSession]);
 
   useEffect(() => {
     // 2. Main Auth Resolution Logic
@@ -525,7 +547,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       }
 
       // Fallback to Supabase (for staff)
-      const { data, error: sError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error: sError } = await supabaseAuth.auth.signInWithPassword({ email, password });
       if (sError) {
         setLoading(false);
         return { error: sError.message };
@@ -632,7 +654,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       if (user?.type === 'CLERK') {
         await clerk.signOut();
       } else {
-        await supabase.auth.signOut();
+        await supabaseAuth.auth.signOut();
         setSupabaseSession(null);
       }
     } catch (e) {

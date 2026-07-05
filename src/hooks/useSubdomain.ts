@@ -1,6 +1,13 @@
 export function getSubdomain() {
     const hostname = window.location.hostname;
     console.log('[useSubdomain] Current hostname:', hostname);
+    
+    // Check if hostname is an IP address (e.g., 127.0.0.1)
+    const isIP = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(hostname);
+    if (isIP) {
+        return null;
+    }
+
     const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
 
     // Ignore common non-tenant subdomains

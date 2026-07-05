@@ -4,6 +4,17 @@ import { useAuth } from '../../context/AuthContext';
 import { useClerk, useSignIn } from '@clerk/react';
 import { motion } from 'motion/react';
 
+/* ─────────────────────────────────────────────────────────────
+   Imagery — served from the Unsplash CDN (same external-CDN model
+   the app already uses for Clerk / Supabase / Google Fonts).
+   ───────────────────────────────────────────────────────────── */
+const U = (id: string, w = 1400) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+
+const BRAND_IMG = U('1571003123894-1f0594d2b5d9', 1400); // luxury resort pool at dusk
+const GRAIN =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
+
 // --- Reusable Input Component ---
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -25,6 +36,12 @@ const EyeOffIcon = () => (
   </svg>
 );
 
+const StarIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.783 1.401 8.168L12 18.896l-7.335 3.868 1.401-8.168L.132 9.21l8.2-1.192z" />
+  </svg>
+);
+
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className = "", label, type = "text", ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +54,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           type={currentType}
           id={props.id || label}
-          className={`peer w-full bg-[#0E2A38]/30 border border-[#AAB8C5]/20 rounded-lg px-4 pt-6 pb-2 text-[#F7F4EF] placeholder-transparent outline-none transition-all duration-300 focus:border-[#0E2A38] focus:bg-[#0E2A38]/50 focus:ring-1 focus:ring-[#2E7D5B]/40 hover:border-[#AAB8C5]/40 shadow-inner hover:-translate-y-[1px] ${className}`}
+          className={`peer w-full bg-[#0E2A38]/30 border border-[#AAB8C5]/20 rounded-lg px-4 pt-6 pb-2 text-[#F7F4EF] placeholder-transparent outline-none transition-all duration-300 focus:border-[#C9A646]/50 focus:bg-[#0E2A38]/50 focus:ring-1 focus:ring-[#C9A646]/40 hover:border-[#AAB8C5]/40 shadow-inner hover:-translate-y-[1px] ${className}`}
           placeholder={label}
           {...props}
         />
@@ -166,7 +183,8 @@ export default function Login() {
         // Alternative: Use Clerk's built-in OAuth
         if (clerk.openSignIn) {
           await clerk.openSignIn({
-            redirectUrl: `${apexOrigin}/admin/dashboard`,
+            forceRedirectUrl: `${apexOrigin}/admin/dashboard`,
+            fallbackRedirectUrl: `${apexOrigin}/admin/dashboard`,
           });
         } else {
           throw ssoError;
@@ -182,7 +200,7 @@ export default function Login() {
       } else if (err?.errors?.[0]?.message) {
         errorMessage = err.errors[0].message;
       }
-      
+
       setError(errorMessage);
       setGoogleLoading(false);
     }
@@ -195,95 +213,141 @@ export default function Login() {
     setTimeout(() => navigate('/admin/dashboard'), 500);
   };
 
+  const features = [
+    'Real-time reservation sync',
+    'Multi-role access control',
+    'Direct billing and invoicing',
+    'Your own website and subdomain',
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className="min-h-screen w-full flex flex-col md:flex-row bg-[#0C2230] relative overflow-hidden font-sans selection:bg-[#2E7D5B]/30"
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+      className="min-h-screen w-full flex flex-col md:flex-row bg-[#071A24] relative overflow-hidden font-sans selection:bg-[#C9A646]/30"
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0E2A38] to-[#071A24] z-0" />
-      <div
-        className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none z-0"
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
-      />
-      <div className="absolute right-0 md:right-[5%] top-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#0E2A38] rounded-full blur-[100px] opacity-40 pointer-events-none z-0" />
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+      <link rel="preconnect" href="https://images.unsplash.com" />
 
-      {/* LEFT SIDE (BRAND PANEL) */}
-      <div className="relative z-10 w-full md:w-[45%] p-8 md:p-16 lg:px-24 flex flex-col justify-center border-b md:border-b-0 md:border-r border-[#AAB8C5]/5 h-auto md:h-full order-2 md:order-1 min-h-[50vh] md:min-h-screen">
-        <div className="flex-1 flex flex-col justify-center">
+      {/* ────────── LEFT: CINEMATIC BRAND PANEL ────────── */}
+      <div className="relative w-full md:w-[48%] lg:w-[52%] order-2 md:order-1 min-h-[55vh] md:min-h-screen overflow-hidden">
+        {/* Photograph + brand scrims */}
+        <div className="absolute inset-0">
+          <motion.img
+            src={BRAND_IMG}
+            alt="A luxury resort at dusk"
+            className="w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+            initial={{ scale: 1.08 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 8, ease: 'easeOut' }}
+          />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(8,27,38,0.62) 0%, rgba(14,42,56,0.80) 55%, rgba(7,26,36,0.94) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(8,27,38,0.30) 0%, rgba(8,27,38,0.55) 100%)' }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(75% 60% at 15% 12%, rgba(201,166,70,0.22) 0%, transparent 55%)' }} />
+          <div className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-[0.10]" style={{ backgroundImage: GRAIN, backgroundSize: '140px 140px' }} />
+        </div>
+
+        <div className="relative z-10 h-full p-8 md:p-14 lg:px-20 flex flex-col justify-between min-h-[55vh] md:min-h-screen">
+          {/* Top: wordmark + tagline */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.8, delay: 0.15 }}
           >
-            <h1 className="font-playfair text-[36px] md:text-[48px] font-black text-[#F7F4EF] leading-tight mb-2 tracking-tight">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.16em] mb-8 border" style={{ borderColor: 'rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.08)', color: '#C9A646', backdropFilter: 'blur(6px)' }}>
+              Operations Portal
+            </span>
+            <h1 className="font-playfair text-[38px] md:text-[46px] lg:text-[54px] font-black text-[#F7F4EF] leading-[1.02] tracking-tight mb-3">
               TRIP<span className="text-[#C9A646]">LOOPER</span>
             </h1>
-            <h2 className="text-[#AAB8C5] font-light text-[18px] md:text-[22px] tracking-wide mb-8">
-              Hotel & Restaurant Operations Portal
-            </h2>
-
-            <p className="text-[#AAB8C5] text-[15px] max-w-[400px] leading-relaxed mb-12 font-light">
-              Manage your property, bookings, inventory, billing, and team from one system.
+            <p className="text-[#D9E0E5]/85 font-light text-[17px] md:text-[19px] tracking-wide max-w-[420px] leading-relaxed">
+              Manage your property, bookings, inventory, billing, and team — from one refined system.
             </p>
+          </motion.div>
 
-            <ul className="space-y-6 text-[#F7F4EF]">
-              {[
-                "Real-time reservation sync",
-                "Multi-role access control",
-                "Direct billing and invoicing",
-                "Your own website and subdomain"
-              ].map((feature, i) => (
-                <motion.li
-                  key={feature}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + (i * 0.1), duration: 0.6, ease: "easeOut" }}
-                  className="flex items-center space-x-4 group"
-                >
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#0E2A38] border border-[#AAB8C5]/30 group-hover:bg-[#C9A646] group-hover:border-[#C9A646] transition-colors duration-300" />
-                  <span className="text-[14px] md:text-[15px] font-normal tracking-wide text-[#AAB8C5] group-hover:text-[#F7F4EF] transition-colors duration-300">{feature}</span>
-                </motion.li>
-              ))}
-            </ul>
+          {/* Middle: feature list */}
+          <motion.ul
+            className="my-10 space-y-4 max-w-[400px]"
+            initial="hidden"
+            animate="show"
+          >
+            {features.map((feature, i) => (
+              <motion.li
+                key={feature}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + i * 0.1, duration: 0.6, ease: 'easeOut' }}
+                className="flex items-center gap-3.5 group"
+              >
+                <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 border transition-colors duration-300" style={{ background: 'rgba(201,166,70,0.12)', borderColor: 'rgba(201,166,70,0.4)' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C9A646" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                </span>
+                <span className="text-[14px] md:text-[15px] font-normal tracking-wide text-[#D9E0E5]/85 group-hover:text-[#F7F4EF] transition-colors duration-300">{feature}</span>
+              </motion.li>
+            ))}
+          </motion.ul>
+
+          {/* Bottom: floating glass proof-card + footer */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.85, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col gap-6"
+          >
+            <div className="rounded-2xl border p-5 max-w-[420px]" style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(12px)' }}>
+              <div className="flex items-center gap-1 mb-2.5" style={{ color: '#C9A646' }} aria-hidden="true">
+                {[0, 1, 2, 3, 4].map((s) => <StarIcon key={s} />)}
+              </div>
+              <p className="text-[13.5px] leading-relaxed text-[#F7F4EF]/90 italic font-light">
+                “We replaced five tools with Triplooper. Direct bookings jumped 40% in the first quarter.”
+              </p>
+              <div className="mt-3.5 flex items-center gap-3">
+                <img src={U('1507003211169-0a1dd7228f2d', 96)} alt="" className="w-8 h-8 rounded-full object-cover border" style={{ borderColor: 'rgba(201,166,70,0.4)' }} loading="lazy" />
+                <div className="text-[12px]">
+                  <p className="font-semibold text-[#F7F4EF] leading-tight">Rajiv Sharma</p>
+                  <p className="text-[#AAB8C5]">Boutique Hotel, Jaipur</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 pt-5 border-t border-[#AAB8C5]/10">
+              <Link
+                to="/"
+                className="text-[12px] md:text-[13px] font-medium text-[#C9A646] hover:text-[#F7F4EF] tracking-wide transition-colors"
+              >
+                ← Back to triplooper.com
+              </Link>
+              <p className="text-[10px] font-semibold text-[#AAB8C5]/50 tracking-[0.18em] uppercase text-right leading-relaxed m-0">
+                &copy; {new Date().getFullYear()} Triplooper
+              </p>
+            </div>
           </motion.div>
         </div>
-
-        <motion.div
-          className="mt-16 md:mt-auto flex flex-col gap-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 1 }}
-        >
-          <Link
-            to="/"
-            className="text-[12px] md:text-[13px] font-medium text-[#C9A646] hover:text-[#F7F4EF] tracking-wide text-left transition-colors self-start"
-          >
-            ← Back to triplooper.com
-          </Link>
-
-          <div className="pt-6 border-t border-[#AAB8C5]/10">
-            <p className="text-[10px] md:text-[11px] font-semibold text-[#AAB8C5] tracking-[0.2em] uppercase leading-relaxed text-left opacity-60 m-0">
-              &copy; {new Date().getFullYear()} Triplooper<br />
-              Secure hotel and restaurant infrastructure
-            </p>
-          </div>
-        </motion.div>
       </div>
 
-      {/* RIGHT SIDE (LOGIN PANEL) */}
-      <div className="relative z-10 w-full md:w-[55%] flex items-center justify-center p-6 sm:p-12 md:p-24 min-h-[60vh] md:min-h-screen order-1 md:order-2">
+      {/* ────────── RIGHT: LOGIN PANEL ────────── */}
+      <div className="relative w-full md:w-[52%] lg:w-[48%] flex items-center justify-center p-6 sm:p-12 md:p-16 lg:p-20 min-h-[45vh] md:min-h-screen order-1 md:order-2 overflow-hidden">
+        {/* Ambient background */}
+        <div className="absolute inset-0 z-0" style={{ background: 'linear-gradient(160deg, #0E2A38 0%, #071A24 100%)' }} />
+        <div className="absolute inset-0 z-0 opacity-[0.04] mix-blend-overlay pointer-events-none" style={{ backgroundImage: GRAIN, backgroundSize: '140px 140px' }} />
+        <div className="absolute -top-24 -right-24 w-[420px] h-[420px] rounded-full blur-[110px] opacity-30 pointer-events-none z-0" style={{ background: '#C9A646' }} />
+        <div className="absolute -bottom-32 -left-16 w-[380px] h-[380px] rounded-full blur-[120px] opacity-20 pointer-events-none z-0" style={{ background: '#0E2A38' }} />
+
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-[420px] p-8 sm:p-12 rounded-2xl bg-[#0E2A38]/20 backdrop-blur-xl border border-[#AAB8C5]/10 shadow-[0_40px_120px_rgba(0,0,0,0.25)] relative overflow-hidden"
+          className="w-full max-w-[420px] p-8 sm:p-10 rounded-2xl relative overflow-hidden z-10"
+          style={{ background: 'rgba(14,42,56,0.35)', border: '1px solid rgba(170,184,197,0.12)', backdropFilter: 'blur(20px)', boxShadow: '0 40px 120px rgba(0,0,0,0.35)' }}
         >
           <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/5 pointer-events-none" />
+          <div className="absolute top-0 left-8 right-8 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,166,70,0.5), transparent)' }} />
 
-          <div className="mb-10">
+          <div className="mb-8">
             <h2 className="font-playfair text-[30px] font-bold text-[#F7F4EF] tracking-tight m-0">
               Welcome back
             </h2>
@@ -333,15 +397,16 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="pt-6">
+            <div className="pt-4">
               <motion.button
                 type="submit"
                 disabled={isLoading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="relative w-full overflow-hidden bg-gradient-to-b from-[#0E2A38] to-[#071A24] text-[#F7F4EF] font-semibold tracking-wide py-3.5 px-6 rounded-lg transition-all duration-200 border border-transparent shadow-[0_4px_14px_rgba(0,0,0,0.3)] hover:border-[#C9A646]/30 hover:shadow-[0_8px_30px_rgba(201,166,70,0.15)] disabled:opacity-50"
+                className="relative w-full overflow-hidden text-[#071A24] font-bold tracking-wide py-3.5 px-6 rounded-lg transition-all duration-200 border border-transparent shadow-[0_8px_24px_rgba(201,166,70,0.28)] hover:shadow-[0_12px_36px_rgba(201,166,70,0.4)] disabled:opacity-50"
+                style={{ background: 'linear-gradient(180deg, #D8B85A 0%, #C9A646 100%)' }}
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? 'Signing in…' : 'Sign in'}
               </motion.button>
             </div>
           </form>
@@ -363,7 +428,7 @@ export default function Login() {
             className="w-full flex items-center justify-center gap-3 py-3 rounded-lg border border-[#AAB8C5]/15 bg-white/5 hover:bg-white/10 hover:border-[#AAB8C5]/30 transition-all text-[#F7F4EF] text-sm font-medium disabled:opacity-50"
           >
             <GoogleIcon />
-            {googleLoading ? 'Redirecting...' : 'Continue with Google'}
+            {googleLoading ? 'Redirecting…' : 'Continue with Google'}
           </motion.button>
 
           {/* Demo Login Option */}

@@ -296,32 +296,45 @@ export default function WebsiteEditor() {
         if (!tenant?.id) return;
         setSaving(true);
 
+        // Track partial failures. Under RLS, a write the current user isn't
+        // allowed to make returns an error OR silently affects 0 rows — either
+        // way the change never goes live, so we must NOT report success.
+        const failures: string[] = [];
+
         try {
             // Save settings
             for (const [key, value] of Object.entries(settings)) {
-                await supabase.from('settings').upsert(
+                const { error } = await supabase.from('settings').upsert(
                     { setting_key: key, setting_value: value, tenant_id: tenant.id },
                     { onConflict: 'tenant_id,setting_key' }
-                );
+                ).select();
+                if (error) failures.push(`setting "${key}": ${error.message}`);
             }
 
-            // Save tenant-level fields
-            await supabase.from('tenants').update({
-                hero_image_url: heroImageUrl,
-                sections_visible: visibility,
-            }).eq('id', tenant.id);
+            // Save tenant-level fields. .select() returns the affected rows so we
+            // can detect an RLS block that reports no error but touches 0 rows.
+            {
+                const { data, error } = await supabase.from('tenants').update({
+                    hero_image_url: heroImageUrl,
+                    sections_visible: visibility,
+                }).eq('id', tenant.id).select('id');
+                if (error) failures.push(`hero/visibility: ${error.message}`);
+                else if (!data || data.length === 0) failures.push('hero/visibility: no rows updated (permission denied)');
+            }
 
             // Save testimonials
             for (const t of testimonials) {
                 if (t.id) {
-                    await supabase.from('testimonials').update({
+                    const { error } = await supabase.from('testimonials').update({
                         guest_name: t.guest_name, guest_location: t.guest_location,
                         rating: t.rating, review_text: t.review_text, is_featured: t.is_featured,
-                    }).eq('id', t.id);
+                    }).eq('id', t.id).select('id');
+                    if (error) failures.push(`testimonial "${t.guest_name || t.id}": ${error.message}`);
                 } else {
-                    await supabase.from('testimonials').insert({
+                    const { error } = await supabase.from('testimonials').insert({
                         ...t, tenant_id: tenant.id
-                    });
+                    }).select('id');
+                    if (error) failures.push(`new testimonial "${t.guest_name || ''}": ${error.message}`);
                 }
             }
 
@@ -330,16 +343,20 @@ export default function WebsiteEditor() {
 
             // Save room visibility toggles
             for (const room of rooms) {
-                await supabase.from('rooms').update({
+                const { data, error } = await supabase.from('rooms').update({
                     show_on_website: room.show_on_website,
-                }).eq('id', room.id);
+                }).eq('id', room.id).select('id');
+                if (error) failures.push(`room "${room.name}": ${error.message}`);
+                else if (!data || data.length === 0) failures.push(`room "${room.name}": no rows updated (permission denied)`);
             }
 
             // Save chef specials toggles
             for (const item of menuItemsList) {
-                await supabase.from('menu_items').update({
+                const { data, error } = await supabase.from('menu_items').update({
                     is_chef_special: item.is_chef_special,
-                }).eq('id', item.id);
+                }).eq('id', item.id).select('id');
+                if (error) failures.push(`menu item "${item.name}": ${error.message}`);
+                else if (!data || data.length === 0) failures.push(`menu item "${item.name}": no rows updated (permission denied)`);
             }
 
             // Refresh preview
@@ -347,8 +364,18 @@ export default function WebsiteEditor() {
                 iframeRef.current.src = iframeRef.current.src;
             }
 
-            setHasChanges(false);
-            toast.success('Website updated. Changes are live.');
+            if (failures.length > 0) {
+                // Something didn't persist — tell the user the truth, not "live".
+                console.error('WebsiteEditor save failures:', failures);
+                toast.error(
+                    `${failures.length} change(s) did not save. ` +
+                    `First error: ${failures[0]}`
+                );
+                // Leave hasChanges=true so the user can retry.
+            } else {
+                setHasChanges(false);
+                toast.success('Website updated. Changes are live.');
+            }
         } catch (err: any) {
             toast.error('Save failed: ' + err.message);
         } finally {
@@ -789,14 +816,14 @@ export default function WebsiteEditor() {
                                             <div className="flex items-center gap-2">
                                                 <input
                                                     type="color"
-                                                    value={settings.brandColor || '#0E2A38'}
-                                                    onChange={e => updateSetting('brandColor', e.target.value)}
+                                                    value={settings.primary_color || '#0E2A38'}
+                                                    onChange={e => updateSetting('primary_color', e.target.value)}
                                                     className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5 bg-white"
                                                 />
                                                 <input
                                                     type="text"
-                                                    value={settings.brandColor || '#0E2A38'}
-                                                    onChange={e => updateSetting('brandColor', e.target.value)}
+                                                    value={settings.primary_color || '#0E2A38'}
+                                                    onChange={e => updateSetting('primary_color', e.target.value)}
                                                     className="flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs font-mono focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none"
                                                     placeholder="#0E2A38"
                                                 />
@@ -807,14 +834,14 @@ export default function WebsiteEditor() {
                                             <div className="flex items-center gap-2">
                                                 <input
                                                     type="color"
-                                                    value={settings.accentColor || '#C9A646'}
-                                                    onChange={e => updateSetting('accentColor', e.target.value)}
+                                                    value={settings.accent_color || '#C9A646'}
+                                                    onChange={e => updateSetting('accent_color', e.target.value)}
                                                     className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5 bg-white"
                                                 />
                                                 <input
                                                     type="text"
-                                                    value={settings.accentColor || '#C9A646'}
-                                                    onChange={e => updateSetting('accentColor', e.target.value)}
+                                                    value={settings.accent_color || '#C9A646'}
+                                                    onChange={e => updateSetting('accent_color', e.target.value)}
                                                     className="flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs font-mono focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none"
                                                     placeholder="#C9A646"
                                                 />
@@ -836,7 +863,7 @@ export default function WebsiteEditor() {
                                             ].map(p => (
                                                 <button
                                                     key={p.name}
-                                                    onClick={() => { updateSetting('brandColor', p.primary); updateSetting('accentColor', p.accent); }}
+                                                    onClick={() => { updateSetting('primary_color', p.primary); updateSetting('accent_color', p.accent); }}
                                                     title={p.name}
                                                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-100 hover:border-gray-300 transition-colors text-[10px] font-semibold text-gray-600 bg-white"
                                                 >

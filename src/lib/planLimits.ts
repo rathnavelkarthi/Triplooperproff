@@ -25,8 +25,8 @@ export function usePlanLimits() {
     const { tenant } = useAuth();
     const { rooms, reservations, menuItems, restaurantTables, staff, foodOrders } = useCRM();
 
-    const plan = tenant?.plan || 'starter';
-    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.starter;
+    const plan = '12% Commission';
+    const limits = PLAN_LIMITS.enterprise;
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();

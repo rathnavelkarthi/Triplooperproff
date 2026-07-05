@@ -260,8 +260,8 @@ export default function App() {
                   {/* New Apple-inspired landing page */}
                   <Route path="/" element={<LandingPage />} />
 
-                  {/* Pricing page */}
-                  <Route path="/pricing" element={<PricingPage />} />
+                  {/* Pricing page redirects to B2B portal */}
+                  <Route path="/pricing" element={<Signup />} />
 
                   {/* Public table ordering (QR code) */}
                   <Route path="/order/:subdomain/:tableId" element={<TableOrder />} />

@@ -277,82 +277,60 @@ export default function PricingPage() {
                         </p>
                     </div>
 
-                    {/* BILLING TOGGLE */}
-                    <BillingToggle isYearly={isYearly} onToggle={setIsYearly} />
+                    {/* PRICING CARD */}
+                    <div className="max-w-2xl mx-auto">
+                        <div className="relative bg-white border border-neutral-200 rounded-3xl p-8 lg:p-12 shadow-xl flex flex-col justify-between space-y-8 overflow-hidden">
+                            <div className="absolute top-0 right-6 -translate-y-1/2 bg-[#ef4d23] text-white font-extrabold text-[10px] uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md">
+                                Commission-Based Plan
+                            </div>
 
-                    {/* PRICING GRID */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 items-start">
-                        <PricingCard
-                            index={0}
-                            name="STARTER"
-                            isFree={true}
-                            price={starterPrice}
-                            description="Try Trip Looper with zero commitment."
-                            ctaText={loading === 'starter' ? 'Loading...' : 'Start Free'}
-                            onCtaClick={() => handlePlanClick('starter')}
-                            features={[
-                                "Basic Booking Page",
-                                "Up to 5 Rooms",
-                                "Calendar View",
-                                "20 Bookings / month",
-                                "Email Support"
-                            ]}
-                        />
-                        <PricingCard
-                            index={1}
-                            name="GROWTH"
-                            price={growthPrice}
-                            period={growthPeriod}
-                            description="For independent hotels going digital."
-                            ctaText={loading === 'growth' ? 'Processing...' : 'Get Started'}
-                            onCtaClick={() => handlePlanClick('growth')}
-                            features={[
-                                "Everything in Starter, plus:",
-                                "Custom Booking Website",
-                                "Booking Engine",
-                                "CRM Dashboard",
-                                "Guest Management",
-                                "GST Invoice System",
-                                "WhatsApp (100 msgs/mo)"
-                            ]}
-                        />
-                        <PricingCard
-                            index={2}
-                            name="PRO"
-                            isPopular={true}
-                            price={proPrice}
-                            period={proPeriod}
-                            description="Complete hotel + restaurant platform."
-                            ctaText={loading === 'pro' ? 'Processing...' : 'Start Pro Plan'}
-                            onCtaClick={() => handlePlanClick('pro')}
-                            features={[
-                                "Everything in Growth, plus:",
-                                "OTA Booking Sync",
-                                "Restaurant POS & Menu",
-                                "Food Orders & Inventory",
-                                "Full WhatsApp Automation",
-                                "Revenue Analytics",
-                                "Priority Support"
-                            ]}
-                        />
-                        <PricingCard
-                            index={3}
-                            name="ENTERPRISE"
-                            price={enterprisePrice}
-                            period={enterprisePeriod}
-                            description="For hotel groups and chains."
-                            ctaText={loading === 'enterprise' ? 'Processing...' : 'Contact Sales'}
-                            onCtaClick={() => handlePlanClick('enterprise')}
-                            features={[
-                                "Everything in Pro, plus:",
-                                "Unlimited Rooms",
-                                "Multi-Property Dashboard",
-                                "API Access",
-                                "Custom Branding",
-                                "Dedicated Account Manager",
-                                "On-Site Training"
-                            ]}
-                        />
+                            <div className="space-y-6 text-left font-sans">
+                                <div>
+                                    <h3 className="text-2xl font-bold text-[#0E2A38] tracking-tight">Enterprise Operations Unlocked</h3>
+                                    <p className="text-sm text-neutral-500 mt-2 font-light leading-relaxed">
+                                        Triplooper provides the complete operating system for hospitality commerce. Create multiple properties, sync OTA channels, manage guests, process invoices, and use POS menus — with zero subscription fees.
+                                    </p>
+                                </div>
+
+                                <div className="flex items-baseline gap-1 pt-4">
+                                    <span className="text-6xl font-black text-[#0E2A38] tracking-tight">12%</span>
+                                    <span className="text-lg text-neutral-500 font-medium">commission per booking</span>
+                                </div>
+                                
+                                <p className="text-xs text-neutral-400 font-mono">₹0 Setup Fee. Pay only as you generate revenue.</p>
+
+                                <div className="h-px bg-neutral-100 my-6" />
+
+                                <h4 className="text-sm font-bold text-[#0E2A38] uppercase tracking-wide">Included Features:</h4>
+                                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-neutral-600 font-light">
+                                    {[
+                                        "Custom Website & Booking Engine",
+                                        "OTA Channel Manager Sync",
+                                        "Guest Portal with Aadhaar Check-In",
+                                        "Restaurant POS & Digital Menus",
+                                        "WhatsApp Booking Automations",
+                                        "GST Billing & Invoice Folios",
+                                        "Exportable Financial Reports",
+                                        "Unlimited Properties & Stays",
+                                        "Unlimited Active Rooms & Staff"
+                                    ].map((f, i) => (
+                                        <li key={i} className="flex gap-2.5 items-center">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-[#ef4d23]" />
+                                            <span>{f}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="pt-4">
+                                <a
+                                    href="/signup"
+                                    className="w-full bg-[#0E2A38] hover:bg-[#ef4d23] text-white font-bold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md text-center"
+                                >
+                                    <span>Get Started Free</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

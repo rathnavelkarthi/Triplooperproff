@@ -1,12 +1,30 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+// v2.103+ required for auth.getClaims() used in the caller-authorization check (WEB-005).
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.103.0";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// WEB-008: restrict CORS to known origins instead of "*".
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ||
+  'https://triplooper.com,https://www.triplooper.com')
+  .split(',').map((s) => s.trim());
+
+function corsFor(req: Request) {
+  const origin = req.headers.get('Origin') || '';
+  const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allow,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  };
+}
+
+// Roles a caller is allowed to assign to new staff. A caller cannot mint an
+// account more privileged than an admin, and cannot create platform admins.
+const ASSIGNABLE_ROLES = new Set([
+  'MANAGER', 'RECEPTION', 'HOUSEKEEPING', 'ACCOUNTANT', 'SERVER',
+]);
 
 serve(async (req) => {
+  const corsHeaders = corsFor(req);
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -23,10 +41,47 @@ serve(async (req) => {
       throw new Error("Missing required fields");
     }
 
+    // WEB-005: validate the requested role is one the caller may assign.
+    if (!ASSIGNABLE_ROLES.has(String(role).toUpperCase())) {
+      return new Response(JSON.stringify({ error: `Role '${role}' cannot be assigned.` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403,
+      });
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // WEB-005: verify the CALLER is an admin/owner OF THIS tenant before creating
+    // staff in it. The client sends its Clerk/Supabase JWT; resolve the caller id
+    // from it and check user_properties for an owning/admin role on tenant_id.
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    const { data: claims, error: claimErr } = await supabaseAdmin.auth.getClaims(token);
+    const callerId = claims?.claims?.sub as string | undefined;
+    if (claimErr || !callerId) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401,
+      });
+    }
+
+    const { data: callerLink } = await supabaseAdmin
+      .from('user_properties')
+      .select('role, is_owner')
+      .eq('user_id', callerId)
+      .eq('tenant_id', tenant_id)
+      .maybeSingle();
+    const { data: ownedTenant } = await supabaseAdmin
+      .from('tenants').select('id').eq('id', tenant_id).eq('owner_id', callerId).maybeSingle();
+
+    const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'BUSINESS_ADMIN', 'MANAGER']);
+    const isAuthorized = !!ownedTenant || callerLink?.is_owner ||
+      (callerLink?.role && ADMIN_ROLES.has(String(callerLink.role).toUpperCase()));
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({ error: 'Forbidden: not an admin of this tenant' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403,
+      });
+    }
 
     // 1. Create the user in Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({

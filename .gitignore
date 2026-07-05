@@ -17,6 +17,12 @@ supabase/.temp/
 scripts/credentials-readable.txt
 scripts/credentials-report.json
 
+# Plaintext secret files — MUST NEVER be committed (see docs/WEBAPP-PENTEST-REPORT.md WEB-003)
+credatials.txt
+credentials.txt
+*.secrets
+*secrets*.txt
+
 # Local lead data spreadsheets and reports
 *.xlsx
 *.png
