@@ -168,6 +168,14 @@ export default function PlatformAdmin() {
   const loadData = async () => {
     setLoading(true);
     try {
+      // Load all business invites first for fallback email resolution
+      const { data: inviteData } = await supabase
+        .from('business_invites')
+        .select('*')
+        .order('created_at', { ascending: false });
+      const loadedInvites = inviteData || [];
+      setInvites(loadedInvites);
+
       // Load all reservations
       const { data: resList, error: resErr } = await supabase
         .from('reservations')
@@ -278,10 +286,19 @@ export default function PlatformAdmin() {
           if (!tenant) continue;
 
           // Try to get a readable email: staff table first, then Clerk email (stored in tenant)
-          const email =
+          let email =
             staffEmailMap.get(link.user_id) ||
             tenant.custom_email ||
             link.user_id; // fallback: show the ID if nothing else
+
+          if (email === link.user_id && loadedInvites) {
+            const matchingInvite = loadedInvites.find(inv => 
+              inv.business_name.toLowerCase() === tenant.business_name.toLowerCase()
+            );
+            if (matchingInvite) {
+              email = matchingInvite.email;
+            }
+          }
             
           const name = staffNameMap.get(link.user_id);
 
@@ -319,7 +336,15 @@ export default function PlatformAdmin() {
            if (!t.owner_id) continue;
            const alreadyHas = userMap.get(t.owner_id)?.properties.find(p => p.id === t.id);
            if (!alreadyHas) {
-             const email = staffEmailMap.get(t.owner_id) || t.custom_email || t.owner_id;
+             let email = staffEmailMap.get(t.owner_id) || t.custom_email || t.owner_id;
+             if (email === t.owner_id && loadedInvites) {
+               const matchingInvite = loadedInvites.find(inv => 
+                 inv.business_name.toLowerCase() === t.business_name.toLowerCase()
+               );
+               if (matchingInvite) {
+                 email = matchingInvite.email;
+               }
+             }
              const name = staffNameMap.get(t.owner_id);
              ensureUser(t.owner_id, email, name, t.created_at);
              const stats = getTenantStats(t.id);
@@ -350,14 +375,6 @@ export default function PlatformAdmin() {
       }
 
       setUsers(Array.from(userMap.values()));
-
-      // Load business invites
-      const { data: inviteData } = await supabase
-        .from('business_invites')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (inviteData) setInvites(inviteData);
 
       // Load all drivers
       const { data: driverList } = await supabase

@@ -231,7 +231,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
                     await supabase.from('tenants').update({ 
                         business_id: newBusiness.id,
                         managed_by_business: true,
-                        payment_setup: false
+                        payment_setup: false,
+                        custom_email: email
                     }).eq('id', newTenantId);
                     
                     // Accept invitation if applicable
@@ -321,6 +322,12 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
             // Important: we use the original userId from Auth for the session state
             setUser(buildUser(userId, email, name, role, type, avatarUrl));
 
+            if (type === 'CLERK' && email && active.custom_email !== email) {
+              supabase.from('tenants').update({ custom_email: email }).eq('id', active.id).then(() => {
+                active.custom_email = email;
+              });
+            }
+
             const businessId = (active as Tenant).business_id;
             if (businessId) {
               const { data: bData } = await supabase
@@ -374,6 +381,12 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           console.log(`[AuthContext] Clerk fallback – role assigned: ${assignedRole}`);
           setUser(buildUser(userId, email, name, assignedRole, 'CLERK', avatarUrl));
           if (bData) setBusiness(bData as Business);
+
+          if (type === 'CLERK' && email && active.custom_email !== email) {
+            supabase.from('tenants').update({ custom_email: email }).eq('id', active.id).then(() => {
+              active.custom_email = email;
+            });
+          }
 
           setLoading(false);
           return;
