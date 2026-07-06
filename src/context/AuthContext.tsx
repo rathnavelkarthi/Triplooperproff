@@ -174,17 +174,29 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           }
         }
 
-        if (inviteToken) {
-          console.log('[AuthContext] Unified onboarding for token:', inviteToken);
-          const { data: invite, error: inviteReadError } = await supabase
-            .from('business_invites')
-            .select('*')
-            .eq('token', inviteToken)
-            .single();
+        if (inviteToken || pendingName) {
+          console.log('[AuthContext] Onboarding flow triggered. Invite:', inviteToken, 'Pending Name:', pendingName);
+          
+          let maxProperties = 5;
+          let maxRooms = 15;
+          let bName = pendingName || '';
+          let bType = pendingType || 'hotel';
+          
+          if (inviteToken) {
+            const { data: invite, error: inviteReadError } = await supabase
+              .from('business_invites')
+              .select('*')
+              .eq('token', inviteToken)
+              .single();
 
-          if (!inviteReadError && invite && invite.status === 'pending') {
-            const bName = invite.business_name;
-            const bType = pendingType || 'hotel';
+            if (!inviteReadError && invite && invite.status === 'pending') {
+              bName = invite.business_name;
+              maxProperties = invite.max_properties || 5;
+              maxRooms = invite.max_rooms_per_property || 15;
+            }
+          }
+
+          if (bName) {
             const subdomain = generateSubdomain(bName);
 
             // 1. Create Business Record (using standard client — RLS permits own business creation)
@@ -194,8 +206,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
                 name: bName,
                 owner_id: userId,
                 contact_email: email,
-                max_properties: invite.max_properties || 5,
-                max_rooms_per_property: invite.max_rooms_per_property || 15
+                max_properties: maxProperties,
+                max_rooms_per_property: maxRooms
               })
               .select('*')
               .single();
@@ -215,13 +227,17 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
                 if (!tError && newTenantId) {
                     // Update business links on the newly created tenant
+                    // Set payment_setup = false so they are gated to billing selection page
                     await supabase.from('tenants').update({ 
                         business_id: newBusiness.id,
-                        managed_by_business: true 
+                        managed_by_business: true,
+                        payment_setup: false
                     }).eq('id', newTenantId);
                     
-                    // Accept the invitation token
-                    await supabase.from('business_invites').update({ status: 'accepted' }).eq('token', inviteToken);
+                    // Accept invitation if applicable
+                    if (inviteToken) {
+                      await supabase.from('business_invites').update({ status: 'accepted' }).eq('token', inviteToken);
+                    }
                     localStorage.removeItem('pending_invite_token');
                     localStorage.removeItem('pending_business_name');
                     localStorage.removeItem('pending_business_type');

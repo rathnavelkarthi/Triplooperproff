@@ -176,6 +176,12 @@ export default function Signup() {
             return;
         }
 
+        localStorage.setItem('pending_business_name', businessName);
+        localStorage.setItem('pending_business_type', businessType);
+        if (inviteToken) {
+            localStorage.setItem('pending_invite_token', inviteToken);
+        }
+
         const result = await signup(email, password, businessName, businessType);
 
         if (result.error) {
