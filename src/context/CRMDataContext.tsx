@@ -56,6 +56,7 @@ export type Room = {
     cleaning_status: 'Clean' | 'Dirty';
     is_available: boolean;
     maintenance_notes?: string | null;
+    tourist_attractions?: string[];
 };
 
 export type PageContent = {

@@ -818,3 +818,34 @@ export async function sendVerificationRejected(data: VerificationRejectedData): 
     verificationRejectedHtml(data)
   );
 }
+
+export interface CustomEmailData {
+  email: string;
+  subject: string;
+  message: string;
+  businessName: string;
+}
+
+function customEmailHtml(data: CustomEmailData): string {
+  return baseTemplate({
+    preheader: data.subject,
+    businessName: data.businessName,
+    bodyContent: `
+      ${heading(data.subject)}
+      <div style="background:${T.bgOuter};padding:24px;border:1px solid ${T.border};border-radius:6px;margin:20px 0;">
+        <p style="margin:0;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7;white-space:pre-wrap;">${data.message}</p>
+      </div>
+    `,
+    accentColor: T.accent,
+  });
+}
+
+export async function sendCustomEmail(data: CustomEmailData): Promise<boolean> {
+  if (!data.email) return false;
+  return sendResendEmail(
+    data.email,
+    data.subject,
+    customEmailHtml(data)
+  );
+}
+

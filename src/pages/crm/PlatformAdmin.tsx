@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth, isPlatformAdminEmail } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
-import { sendBusinessInvite } from '../../lib/email';
+import { sendBusinessInvite, sendVerificationApproved, sendVerificationRejected, sendCustomEmail } from '../../lib/email';
 import { toast } from 'sonner';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -59,6 +59,38 @@ interface PropertyDrawerData {
   bookings: any[];
 }
 
+const getVerificationBadge = (p: PlatformUser['properties'][0], docs: any[] = []) => {
+  const hasTradeAuth = docs.some(d => d.doc_type === 'govt_trade_authorization');
+  const hasComplaints = docs.some(d => d.doc_type === 'govt_complaints_proof');
+  
+  if (p.verification_status === 'approved') {
+    return {
+      text: 'Approved',
+      bgColor: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+      status: 'approved'
+    };
+  }
+  if (p.verification_status === 'rejected') {
+    return {
+      text: 'Rejected',
+      bgColor: 'bg-red-50 text-red-700 border-red-150',
+      status: 'rejected'
+    };
+  }
+  if (hasTradeAuth && hasComplaints) {
+    return {
+      text: 'Pending - Review Ready',
+      bgColor: 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse',
+      status: 'review_ready'
+    };
+  }
+  return {
+    text: 'Pending - Uploads Missing',
+    bgColor: 'bg-gray-100 text-gray-600 border-gray-200',
+    status: 'uploads_missing'
+  };
+};
+
 export default function PlatformAdmin() {
   const { user, isPlatformAdmin } = useAuth();
   const [users, setUsers] = useState<PlatformUser[]>([]);
@@ -84,6 +116,46 @@ export default function PlatformAdmin() {
   const [inviteMaxRooms, setInviteMaxRooms] = useState(15);
   const [sending, setSending] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
+
+  // Property rejection form state
+  const [rejectingBizId, setRejectingBizId] = useState<string | null>(null);
+  const [rejectReasonText, setRejectReasonText] = useState('');
+  const [submittingRejection, setSubmittingRejection] = useState(false);
+
+  // Custom email states
+  const [customEmailBizId, setCustomEmailBizId] = useState<string | null>(null);
+  const [customEmailSubject, setCustomEmailSubject] = useState('');
+  const [customEmailMessage, setCustomEmailMessage] = useState('');
+  const [sendingCustomEmail, setSendingCustomEmail] = useState(false);
+
+  const handleSendCustomEmail = async (email: string, businessName: string, tenantId: string) => {
+    if (!customEmailSubject.trim() || !customEmailMessage.trim()) {
+      toast.error("Please fill in both subject and message.");
+      return;
+    }
+    setSendingCustomEmail(true);
+    try {
+      const sent = await sendCustomEmail({
+        email,
+        subject: customEmailSubject.trim(),
+        message: customEmailMessage.trim(),
+        businessName
+      });
+      if (sent) {
+        toast.success(`Custom email sent to ${email}`);
+        setCustomEmailBizId(null);
+        setCustomEmailSubject('');
+        setCustomEmailMessage('');
+      } else {
+        toast.error("Failed to send email. Please check server log.");
+      }
+    } catch (err: any) {
+      toast.error("Error sending email: " + err.message);
+    } finally {
+      setSendingCustomEmail(false);
+    }
+  };
+
 
   if (!isPlatformAdmin) {
     return <Navigate to="/admin/dashboard" replace />;
@@ -330,10 +402,39 @@ export default function PlatformAdmin() {
 
       if (error) throw error;
 
-      // Trigger the edge function to email the owner about verification outcome
-      await supabase.functions.invoke('verify-property', {
-        body: { tenant_id: tenantId, action, reason }
-      }).catch(err => console.error('Failed to trigger verification email:', err));
+      // Trigger the edge function to update whatsapp/notify owner with correct action mapping ('approve' / 'reject')
+      const mappedAction = action === 'approved' ? 'approve' : 'reject';
+      const funcRes = await supabase.functions.invoke('verify-property', {
+        body: { tenant_id: tenantId, action: mappedAction, reason, requester_email: user?.email }
+      }).catch(err => {
+        console.error('Failed to trigger verification function:', err);
+        return null;
+      });
+
+      // Send the email client-side using Resend proxy on success
+      if (funcRes && funcRes.data && funcRes.data.success) {
+        const { ownerEmail, businessName } = funcRes.data;
+        if (ownerEmail) {
+          if (action === 'approved') {
+            const sent = await sendVerificationApproved({
+              email: ownerEmail,
+              businessName,
+              loginUrl: `${window.location.origin}/admin/login`
+            });
+            if (sent) toast.success(`Verification email sent to ${ownerEmail}`);
+            else toast.warning('Property approved, but email notification failed.');
+          } else {
+            const sent = await sendVerificationRejected({
+              email: ownerEmail,
+              businessName,
+              reason: reason || 'Submitted documents were invalid.',
+              reuploadUrl: `${window.location.origin}/admin/verification`
+            });
+            if (sent) toast.success(`Rejection email sent to ${ownerEmail}`);
+            else toast.warning('Property rejected, but email notification failed.');
+          }
+        }
+      }
 
       toast.success(`Property marked as ${action}.`);
       await loadData();
@@ -363,6 +464,28 @@ export default function PlatformAdmin() {
     }
     return data.signedUrl;
   };
+
+  const downloadDoc = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('property-documents')
+        .download(filePath);
+      if (error) throw error;
+
+      const url = window.URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName || filePath.split('/').pop() || 'document';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(`Downloading ${fileName || 'document'}`);
+    } catch (error: any) {
+      toast.error("Failed to download document: " + error.message);
+    }
+  };
+
 
   const deleteUser = async (u: PlatformUser) => {
     if (isPlatformAdminEmail(u.email)) {
@@ -788,6 +911,290 @@ export default function PlatformAdmin() {
                                   <span className="font-extrabold text-amber-600 text-sm">₹{(p.monthlyCommission || 0).toLocaleString('en-IN')}</span>
                                 </div>
                               </div>
+
+                              {/* Granular Verification & Documents Checklist */}
+                              {(() => {
+                                const pDocs = propertyDocs[p.id] || [];
+                                const tradeAuth = pDocs.find(d => d.doc_type === 'govt_trade_authorization');
+                                const complaintsProof = pDocs.find(d => d.doc_type === 'govt_complaints_proof');
+                                const otherDoc = pDocs.find(d => d.doc_type === 'other');
+                                const badge = getVerificationBadge(p, pDocs);
+
+                                return (
+                                  <div className="bg-white p-4 rounded-lg border border-gray-100/80 text-xs space-y-4">
+                                    <div className="flex items-center justify-between border-b border-gray-50 pb-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-bold text-[#0E2A38] uppercase tracking-wider text-[10px]">Verification &amp; Documents</span>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-wider ${badge.bgColor}`}>
+                                          {badge.text}
+                                        </span>
+                                      </div>
+                                      {p.verification_reason && p.verification_status === 'rejected' && (
+                                        <span className="text-red-500 font-medium max-w-xs truncate text-[10px]" title={p.verification_reason}>
+                                          Reason: {p.verification_reason}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                      {/* Trade Authorization */}
+                                      <div className="p-3 bg-gray-50/50 rounded-lg border border-gray-100 flex flex-col justify-between space-y-2">
+                                        <div>
+                                          <div className="flex items-center justify-between">
+                                            <span className="font-bold text-gray-700">Trade Authorization</span>
+                                            {tradeAuth ? (
+                                              <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full uppercase">Uploaded</span>
+                                            ) : (
+                                              <span className="text-[9px] font-bold text-red-650 bg-red-50 px-1.5 py-0.5 rounded-full uppercase">Missing</span>
+                                            )}
+                                          </div>
+                                          <p className="text-[10px] text-gray-400 mt-1">Official operating trade license.</p>
+                                          {tradeAuth && (
+                                            <p className="text-[10px] text-gray-550 font-mono mt-1.5 truncate" title={tradeAuth.file_name}>
+                                              {tradeAuth.file_name}
+                                            </p>
+                                          )}
+                                        </div>
+                                        {tradeAuth && (
+                                          <div className="flex gap-2 pt-1 border-t border-gray-100/60 mt-1">
+                                            <button
+                                              onClick={async () => {
+                                                const url = await getDocSignedUrl(tradeAuth.file_path);
+                                                if (url) window.open(url, '_blank');
+                                              }}
+                                              className="flex-1 text-center py-1 bg-white border border-gray-200 text-gray-600 hover:text-[#0E2A38] hover:border-[#0E2A38]/30 rounded font-semibold text-[10px] transition-colors cursor-pointer"
+                                            >
+                                              View
+                                            </button>
+                                            <button
+                                              onClick={() => downloadDoc(tradeAuth.file_path, tradeAuth.file_name || 'trade_license.pdf')}
+                                              className="flex-1 text-center py-1 bg-white border border-gray-200 text-gray-600 hover:text-[#0E2A38] hover:border-[#0E2A38]/30 rounded font-semibold text-[10px] transition-colors cursor-pointer"
+                                            >
+                                              Download
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Complaints Proof */}
+                                      <div className="p-3 bg-gray-50/50 rounded-lg border border-gray-100 flex flex-col justify-between space-y-2">
+                                        <div>
+                                          <div className="flex items-center justify-between">
+                                            <span className="font-bold text-gray-700">Complaints Proof</span>
+                                            {complaintsProof ? (
+                                              <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full uppercase">Uploaded</span>
+                                            ) : (
+                                              <span className="text-[9px] font-bold text-red-655 bg-red-50 px-1.5 py-0.5 rounded-full uppercase">Missing</span>
+                                            )}
+                                          </div>
+                                          <p className="text-[10px] text-gray-400 mt-1">No outstanding complaints proof.</p>
+                                          {complaintsProof && (
+                                            <p className="text-[10px] text-gray-550 font-mono mt-1.5 truncate" title={complaintsProof.file_name}>
+                                              {complaintsProof.file_name}
+                                            </p>
+                                          )}
+                                        </div>
+                                        {complaintsProof && (
+                                          <div className="flex gap-2 pt-1 border-t border-gray-100/60 mt-1">
+                                            <button
+                                              onClick={async () => {
+                                                const url = await getDocSignedUrl(complaintsProof.file_path);
+                                                if (url) window.open(url, '_blank');
+                                              }}
+                                              className="flex-1 text-center py-1 bg-white border border-gray-200 text-gray-600 hover:text-[#0E2A38] hover:border-[#0E2A38]/30 rounded font-semibold text-[10px] transition-colors cursor-pointer"
+                                            >
+                                              View
+                                            </button>
+                                            <button
+                                              onClick={() => downloadDoc(complaintsProof.file_path, complaintsProof.file_name || 'complaints_proof.pdf')}
+                                              className="flex-1 text-center py-1 bg-white border border-gray-200 text-gray-600 hover:text-[#0E2A38] hover:border-[#0E2A38]/30 rounded font-semibold text-[10px] transition-colors cursor-pointer"
+                                            >
+                                              Download
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Other document */}
+                                      <div className="p-3 bg-gray-50/50 rounded-lg border border-gray-100 flex flex-col justify-between space-y-2">
+                                        <div>
+                                          <div className="flex items-center justify-between">
+                                            <span className="font-bold text-gray-700">Other Supporting</span>
+                                            {otherDoc ? (
+                                              <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full uppercase">Uploaded</span>
+                                            ) : (
+                                              <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full uppercase">None</span>
+                                            )}
+                                          </div>
+                                          <p className="text-[10px] text-gray-400 mt-1">Additional records / certificates.</p>
+                                          {otherDoc && (
+                                            <p className="text-[10px] text-gray-550 font-mono mt-1.5 truncate" title={otherDoc.file_name}>
+                                              {otherDoc.file_name}
+                                            </p>
+                                          )}
+                                        </div>
+                                        {otherDoc && (
+                                          <div className="flex gap-2 pt-1 border-t border-gray-100/60 mt-1">
+                                            <button
+                                              onClick={async () => {
+                                                const url = await getDocSignedUrl(otherDoc.file_path);
+                                                if (url) window.open(url, '_blank');
+                                              }}
+                                              className="flex-1 text-center py-1 bg-white border border-gray-200 text-gray-600 hover:text-[#0E2A38] hover:border-[#0E2A38]/30 rounded font-semibold text-[10px] transition-colors cursor-pointer"
+                                            >
+                                              View
+                                            </button>
+                                            <button
+                                              onClick={() => downloadDoc(otherDoc.file_path, otherDoc.file_name || 'supporting_doc.pdf')}
+                                              className="flex-1 text-center py-1 bg-white border border-gray-200 text-gray-600 hover:text-[#0E2A38] hover:border-[#0E2A38]/30 rounded font-semibold text-[10px] transition-colors cursor-pointer"
+                                            >
+                                              Download
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Action Buttons Bar */}
+                                    <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-50 items-center justify-between">
+                                      <div className="flex gap-2">
+                                        {p.verification_status !== 'approved' && (
+                                          <button
+                                            onClick={() => decidePropertyVerification(p.id, 'approved')}
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-all shadow-sm cursor-pointer"
+                                          >
+                                            <CheckCircle2 size={12} /> Approve Property
+                                          </button>
+                                        )}
+                                        {p.verification_status !== 'approved' && (
+                                          <button
+                                            onClick={() => {
+                                              setRejectingBizId(rejectingBizId === p.id ? null : p.id);
+                                              setRejectReasonText('The uploaded documents are either unreadable, invalid, or do not match your government trade license registration. Please log in and upload a valid, clear scan of your trade authorization license.');
+                                              setCustomEmailBizId(null);
+                                            }}
+                                            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border cursor-pointer ${
+                                              rejectingBizId === p.id 
+                                                ? 'bg-red-50 text-red-700 border-red-200' 
+                                                : 'bg-white text-red-650 border-red-200 hover:bg-red-55'
+                                            }`}
+                                          >
+                                            <AlertCircle size={12} /> Reject &amp; Request Fix
+                                          </button>
+                                        )}
+                                        <button
+                                          onClick={() => {
+                                            setCustomEmailBizId(customEmailBizId === p.id ? null : p.id);
+                                            setCustomEmailSubject('Update regarding your Triplooper Property registration');
+                                            setCustomEmailMessage(`Hi ${p.business_name} team,\n\nWe are reviewing your property registration on Triplooper.\n\n[Please enter your message here]\n\nRegards,\nTriplooper Support`);
+                                            setRejectingBizId(null);
+                                          }}
+                                          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border cursor-pointer ${
+                                            customEmailBizId === p.id 
+                                              ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                              : 'bg-white text-blue-650 border-blue-200 hover:bg-blue-55'
+                                          }`}
+                                        >
+                                          <Mail size={12} /> Send Email Notice
+                                        </button>
+                                      </div>
+                                      
+                                      <span className="text-[10px] text-gray-400">
+                                        Owner Contact: <span className="font-semibold">{u.email}</span>
+                                      </span>
+                                    </div>
+
+                                    {/* Inline Rejection Form */}
+                                    {rejectingBizId === p.id && (
+                                      <div className="p-3 bg-red-50/50 border border-red-100 rounded-xl space-y-3 mt-2 animate-in fade-in slide-in-from-top-1">
+                                        <div className="flex items-center gap-2 text-red-700">
+                                          <AlertCircle size={14} />
+                                          <span className="font-bold text-[11px] uppercase tracking-wider">Reject &amp; Send Document Warning</span>
+                                        </div>
+                                        <div>
+                                          <label className="block text-[9px] font-bold text-gray-450 uppercase mb-1">Rejection Email Message / Reason</label>
+                                          <textarea
+                                            value={rejectReasonText}
+                                            onChange={(e) => setRejectReasonText(e.target.value)}
+                                            rows={3}
+                                            className="w-full border border-red-200 rounded-lg p-2 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-red-300"
+                                            placeholder="Specify document issues..."
+                                          />
+                                        </div>
+                                        <div className="flex gap-2 justify-end">
+                                          <button
+                                            onClick={() => { setRejectingBizId(null); setRejectReasonText(''); }}
+                                            className="px-2.5 py-1 text-gray-500 hover:bg-gray-100 rounded font-bold text-[10px]"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            onClick={async () => {
+                                              setSubmittingRejection(true);
+                                              await decidePropertyVerification(p.id, 'rejected', rejectReasonText);
+                                              setRejectingBizId(null);
+                                              setRejectReasonText('');
+                                              setSubmittingRejection(false);
+                                            }}
+                                            disabled={!rejectReasonText.trim() || submittingRejection}
+                                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded font-bold text-[10px] disabled:opacity-50"
+                                          >
+                                            {submittingRejection ? 'Rejecting...' : 'Reject & Send Email'}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Inline Custom Email Form */}
+                                    {customEmailBizId === p.id && (
+                                      <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl space-y-3 mt-2 animate-in fade-in slide-in-from-top-1">
+                                        <div className="flex items-center gap-2 text-blue-700">
+                                          <Mail size={14} />
+                                          <span className="font-bold text-[11px] uppercase tracking-wider">Compose Custom Email</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <div>
+                                            <label className="block text-[9px] font-bold text-gray-450 uppercase mb-1">Subject</label>
+                                            <input
+                                              type="text"
+                                              value={customEmailSubject}
+                                              onChange={(e) => setCustomEmailSubject(e.target.value)}
+                                              className="w-full border border-blue-200 rounded-lg px-2.5 py-1.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-blue-300"
+                                              placeholder="Email Subject..."
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-[9px] font-bold text-gray-450 uppercase mb-1">Message Body</label>
+                                            <textarea
+                                              value={customEmailMessage}
+                                              onChange={(e) => setCustomEmailMessage(e.target.value)}
+                                              rows={4}
+                                              className="w-full border border-blue-200 rounded-lg p-2.5 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-blue-300 font-mono"
+                                              placeholder="Write your email here..."
+                                            />
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-2 justify-end">
+                                          <button
+                                            onClick={() => { setCustomEmailBizId(null); setCustomEmailSubject(''); setCustomEmailMessage(''); }}
+                                            className="px-2.5 py-1 text-gray-500 hover:bg-gray-100 rounded font-bold text-[10px]"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            onClick={() => handleSendCustomEmail(u.email, p.business_name, p.id)}
+                                            disabled={!customEmailSubject.trim() || !customEmailMessage.trim() || sendingCustomEmail}
+                                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-[10px] disabled:opacity-50"
+                                          >
+                                            {sendingCustomEmail ? 'Sending...' : 'Send Custom Email'}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+
                             </div>
                           ))}
                         </div>
@@ -1440,6 +1847,89 @@ export default function PlatformAdmin() {
                       <span>Offline / Browser GPS not shared yet</span>
                     </div>
                   )}
+                </div>
+
+                {/* Driver CMS & Pricing Profile */}
+                <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 space-y-4">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Service Profile & CMS Details</h3>
+                  
+                  <div className="space-y-3.5 text-sm">
+                    {/* Pricing */}
+                    <div className="grid grid-cols-2 gap-4 border-b border-gray-100 pb-3">
+                      <div>
+                        <span className="text-xs text-gray-455 block">Standard Hourly Rate</span>
+                        <span className="font-bold text-gray-850 mt-1 block">
+                          {driverDrawerData.payment_details?.hourly_rate ? `₹${driverDrawerData.payment_details.hourly_rate}/hr` : '—'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-455 block">Overtime Rate</span>
+                        <span className="font-bold text-red-600 mt-1 block">
+                          {driverDrawerData.payment_details?.overtime_rate ? `₹${driverDrawerData.payment_details.overtime_rate}/hr` : '—'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Payment Details */}
+                    <div className="border-b border-gray-100 pb-3 space-y-1">
+                      <span className="text-xs text-gray-455 block">Payment & UPI ID</span>
+                      <span className="font-semibold text-gray-800 block">UPI: {driverDrawerData.payment_details?.upi_id || '—'}</span>
+                      {driverDrawerData.payment_details?.bank_name && (
+                        <p className="text-xs text-gray-400">
+                          {driverDrawerData.payment_details.bank_name} • A/C {driverDrawerData.payment_details.account_number} • IFSC {driverDrawerData.payment_details.ifsc_code}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Travel Locations */}
+                    <div className="border-b border-gray-100 pb-3">
+                      <span className="text-xs text-gray-455 block mb-1">Travel Locations</span>
+                      <div className="flex flex-wrap gap-1">
+                        {driverDrawerData.travel_locations && driverDrawerData.travel_locations.length > 0 ? (
+                          driverDrawerData.travel_locations.map((loc: string) => (
+                            <span key={loc} className="bg-gray-200/60 text-gray-700 px-2 py-0.5 rounded text-[11px] font-medium">
+                              {loc}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">No travel locations registered</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Nearby Spots */}
+                    <div className="border-b border-gray-100 pb-3">
+                      <span className="text-xs text-gray-455 block mb-1">Nearby Spots Covered</span>
+                      <div className="flex flex-wrap gap-1">
+                        {driverDrawerData.nearby_spots && driverDrawerData.nearby_spots.length > 0 ? (
+                          driverDrawerData.nearby_spots.map((spot: string) => (
+                            <span key={spot} className="bg-gray-200/60 text-gray-700 px-2 py-0.5 rounded text-[11px] font-medium">
+                              {spot}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">No spots registered</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Pickup & Drop services */}
+                    <div>
+                      <span className="text-xs text-gray-455 block mb-1">Pickup & Drop Services</span>
+                      <div className="flex flex-wrap gap-1">
+                        {driverDrawerData.pickup_drop_services && driverDrawerData.pickup_drop_services.length > 0 ? (
+                          driverDrawerData.pickup_drop_services.map((service: string) => (
+                            <span key={service} className="bg-gray-200/60 text-gray-700 px-2 py-0.5 rounded text-[11px] font-medium">
+                              {service}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">No services registered</span>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
               </div>
 

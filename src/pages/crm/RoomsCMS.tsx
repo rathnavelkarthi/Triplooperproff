@@ -30,11 +30,13 @@ export default function RoomsCMS() {
         images: [],
         status: 'Available',
         cleaning_status: 'Clean',
-        is_available: true
+        is_available: true,
+        tourist_attractions: []
     };
 
     const [formData, setFormData] = useState<Omit<Room, 'id'>>(initialFormState);
     const [newAmenity, setNewAmenity] = useState('');
+    const [newAttraction, setNewAttraction] = useState('');
 
     const filteredRooms = rooms.filter(room =>
         room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,7 +58,8 @@ export default function RoomsCMS() {
                 images: [...room.images],
                 status: room.status,
                 cleaning_status: room.cleaning_status,
-                is_available: room.is_available
+                is_available: room.is_available,
+                tourist_attractions: [...(room.tourist_attractions || [])]
             });
         } else {
             setEditingRoomId(null);
@@ -117,6 +120,27 @@ export default function RoomsCMS() {
         setFormData(prev => ({
             ...prev,
             amenities: prev.amenities.filter(a => a !== amenityToRemove)
+        }));
+    };
+
+    const addAttraction = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && newAttraction.trim()) {
+            e.preventDefault();
+            const currentAttractions = formData.tourist_attractions || [];
+            if (!currentAttractions.includes(newAttraction.trim())) {
+                setFormData(prev => ({
+                    ...prev,
+                    tourist_attractions: [...currentAttractions, newAttraction.trim()]
+                }));
+            }
+            setNewAttraction('');
+        }
+    };
+
+    const removeAttraction = (attractionToRemove: string) => {
+        setFormData(prev => ({
+            ...prev,
+            tourist_attractions: (prev.tourist_attractions || []).filter(a => a !== attractionToRemove)
         }));
     };
 
@@ -436,6 +460,32 @@ export default function RoomsCMS() {
                                                     ))}
                                                     {formData.amenities.length === 0 && (
                                                         <p className="text-xs text-gray-400">Type a facility and press Enter.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Nearby Tourist Attractions */}
+                                            <div>
+                                                <h3 className="text-base font-semibold text-gray-900 mb-3">Nearby Tourist Attractions</h3>
+                                                <input
+                                                    type="text"
+                                                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#C9A646] focus:border-transparent outline-none text-sm mb-3"
+                                                    value={newAttraction}
+                                                    onChange={(e) => setNewAttraction(e.target.value)}
+                                                    onKeyDown={addAttraction}
+                                                    placeholder="Add tourist attractions... (press Enter)"
+                                                />
+                                                <div className="flex flex-wrap gap-2">
+                                                    {(formData.tourist_attractions || []).map(attraction => (
+                                                        <span key={attraction} className="inline-flex items-center gap-1 bg-amber-50 text-[#C9A646] border border-[#C9A646]/20 px-2.5 py-1 rounded-full text-xs font-medium">
+                                                            {attraction}
+                                                            <button type="button" onClick={() => removeAttraction(attraction)} className="text-[#C9A646] hover:text-red-500 ml-0.5">
+                                                                <X size={12} />
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                    {(!formData.tourist_attractions || formData.tourist_attractions.length === 0) && (
+                                                        <p className="text-xs text-gray-400">Type an attraction and press Enter.</p>
                                                     )}
                                                 </div>
                                             </div>

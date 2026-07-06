@@ -16,6 +16,7 @@ import { sendWhatsAppConfirmation } from '../lib/whatsapp';
 type Room = {
   id: number; name: string; type: string; description: string;
   price_per_night: number; max_occupancy: number; amenities: string[]; images: string[];
+  tourist_attractions?: string[];
 };
 type Tenant = { id: string; business_name: string; subdomain: string; logo_url: string };
 type OtherRoom = { id: number; name: string; type: string; price_per_night: number; images: string[] };
@@ -328,6 +329,22 @@ export default function RoomDetail() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {room.tourist_attractions && room.tourist_attractions.length > 0 && (
+              <div>
+                <h2 className="text-lg font-bold text-[#0E2A38] mb-4">Nearby Tourist Attractions</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {room.tourist_attractions.map((attraction, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-amber-50/50 border border-amber-100/50">
+                      <div className="w-9 h-9 rounded-lg bg-[#C9A646]/10 flex items-center justify-center">
+                        <MapPin size={16} className="text-[#C9A646]" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">{attraction}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

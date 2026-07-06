@@ -19,6 +19,7 @@ import { sendWhatsAppConfirmation } from '../lib/whatsapp';
 type Room = {
     id: number; name: string; type: string; description: string;
     price_per_night: number; max_occupancy: number; amenities: string[]; images: string[]; is_available: boolean;
+    tourist_attractions?: string[];
 };
 type Testimonial = {
     guest_name: string; guest_location: string; rating: number;
@@ -1018,6 +1019,12 @@ export default function TenantSite() {
                                                         </>
                                                     )}
                                                 </p>
+                                                {room.tourist_attractions && room.tourist_attractions.length > 0 && (
+                                                    <div className="mt-3 flex items-center gap-1.5 text-xs text-amber-600 font-semibold bg-amber-500/5 border border-amber-500/10 px-2.5 py-1 rounded-lg w-fit">
+                                                        <MapPin size={12} className="shrink-0" />
+                                                        <span className="truncate max-w-[200px]">Near: {room.tourist_attractions.slice(0, 2).join(', ')}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
