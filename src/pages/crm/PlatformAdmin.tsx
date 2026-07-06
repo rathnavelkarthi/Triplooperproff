@@ -33,6 +33,7 @@ interface PlatformUser {
     is_active: boolean;
     subdomain: string | null;
     created_at: string;
+    verification_status?: string;
     dailyRevenue?: number;
     monthlyRevenue?: number;
     dailyCommission?: number;
@@ -65,6 +66,7 @@ export default function PlatformAdmin() {
   const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'drivers'>('users');
   const [drivers, setDrivers] = useState<any[]>([]);
   const [driverDrawerData, setDriverDrawerData] = useState<any | null>(null);
+  const [propertyDocs, setPropertyDocs] = useState<Record<string, any[]>>({});
   const [invites, setInvites] = useState<BusinessInvite[]>([]);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,8 +111,23 @@ export default function PlatformAdmin() {
       // Load all tenants
       const { data: tenants } = await supabase
         .from('tenants')
-        .select('id, business_name, business_type, subdomain, plan, is_active, owner_id, custom_email, created_at')
+        .select('id, business_name, business_type, subdomain, plan, is_active, owner_id, custom_email, created_at, verification_status, verification_reason, verified_at')
         .order('created_at', { ascending: false });
+
+      // Load all property documents
+      const { data: docList } = await supabase
+        .from('property_documents')
+        .select('*');
+      const docsMap: Record<string, any[]> = {};
+      if (docList) {
+        for (const doc of docList) {
+          if (!docsMap[doc.tenant_id]) {
+            docsMap[doc.tenant_id] = [];
+          }
+          docsMap[doc.tenant_id].push(doc);
+        }
+      }
+      setPropertyDocs(docsMap);
 
       // Load all user_properties to get owner links + emails via staff table
       const { data: links } = await supabase
@@ -206,6 +223,7 @@ export default function PlatformAdmin() {
              is_active: tenant.is_active,
              subdomain: tenant.subdomain,
              created_at: tenant.created_at,
+             verification_status: tenant.verification_status,
              ...stats
            });
            
@@ -241,6 +259,7 @@ export default function PlatformAdmin() {
                is_active: t.is_active,
                subdomain: t.subdomain,
                created_at: t.created_at,
+               verification_status: t.verification_status,
                ...stats
              });
              
@@ -296,6 +315,53 @@ export default function PlatformAdmin() {
     } catch (err: any) {
       toast.error(err.message || 'Failed to update driver status.');
     }
+  };
+
+  const decidePropertyVerification = async (tenantId: string, action: 'approved' | 'rejected', reason?: string) => {
+    try {
+      const { error } = await supabase
+        .from('tenants')
+        .update({ 
+          verification_status: action,
+          verified_at: action === 'approved' ? new Date().toISOString() : null,
+          verification_reason: reason || null
+        })
+        .eq('id', tenantId);
+
+      if (error) throw error;
+
+      // Trigger the edge function to email the owner about verification outcome
+      await supabase.functions.invoke('verify-property', {
+        body: { tenant_id: tenantId, action, reason }
+      }).catch(err => console.error('Failed to trigger verification email:', err));
+
+      toast.success(`Property marked as ${action}.`);
+      await loadData();
+      
+      // Update drawer state if open
+      if (drawerData && drawerData.property.id === tenantId) {
+        setDrawerData({
+          ...drawerData,
+          property: {
+            ...drawerData.property,
+            verification_status: action
+          }
+        });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update property verification status.');
+    }
+  };
+
+  const getDocSignedUrl = async (filePath: string) => {
+    const { data, error } = await supabase.storage
+      .from('property-documents')
+      .createSignedUrl(filePath, 3600); // 1 hour link
+    if (error) {
+      toast.error("Failed to get document link: " + error.message);
+      return null;
+    }
+    return data.signedUrl;
   };
 
   const deleteUser = async (u: PlatformUser) => {
@@ -1152,6 +1218,76 @@ export default function PlatformAdmin() {
                         <p className="text-xs text-amber-700/70 uppercase tracking-widest font-semibold">Commission (12%)</p>
                         <p className="text-2xl font-black text-amber-700 mt-1">₹{dCommission.toLocaleString('en-IN')}</p>
                         <p className="text-[10px] text-amber-600/50 mt-1">Triplooper partner fee</p>
+                      </div>
+                    </div>
+
+                    {/* Verification Status & Uploaded Documents */}
+                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-gray-550 uppercase tracking-wider block">Verification Status</span>
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 mt-1 rounded-full ${
+                            drawerData.property.verification_status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
+                            drawerData.property.verification_status === 'rejected' ? 'bg-red-50 text-red-650' :
+                            'bg-amber-50 text-amber-600'
+                          }`}>
+                            {drawerData.property.verification_status || 'pending'}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          {drawerData.property.verification_status !== 'approved' && (
+                            <button
+                              onClick={() => decidePropertyVerification(drawerData.property.id, 'approved')}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {drawerData.property.verification_status !== 'rejected' && (
+                            <button
+                              onClick={() => {
+                                const reason = window.prompt("Enter rejection reason (optional):");
+                                if (reason !== null) {
+                                  decidePropertyVerification(drawerData.property.id, 'rejected', reason);
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                            >
+                              Reject
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Uploaded Documents */}
+                      <div className="space-y-2">
+                        <span className="text-xs font-bold text-gray-550 uppercase tracking-wider block">Uploaded verification documents</span>
+                        {(!propertyDocs[drawerData.property.id] || propertyDocs[drawerData.property.id].length === 0) ? (
+                          <p className="text-xs text-gray-400 italic">No government trade authorization or other documents uploaded yet.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {propertyDocs[drawerData.property.id].map((doc: any) => (
+                              <div key={doc.id} className="flex items-center justify-between p-3 bg-white border border-gray-150 rounded-xl text-xs">
+                                <div className="flex items-center gap-2.5">
+                                  <FileText size={16} className="text-gray-400" />
+                                  <div>
+                                    <p className="font-bold text-gray-800">{doc.file_name || 'Trade Authorization scan'}</p>
+                                    <p className="text-[10px] text-gray-400">Uploaded on {new Date(doc.uploaded_at).toLocaleDateString('en-IN')}</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={async () => {
+                                    const url = await getDocSignedUrl(doc.file_path);
+                                    if (url) window.open(url, '_blank');
+                                  }}
+                                  className="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-150 border border-gray-200 text-gray-700 hover:text-gray-900 rounded-lg font-bold transition-all cursor-pointer"
+                                >
+                                  View scan
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
