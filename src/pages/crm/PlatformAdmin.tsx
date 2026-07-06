@@ -12,7 +12,7 @@ import {
   Plus, AlertCircle, Clock, CheckCircle2,
   TrendingUp, Receipt, Printer, ExternalLink,
   BarChart3, CalendarDays, IndianRupee,
-  ShieldCheck, ShieldAlert, ShieldQuestion, FileText, Loader2, Car, MapPin
+  ShieldCheck, ShieldAlert, ShieldQuestion, FileText, Loader2, Car, MapPin, Pencil
 } from 'lucide-react';
 
 interface PlatformUser {
@@ -127,6 +127,35 @@ export default function PlatformAdmin() {
   const [customEmailSubject, setCustomEmailSubject] = useState('');
   const [customEmailMessage, setCustomEmailMessage] = useState('');
   const [sendingCustomEmail, setSendingCustomEmail] = useState(false);
+
+  // Inline email editor states
+  const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
+  const [tempEmail, setTempEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+
+  const handleSaveEmail = async (tenantId: string, newEmail: string) => {
+    if (!newEmail.trim() || !newEmail.includes('@')) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      const { error } = await supabase
+        .from('tenants')
+        .update({ custom_email: newEmail.trim() })
+        .eq('id', tenantId);
+      
+      if (error) throw error;
+      
+      toast.success("Owner email updated successfully!");
+      setEditingEmailId(null);
+      await loadData();
+    } catch (err: any) {
+      toast.error("Failed to update email: " + err.message);
+    } finally {
+      setSavingEmail(false);
+    }
+  };
 
   const handleSendCustomEmail = async (email: string, businessName: string, tenantId: string) => {
     if (!customEmailSubject.trim() || !customEmailMessage.trim()) {
@@ -1116,8 +1145,56 @@ export default function PlatformAdmin() {
                                         </button>
                                       </div>
                                       
-                                      <span className="text-[10px] text-gray-400">
-                                        Owner Contact: <span className="font-semibold">{u.email}</span>
+                                      <span className="text-[10px] text-gray-400 flex items-center gap-1.5">
+                                        Owner Contact: 
+                                        {editingEmailId === p.id ? (
+                                          <div className="flex items-center gap-1">
+                                            <input
+                                              type="email"
+                                              className="px-2 py-0.5 text-[10px] border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white font-medium"
+                                              value={tempEmail}
+                                              onChange={(e) => setTempEmail(e.target.value)}
+                                              placeholder="Enter valid email"
+                                              disabled={savingEmail}
+                                              autoFocus
+                                            />
+                                            <button
+                                              onClick={() => handleSaveEmail(p.id, tempEmail)}
+                                              className="text-[10px] text-green-600 hover:text-green-700 font-bold px-1 py-0.5 rounded bg-green-50 border border-green-200"
+                                              disabled={savingEmail}
+                                            >
+                                              {savingEmail ? '...' : 'Save'}
+                                            </button>
+                                            <button
+                                              onClick={() => setEditingEmailId(null)}
+                                              className="text-[10px] text-gray-550 hover:text-gray-600 px-1 py-0.5 rounded bg-gray-100 border border-gray-200"
+                                              disabled={savingEmail}
+                                            >
+                                              Cancel
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center gap-1">
+                                            <span className={`font-semibold ${!u.email.includes('@') ? 'text-red-500 bg-red-50 px-1 rounded border border-red-100 animate-pulse' : 'text-gray-700'}`}>
+                                              {u.email}
+                                            </span>
+                                            <button
+                                              onClick={() => {
+                                                setEditingEmailId(p.id);
+                                                setTempEmail(u.email.includes('@') ? u.email : '');
+                                              }}
+                                              className="text-gray-400 hover:text-blue-600 transition-colors p-0.5 rounded hover:bg-gray-100"
+                                              title="Edit Owner Email"
+                                            >
+                                              <Pencil size={11} />
+                                            </button>
+                                            {!u.email.includes('@') && (
+                                              <span className="text-[9px] text-red-500 font-medium">
+                                                (Invalid email! Please edit to send notices)
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
                                       </span>
                                     </div>
 
