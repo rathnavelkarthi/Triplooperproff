@@ -370,7 +370,7 @@ export default function Signup() {
     }
 
     /* ── The working registration card (hero + repeated). ── */
-    const RegistrationCard = ({ idPrefix }: { idPrefix: string }) => (
+    const renderRegistrationCard = (idPrefix: string) => (
         <div
             className="w-full max-w-md rounded-3xl bg-white border shadow-[0_40px_90px_-20px_rgba(8,27,38,0.55)] p-6 sm:p-8"
             style={{ borderColor: 'rgba(255,255,255,0.6)' }}
@@ -667,7 +667,7 @@ export default function Signup() {
                         transition={{ duration: 0.6, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
                         className="flex justify-center lg:justify-end"
                     >
-                        <RegistrationCard idPrefix="hero" />
+                        {renderRegistrationCard("hero")}
                     </motion.div>
                 </div>
             </section>
