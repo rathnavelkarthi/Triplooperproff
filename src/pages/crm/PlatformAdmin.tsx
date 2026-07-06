@@ -64,6 +64,7 @@ export default function PlatformAdmin() {
   const [reservations, setReservations] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'drivers'>('users');
   const [drivers, setDrivers] = useState<any[]>([]);
+  const [driverDrawerData, setDriverDrawerData] = useState<any | null>(null);
   const [invites, setInvites] = useState<BusinessInvite[]>([]);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -857,16 +858,20 @@ export default function PlatformAdmin() {
                   <tbody>
                     {drivers
                       .filter(d => 
-                        d.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        d.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        d.car_number?.toLowerCase().includes(searchQuery.toLowerCase())
+                        (d.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        (d.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (d.car_number || '').toLowerCase().includes(searchQuery.toLowerCase())
                       )
                       .map(d => {
                         const isApproved = d.status === 'approved';
                         const isRejected = d.status === 'rejected';
                         
                         return (
-                          <tr key={d.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                          <tr 
+                            key={d.id} 
+                            onClick={() => setDriverDrawerData(d)}
+                            className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer"
+                          >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
                                 {d.car_photo && (
@@ -918,7 +923,7 @@ export default function PlatformAdmin() {
                               <div className="flex items-center justify-center gap-2">
                                 {d.status !== 'approved' && (
                                   <button
-                                    onClick={() => decideDriverVerification(d.id, 'approved')}
+                                    onClick={(e) => { e.stopPropagation(); decideDriverVerification(d.id, 'approved'); if (driverDrawerData?.id === d.id) setDriverDrawerData({...driverDrawerData, status: 'approved'}); }}
                                     className="px-3 py-1.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
                                   >
                                     Approve
@@ -926,7 +931,7 @@ export default function PlatformAdmin() {
                                 )}
                                 {d.status !== 'rejected' && (
                                   <button
-                                    onClick={() => decideDriverVerification(d.id, 'rejected')}
+                                    onClick={(e) => { e.stopPropagation(); decideDriverVerification(d.id, 'rejected'); if (driverDrawerData?.id === d.id) setDriverDrawerData({...driverDrawerData, status: 'rejected'}); }}
                                     className="px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
                                   >
                                     Reject
@@ -1198,6 +1203,131 @@ export default function PlatformAdmin() {
                   </>
                 );
               })()}
+            </motion.div>
+          </>
+        )}
+
+        {driverDrawerData && (
+          <>
+            <motion.div key="driver-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setDriverDrawerData(null)} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
+            <motion.div key="driver-drawer" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 28, stiffness: 260 }} className="fixed right-0 top-0 h-full w-full max-w-xl bg-white shadow-2xl z-50 flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="flex items-start justify-between p-6 border-b border-gray-100 bg-[#0E2A38] text-white">
+                <div className="flex items-center gap-3">
+                  <Car size={20} className="text-[#C9A646]" />
+                  <div>
+                    <h2 className="text-lg font-bold text-white">{driverDrawerData.name}</h2>
+                    <p className="text-xs text-gray-300">Driver Partner Profile</p>
+                  </div>
+                </div>
+                <button onClick={() => setDriverDrawerData(null)} className="p-2 text-white/75 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><X size={18} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Car Photo Display */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2.5">Uploaded Vehicle & Car Photo</label>
+                  {driverDrawerData.car_photo ? (
+                    <div className="relative aspect-video rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
+                      <img 
+                        src={driverDrawerData.car_photo} 
+                        alt="Vehicle" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 text-sm">
+                      <Car size={32} className="mb-2" />
+                      <span>No vehicle photo uploaded</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Details Grid */}
+                <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 space-y-4">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">Driver Details & Documents</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-xs text-gray-450 block">Verification Status</span>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 mt-1 rounded-full ${
+                        driverDrawerData.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
+                        driverDrawerData.status === 'rejected' ? 'bg-red-50 text-red-650' :
+                        'bg-amber-50 text-amber-600'
+                      }`}>
+                        {driverDrawerData.status}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-450 block">Registration Date</span>
+                      <span className="font-semibold text-gray-800 mt-1 block">
+                        {new Date(driverDrawerData.created_at || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-455 block">Driving License Number</span>
+                      <span className="font-mono font-bold text-gray-850 mt-1 block uppercase">{driverDrawerData.license_info || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-455 block">Car License Plate</span>
+                      <span className="font-bold text-gray-850 mt-1 block uppercase">{driverDrawerData.car_number || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-455 block">Email Address</span>
+                      <a href={`mailto:${driverDrawerData.email}`} className="font-semibold text-blue-500 hover:underline mt-1 block">{driverDrawerData.email}</a>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-455 block">Phone Number</span>
+                      <a href={`tel:${driverDrawerData.phone}`} className="font-semibold text-gray-850 mt-1 block">{driverDrawerData.phone}</a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* GPS Location Status */}
+                <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 space-y-3">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 pb-2">GPS Location (Live Browser Sync)</h3>
+                  {driverDrawerData.latitude && driverDrawerData.longitude ? (
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2 font-mono font-bold text-[#0E2A38]">
+                        <MapPin className="text-emerald-500" size={16} />
+                        <span>{driverDrawerData.latitude.toFixed(6)}, {driverDrawerData.longitude.toFixed(6)}</span>
+                      </div>
+                      {driverDrawerData.location_updated_at && (
+                        <p className="text-xs text-gray-400">
+                          Last coordinates synced: {new Date(driverDrawerData.location_updated_at).toLocaleString('en-IN')}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-gray-400 italic">
+                      <MapPin size={16} className="text-gray-300" />
+                      <span>Offline / Browser GPS not shared yet</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons Footer */}
+              <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex gap-3">
+                {driverDrawerData.status !== 'approved' && (
+                  <button
+                    onClick={() => { decideDriverVerification(driverDrawerData.id, 'approved'); setDriverDrawerData({...driverDrawerData, status: 'approved'}); }}
+                    className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <CheckCircle2 size={16} />
+                    Approve Partner
+                  </button>
+                )}
+                {driverDrawerData.status !== 'rejected' && (
+                  <button
+                    onClick={() => { decideDriverVerification(driverDrawerData.id, 'rejected'); setDriverDrawerData({...driverDrawerData, status: 'rejected'}); }}
+                    className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <X size={16} />
+                    Reject Partner
+                  </button>
+                )}
+              </div>
             </motion.div>
           </>
         )}
