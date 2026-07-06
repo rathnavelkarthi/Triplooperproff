@@ -278,6 +278,7 @@ export default function PlatformAdmin() {
       console.error('PlatformAdmin: load error', err);
     } finally {
       setVerifyingId(null);
+      setLoading(false);
     }
   };
 
