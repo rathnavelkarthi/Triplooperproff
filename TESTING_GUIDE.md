@@ -1,96 +1,181 @@
-# QA Testing Guide: Property Verification & Platform Admin Features
+# Triplooper Master QA Testing Manual
 
-This guide details the test cases for verifying the new **Property Verification Gating**, **Inline Document Review**, and **Email Notification Systems**.
-
----
-
-## Part 1: Owner Verification Portal & Gating
-
-### Test Case 1.1: Verification Gate Redirection
-1. **Prerequisite:** Create or log into a Property Owner account whose property has `verification_status = 'pending'` or `'rejected'`.
-2. **Steps:**
-   - Log in via `/admin/login`.
-   - Attempt to navigate to `/admin/dashboard`, `/admin/rooms`, or any other business route.
-3. **Expected Result:**
-   - The owner is blocked and automatically redirected to `/admin/verification`.
-   - The main sidebar and dashboard content are inaccessible.
-
-### Test Case 1.2: Document Upload Flow
-1. **Prerequisite:** Owner is on `/admin/verification`.
-2. **Steps:**
-   - Click "Upload" for **Government Trade Authorization** and select a PDF or image.
-   - Click "Upload" for **Government Complaints Proof** and select a file.
-3. **Expected Result:**
-   - Upload indicators show success.
-   - Files are stored securely in the Supabase private bucket `property-documents` under paths matching `[tenant_id]/[document_type].[extension]`.
-   - The status updates dynamically to show uploaded filenames.
+This document is a comprehensive manual testing guide for the entire Triplooper platform. The tester should execute each test case step-by-step and record the **PASS/FAIL** status along with any comments.
 
 ---
 
-## Part 2: Platform Admin Dashboard
-
-### Test Case 2.1: Granular Status Badges
-1. **Prerequisite:** Log into a Platform Admin account (e.g. `admin@triplooper.com`) and navigate to `/admin/platform`.
-2. **Steps:**
-   - Scan the list of properties in the "Properties & Stays" card.
-3. **Expected Result:**
-   - Properties are marked with correct statuses:
-     - `Approved` (green) for verified properties.
-     - `Rejected` (red) for rejected properties.
-     - `Pending - Review Ready` (amber) if BOTH Trade Auth and Complaints Proof are uploaded.
-     - `Pending - Uploads Missing` (gray) if any required documents are missing.
-
-### Test Case 2.2: Document View & Download
-1. **Prerequisite:** Expand a property card that has uploaded documents.
-2. **Steps:**
-   - Click **View** on the "Trade Authorization" or "Complaints Proof" slot.
-   - Click **Download** on the same slot.
-3. **Expected Result:**
-   - Clicking **View** opens a secure, time-limited signed URL (`supabase.storage.createSignedUrl`) of the document in a new tab.
-   - Clicking **Download** triggers an automatic file download using the file's original saved filename.
-
-### Test Case 2.3: Inline Owner Email Editing (Tier 1 Fix)
-1. **Prerequisite:** Expand a property card showing a Clerk ID fallback (e.g. `user_...` containing no `@` character) as its contact email.
-2. **Steps:**
-   - Verify that the contact reads `Owner Contact: user_... (Invalid email! Please edit to send notices)` in red text.
-   - Click the small **Pencil** icon next to the email.
-   - Enter an invalid email (e.g., `not-an-email`) and click **Save**. Verify that it blocks saving.
-   - Enter a valid email address (e.g., `owner@example.com`) and click **Save**.
-3. **Expected Result:**
-   - The database table `tenants` is updated (setting `custom_email = 'owner@example.com'`).
-   - The dashboard updates immediately showing the updated contact in normal text: `Owner Contact: owner@example.com`.
+## 🔑 Tester Roles & Credentials Setup
+Before beginning, ensure you have:
+1. **Platform Admin Account:** Access to `triplooper.com/admin/platform` (e.g. `admin@triplooper.com`).
+2. **Property Owner Account:** Access to a property portal (e.g. `Aniya Residency` or `ARFU NEST`).
+3. **Staff/Receptionist Account:** Created via the property portal.
+4. **Driver Partner Account:** Access to the driver registration/login flow.
+5. **Guest Session:** Created via a reservation token link.
 
 ---
 
-## Part 3: Email Notice Dispatching
+## 📊 Section 1: Platform Admin Dashboard (`/admin/platform`)
 
-### Test Case 3.1: Approve Property Notification
-1. **Prerequisite:** A property is in a pending state with a valid email.
-2. **Steps:**
-   - Expand the property card on `/admin/platform`.
-   - Click the **Approve Property** button.
-3. **Expected Result:**
-   - The property's database status updates to `approved`.
-   - The backend `verify-property` Edge Function triggers, updating the database status, sending WhatsApp notifications (if enabled), and returning user metadata.
-   - The client triggers Resend to dispatch a beautifully branded **Verification Approved** email to the owner.
+### TC 1.1: Business Invites Workflow
+* **Steps:**
+  1. Click **New Invite** on the "Business Invites" panel.
+  2. Input a test email, business name (e.g., "QA test resort"), max properties = `3`, and max rooms = `20`.
+  3. Click **Send Invite**.
+  4. Verify the invite appears in the list as `pending`.
+  5. Click the **Copy Link** button and paste it into a new incognito window.
+  6. Click **Delete Invite** on a pending invite to verify cancellation works.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
 
-### Test Case 3.2: Reject & Request Fix Form
-1. **Prerequisite:** A property is in a pending state.
-2. **Steps:**
-   - Click **Reject & Request Fix**.
-   - Review or modify the pre-filled rejection reasons in the textarea.
-   - Click **Reject Property**.
-3. **Expected Result:**
-   - The status updates to `rejected` in the database.
-   - A branded **Verification Rejected** email containing the custom reason is sent to the owner.
-   - The owner is redirected back to `/admin/verification` when they log in to re-upload documents.
+### TC 1.2: Interactive Property List & Stats
+* **Steps:**
+  1. Verify the summary stats cards at the top show correct counts: **Total Properties**, **Platform Bookings**, **Active Businesses**, and **Pending Invites**.
+  2. Locate a property card (e.g., "ARFU NEST"). Click on the card to expand it.
+  3. Verify that the daily revenue, monthly revenue, daily commission (12%), and monthly commission (12%) calculations are computed and displayed.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
 
-### Test Case 3.3: Compose Custom Email Notice
-1. **Prerequisite:** Expand any property card.
-2. **Steps:**
-   - Click **Send Email Notice**.
-   - Input a custom subject and body text.
-   - Click **Send Custom Email**.
-3. **Expected Result:**
-   - The local/Vercel serverless proxy `/api/send-email` executes the request.
-   - Resend delivers a custom email wrapped inside the premium Triplooper email template layout.
+### TC 1.3: Document checklist, View & Download
+* **Steps:**
+  1. Expand a pending property card.
+  2. Review the **Verification & Documents** status card.
+  3. Verify that uploaded documents show a green `Uploaded` badge with **View** and **Download** buttons.
+  4. Click **View** on a document. Verify it opens the file securely in a new browser tab.
+  5. Click **Download**. Verify it downloads to your local machine with the original filename.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 1.4: Owner Contact Inline Email Edit
+* **Steps:**
+  1. Locate the **Owner Contact** text at the bottom right of the expanded property card.
+  2. If the email contains a Clerk user ID instead of a valid email address (e.g. `user_...`), verify that a red flashing warning `(Invalid email! Please edit to send notices)` is visible.
+  3. Click the small **Pencil** edit icon next to the email.
+  4. Input an invalid email (like `test-email`) and click **Save**. Verify it blocks and triggers an error toast.
+  5. Input a valid email (like `tester@triplooper.com`) and click **Save**.
+  6. Verify the warning disappears and the database is updated.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 1.5: Verification Decisions & Resend Notices
+* **Steps:**
+  1. Click **Send Email Notice** on any property card.
+  2. Enter a custom subject and body message in the inline form, then click **Send Custom Email**. Verify success toast.
+  3. Click **Reject & Request Fix** on a pending property.
+  4. Input a custom rejection reason and click **Reject Property**. Verify the property status badge changes to `Rejected` and a notification email is dispatched.
+  5. Click **Approve Property**. Verify the status changes to `Approved` and a welcome/approval email is sent.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 1.6: Driver Verification & List Management
+* **Steps:**
+  1. Click the **Drivers** tab on the Platform Admin panel.
+  2. Expand a pending driver profile.
+  3. Click **Approve Driver** or **Reject Driver**.
+  4. Verify the driver's status badge updates instantly.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+---
+
+## 🏨 Section 2: Property Portal (PMS & CRM Dashboard)
+
+### TC 2.1: Verification Redirection Gate
+* **Steps:**
+  1. Log in as a property owner whose verification status is `pending` or `rejected`.
+  2. Attempt to click sidebar links to access rooms, reservations, or settings.
+* **Expected Result:**
+  - You are strictly locked and redirected to `/admin/verification`.
+  - You can upload files in the Trade Authorization and Complaints Proof slots.
+  - You are only unlocked once the Platform Admin changes your status to `Approved`.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 2.2: Room Inventory Management
+* **Steps:**
+  1. Navigate to the **Rooms** section.
+  2. Click **Add Room**. Fill in room number, room type, description, amenities, and price. Click **Save**.
+  3. On any room card, toggle the Status dropdown: change status from `Available` to `Cleaning` or `Maintenance`.
+  4. Verify the status indicator updates color (Available: Green, Cleaning: Orange, Maintenance: Red).
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 2.3: Booking Engine & Invoicing
+* **Steps:**
+  1. Navigate to the **Reservations** section.
+  2. Click **Create Booking**. Input guest name, phone, email, check-in/check-out dates, selected room, and total amount. Click **Book**.
+  3. Click on the newly created reservation to view its details.
+  4. Click **Generate Invoice / Receipt**. Verify it opens a clean, printable PDF receipt showing guest details, room pricing, and GST breakdowns.
+  5. Click **Check Out** on an active guest reservation. Verify the room availability status changes back to `Available`.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 2.4: Interactive Calendar & Timeline
+* **Steps:**
+  1. Navigate to the **Calendar View** page.
+  2. Verify that all rooms are listed on the Y-axis and dates are on the X-axis.
+  3. Check if active reservations appear as horizontal color-coded bars across their booked dates.
+  4. Click on a reservation bar to verify it opens the reservation details modal.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 2.5: Guest Service Requests
+* **Steps:**
+  1. Navigate to the **Service Requests** panel.
+  2. Verify you can view requests sent by guests (e.g. Room Cleaning, Towels, Room Service).
+  3. Select a staff member to assign the task, change the priority to **High**, and set the status to **In Progress** or **Completed**.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+---
+
+## 📱 Section 3: Guest Portal (Mobile-First Experience)
+
+### TC 3.1: Tokenized Guest Access
+* **Steps:**
+  1. Copy the guest session link/token URL from the active reservation page.
+  2. Open the link in a mobile viewport or phone browser.
+  3. Verify that the guest lands on their dedicated portal showing their name, room number, and check-out date without requiring a standard username/password login.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 3.2: Digital Room Service & Food Ordering
+* **Steps:**
+  1. Navigate to the **Food Service** page in the Guest Portal.
+  2. Browse menu categories (Starters, Main Course, Drinks).
+  3. Select items, specify quantities, and add them to the cart.
+  4. Open the cart and click **Place Order**.
+  5. Go to the Property Admin Portal → Restaurant/Service Requests section. Verify that the order appears in real-time with the correct room number and items.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 3.3: Feedback & Testimonials Submission
+* **Steps:**
+  1. Navigate to the **Feedback** tab in the Guest Portal.
+  2. Rate the stay (1-5 stars) and enter comments. Click **Submit**.
+  3. Verify the feedback is logged and appears under the property's public website testimonials section.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+---
+
+## 🚗 Section 4: Driver Portal & Tourist Attractions CMS
+
+### TC 4.1: Driver Portal Registration & Login
+* **Steps:**
+  1. Open the Driver Portal signup page `/driver/register`.
+  2. Fill in the driver registration form: Name, Phone, Vehicle Number, Vehicle Type (e.g., Sedan, SUV), and Licence Number. Click **Register**.
+  3. Log out and log back in via `/driver/login` using the registered credentials.
+  4. Toggle the online/offline toggle in the Driver Dashboard. Verify status changes.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
+
+### TC 4.2: Nearby Attractions Manager
+* **Steps:**
+  1. Log in as a Property Owner or Platform Admin.
+  2. Navigate to **Nearby Attractions** or **CMS settings**.
+  3. Click **Add Attraction**. Enter Name, Description, Distance from hotel (in km), and upload an image. Click **Save**.
+  4. Log in to the Guest Portal for that property.
+  5. Navigate to **Local Guide / Nearby Attractions**.
+  6. Verify that the newly added attraction displays correctly with its distance, description, and photo.
+* **Pass/Fail:** `[  ]`
+* **Comments:**
