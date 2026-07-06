@@ -3,7 +3,9 @@ import cors from 'cors';
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
+dotenv.config({ path: '.env.local' });
 dotenv.config();
+
 
 const app = express();
 app.use(cors());
