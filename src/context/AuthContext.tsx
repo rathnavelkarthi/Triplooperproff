@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { useUser, useClerk, useSignIn, useSignUp, useSession } from '@clerk/react';
 import { supabase, supabaseAuth, setSupabaseTokenGetter } from '../lib/supabaseClient';
-import { supabaseAdmin } from '../lib/supabaseAdmin';
 import { generateSubdomain, hasPermission as checkPermission, DEMO_EMAIL } from '../lib/booking';
 import { Session } from '@supabase/supabase-js';
 
@@ -133,7 +132,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   // Cache the Supabase ID for a Clerk user's email to avoid repeated listUsers() calls
   const supabaseIdCacheRef = useRef<Record<string, string>>({});
 
-  const isPlatformAdmin = isPlatformAdminEmail(user?.email);
+  const isPlatformAdmin = user?.role === 'PLATFORM_ADMIN';
 
   const buildUser = (id: string, email: string, name: string, role: Role, type: 'CLERK' | 'SUPABASE', avatarUrl?: string): User => {
     // Force PLATFORM_ADMIN role for configured platform-admin emails, regardless of
@@ -162,7 +161,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       try {
         // Automatically recover lost invite token if the user has a pending invite for their email
         if (!inviteToken && email) {
-          const { data: lostInvite } = await supabaseAdmin
+          const { data: lostInvite } = await supabase
             .from('business_invites')
             .select('token')
             .eq('email', email)
@@ -177,7 +176,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
         if (inviteToken) {
           console.log('[AuthContext] Unified onboarding for token:', inviteToken);
-          const { data: invite, error: inviteReadError } = await supabaseAdmin
+          const { data: invite, error: inviteReadError } = await supabase
             .from('business_invites')
             .select('*')
             .eq('token', inviteToken)
@@ -188,8 +187,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
             const bType = pendingType || 'hotel';
             const subdomain = generateSubdomain(bName);
 
-            // 1. Create Business Record (using Admin client to bypass RLS)
-            const { data: newBusiness, error: bError } = await supabaseAdmin
+            // 1. Create Business Record (using standard client — RLS permits own business creation)
+            const { data: newBusiness, error: bError } = await supabase
               .from('businesses')
               .insert({
                 name: bName,
@@ -204,8 +203,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
             if (bError) console.error('[AuthContext] Failed to create business:', bError);
 
             if (!bError && newBusiness) {
-                // 2. Create First Tenant (Property)
-                const { data: newTenantId, error: tError } = await supabaseAdmin.rpc('create_tenant', {
+                // 2. Create First Tenant (Property) via security-definer RPC
+                const { data: newTenantId, error: tError } = await supabase.rpc('create_tenant', {
                   p_owner_id: userId,
                   p_business_name: bName,
                   p_business_type: bType,
@@ -215,19 +214,14 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
                 if (tError) console.error('[AuthContext] Failed to create tenant:', tError);
 
                 if (!tError && newTenantId) {
-                    await supabaseAdmin.from('tenants').update({ 
+                    // Update business links on the newly created tenant
+                    await supabase.from('tenants').update({ 
                         business_id: newBusiness.id,
                         managed_by_business: true 
                     }).eq('id', newTenantId);
                     
-                    await supabaseAdmin.from('user_properties').insert({
-                        user_id: userId,
-                        tenant_id: newTenantId,
-                        role: 'BUSINESS_ADMIN',
-                        is_owner: true
-                    });
-                    
-                    await supabaseAdmin.from('business_invites').update({ status: 'accepted' }).eq('token', inviteToken);
+                    // Accept the invitation token
+                    await supabase.from('business_invites').update({ status: 'accepted' }).eq('token', inviteToken);
                     localStorage.removeItem('pending_invite_token');
                     localStorage.removeItem('pending_business_name');
                     localStorage.removeItem('pending_business_type');
@@ -258,18 +252,20 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       // so they can access their existing data whether they login via Google or Email
       if (type === 'CLERK') {
         try {
-          // Use cache to avoid the expensive listUsers() call on every render
+          // Use cache to avoid the query on every render
           if (supabaseIdCacheRef.current[email]) {
             lookupIds.push(supabaseIdCacheRef.current[email]);
           } else {
-            // Filter by email directly — much faster than fetching all users
-            const { data: adminUsers } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-            if (adminUsers?.users) {
-              const supaUser = adminUsers.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
-              if (supaUser) {
-                supabaseIdCacheRef.current[email] = supaUser.id;
-                lookupIds.push(supaUser.id);
-              }
+            // Query staff table by email to resolve Supabase auth user UUID
+            const { data: staffRow } = await supabase
+              .from('staff')
+              .select('id')
+              .eq('email', email.toLowerCase())
+              .maybeSingle();
+              
+            if (staffRow) {
+              supabaseIdCacheRef.current[email] = staffRow.id;
+              lookupIds.push(staffRow.id);
             }
           }
         } catch (e) {

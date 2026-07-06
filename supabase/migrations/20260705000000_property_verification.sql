@@ -48,6 +48,9 @@ stable
 security definer
 set search_path = public
 as $$
+  select id from tenants
+  where (auth.jwt() ->> 'email') in ('rathnavelkarthi1@gmail.com', 'admin@triplooper.com')
+  union
   select up.tenant_id
   from user_properties up
   where up.user_id = (auth.jwt() ->> 'sub')

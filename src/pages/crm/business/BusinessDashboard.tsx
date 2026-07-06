@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { supabase } from '../../../lib/supabaseClient';
-import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 import { Link, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -46,7 +45,7 @@ export default function BusinessDashboard() {
     
     setLoading(true);
     try {
-      const { data: tenants } = await supabaseAdmin
+      const { data: tenants } = await supabase
         .from('tenants')
         .select('*')
         .eq('business_id', business.id)

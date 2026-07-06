@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { supabase } from '../../../lib/supabaseClient';
-import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -87,7 +86,7 @@ export default function BusinessPropertyDetail() {
   const loadProperty = async () => {
     setLoading(true);
     try {
-      const { data, error: fetchErr } = await supabaseAdmin
+      const { data, error: fetchErr } = await supabase
         .from('tenants')
         .select('*')
         .eq('id', propertyId)
@@ -126,7 +125,7 @@ export default function BusinessPropertyDetail() {
     setSaving(true);
     setError(null);
 
-    const { error: updateErr } = await supabaseAdmin
+    const { error: updateErr } = await supabase
       .from('tenants')
       .update({ feature_toggles: toggles })
       .eq('id', propertyId);

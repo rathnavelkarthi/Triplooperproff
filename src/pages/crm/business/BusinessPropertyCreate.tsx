@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { supabase, supabaseAuth } from '../../../lib/supabaseClient';
-import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { generateSubdomain } from '../../../lib/booking';
 import { sendWelcomeEmail } from '../../../lib/email';
@@ -143,7 +142,7 @@ export default function BusinessPropertyCreate() {
       }
 
       // 1. Check property limit using the active business record
-      const { count } = await supabaseAdmin
+      const { count } = await supabase
         .from('tenants')
         .select('id', { count: 'exact', head: true })
         .eq('business_id', currentBusiness.id);
@@ -172,28 +171,18 @@ export default function BusinessPropertyCreate() {
 
       const ownerId = authData?.user?.id || ownerEmail.trim();
 
-      // 4. Create tenant (property) with feature toggles
+      // 4. Create tenant (property) via security-definer RPC
       const subdomain = generateSubdomain(propName.trim());
-      const { data: newTenant, error: tenantError } = await supabaseAdmin
-        .from('tenants')
-        .insert({
-          business_name: propName.trim(),
-          business_type: propType,
-          subdomain,
-          template: 'modern',
-          plan: 'growth',
-          owner_id: ownerId,
-          business_id: currentBusiness.id,
-          managed_by_business: true,
-          feature_toggles: toggles,
-          is_active: true,
-          verification_status: 'pending',
-        })
-        .select()
-        .single();
+      const { data: newTenantId, error: tenantError } = await supabase
+        .rpc('create_tenant', {
+          p_owner_id: ownerId,
+          p_business_name: propName.trim(),
+          p_business_type: propType,
+          p_subdomain: subdomain
+        });
 
       if (tenantError) {
-        if (tenantError.message?.includes('subdomain')) {
+        if (tenantError.message?.includes('subdomain') || tenantError.message?.includes('tenants_subdomain_key')) {
           setError('A property with this name already exists. Choose a different name.');
         } else {
           setError(tenantError.message);
@@ -202,15 +191,33 @@ export default function BusinessPropertyCreate() {
         return;
       }
 
-      // 5. Create user_properties link
-      if (newTenant) {
-        await supabaseAdmin.from('user_properties').insert({
-          user_id: ownerId,
-          tenant_id: newTenant.id,
-          role: 'SUPER_ADMIN',
-          is_owner: true,
-        });
+      let newTenant = null;
+      if (newTenantId) {
+        // Since owner link is created in user_properties, standard RLS now permits updating the tenant
+        const { data: updatedTenant, error: updateErr } = await supabase
+          .from('tenants')
+          .update({
+            template: 'modern',
+            plan: 'growth',
+            business_id: currentBusiness.id,
+            managed_by_business: true,
+            feature_toggles: toggles,
+            is_active: true,
+            verification_status: 'pending',
+          })
+          .eq('id', newTenantId)
+          .select()
+          .single();
 
+        if (updateErr) {
+          setError(updateErr.message);
+          setCreating(false);
+          return;
+        }
+        newTenant = updatedTenant;
+      }
+
+      if (newTenant) {
         // 6. Send welcome email
         await sendWelcomeEmail({
           email: ownerEmail.trim(),

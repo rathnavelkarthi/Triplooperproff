@@ -94,7 +94,7 @@ export default function PlatformAdmin() {
     setLoading(true);
     try {
       // Load all reservations
-      const { data: resList, error: resErr } = await supabaseAdmin
+      const { data: resList, error: resErr } = await supabase
         .from('reservations')
         .select('*')
         .order('created_at', { ascending: false });
