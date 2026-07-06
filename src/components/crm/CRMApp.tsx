@@ -45,6 +45,10 @@ import BusinessPropertyDetail from '../../pages/crm/business/BusinessPropertyDet
 // Platform admin
 import PlatformAdmin from '../../pages/crm/PlatformAdmin';
 
+// Property verification gate
+import PropertyVerification from '../../pages/crm/PropertyVerification';
+import BillingSetup from '../../pages/crm/BillingSetup';
+
 export default function CRMApp() {
   const { user, tenant, loading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -69,6 +73,32 @@ export default function CRMApp() {
 
   if (!user) {
     return <Navigate to="/admin/login" replace />;
+  }
+
+  // Verification gate: a property owner whose tenant is not yet approved is
+  // locked to /admin/verification until the platform admin approves it.
+  // Platform admins are exempt. Existing/live tenants are grandfathered as
+  // 'approved' by migration 20260705000000, so they never hit this.
+  const needsVerification =
+    user.role !== 'PLATFORM_ADMIN' &&
+    !!tenant &&
+    tenant.verification_status !== undefined &&
+    tenant.verification_status !== 'approved';
+  const onVerificationRoute = location.pathname.startsWith('/admin/verification');
+
+  // Billing Setup gate: locked to /admin/billing-setup until payment is completed
+  const needsBillingSetup =
+    user.role !== 'PLATFORM_ADMIN' &&
+    !!tenant &&
+    tenant.payment_setup === false;
+  const onBillingSetupRoute = location.pathname.startsWith('/admin/billing-setup');
+
+  if (needsBillingSetup && !onBillingSetupRoute) {
+    return <Navigate to="/admin/billing-setup" replace />;
+  }
+
+  if (needsVerification && !onVerificationRoute && !needsBillingSetup) {
+    return <Navigate to="/admin/verification" replace />;
   }
 
   const isRestaurantOnly = tenant?.business_type === 'restaurant';
@@ -102,16 +132,24 @@ export default function CRMApp() {
                     : (isRestaurantOnly ? <RestaurantDashboard /> : <Dashboard />))
             } />
             <Route path="server-orders" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SERVER', 'BUSINESS_ADMIN']}>
-                <ServerOrders />
-              </RoleGuard>
+              tenant?.plan === 'commission' ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'SERVER', 'BUSINESS_ADMIN']}>
+                  <ServerOrders />
+                </RoleGuard>
+              )
             } />
 
             {/* Hotel routes */}
             <Route path="channels" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'BUSINESS_ADMIN']}>
-                <ChannelManager />
-              </RoleGuard>
+              tenant?.plan === 'commission' ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'BUSINESS_ADMIN']}>
+                  <ChannelManager />
+                </RoleGuard>
+              )
             } />
             <Route path="reservations" element={
               <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'BUSINESS_ADMIN']}>
@@ -191,29 +229,49 @@ export default function CRMApp() {
 
             {/* Restaurant routes */}
             <Route path="pos" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER']}>
-                <POS />
-              </RoleGuard>
+              tenant?.plan === 'commission' ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER']}>
+                  <POS />
+                </RoleGuard>
+              )
             } />
             <Route path="menu" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER']}>
-                <MenuManager />
-              </RoleGuard>
+              tenant?.plan === 'commission' ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER']}>
+                  <MenuManager />
+                </RoleGuard>
+              )
             } />
             <Route path="food-orders" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER']}>
-                <FoodOrders />
-              </RoleGuard>
+              tenant?.plan === 'commission' ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER']}>
+                  <FoodOrders />
+                </RoleGuard>
+              )
             } />
             <Route path="tables" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER']}>
-                <Tables />
-              </RoleGuard>
+              tenant?.plan === 'commission' ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER']}>
+                  <Tables />
+                </RoleGuard>
+              )
             } />
             <Route path="inventory" element={
-              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER']}>
-                <FoodInventory />
-              </RoleGuard>
+              tenant?.plan === 'commission' ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER']}>
+                  <FoodInventory />
+                </RoleGuard>
+              )
             } />
 
             {/* Finance */}
@@ -258,6 +316,12 @@ export default function CRMApp() {
                 <BusinessPropertyDetail />
               </RoleGuard>
             } />
+
+            {/* Billing setup gate */}
+            <Route path="billing-setup" element={<BillingSetup />} />
+
+            {/* Property verification gate (owner-only, no RoleGuard) */}
+            <Route path="verification" element={<PropertyVerification />} />
 
             {/* Platform admin */}
             <Route path="platform" element={

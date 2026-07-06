@@ -185,6 +185,9 @@ const CRMApp = lazy(() => import('./components/crm/CRMApp'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const SSOCallback = lazy(() => import('./pages/SSOCallback'));
 const TableOrder = lazy(() => import('./pages/TableOrder'));
+const DriverRegister = lazy(() => import('./pages/driver/DriverRegister'));
+const DriverLogin = lazy(() => import('./pages/driver/DriverLogin'));
+const DriverDashboard = lazy(() => import('./pages/driver/DriverDashboard'));
 
 // Guest portal
 const GuestLayout = lazy(() => import('./pages/guest/GuestLayout'));
@@ -284,6 +287,11 @@ export default function App() {
 
                   {/* SSO callback (Google OAuth) */}
                   <Route path="/sso-callback" element={<SSOCallback />} />
+
+                  {/* Driver Routes */}
+                  <Route path="/driver/register" element={<DriverRegister />} />
+                  <Route path="/driver/login" element={<DriverLogin />} />
+                  <Route path="/driver/dashboard" element={<DriverDashboard />} />
 
                   {/* CRM admin routes */}
                   <Route path="/admin/login" element={<Login />} />

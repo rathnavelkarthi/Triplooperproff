@@ -187,6 +187,7 @@ export default function BusinessPropertyCreate() {
           managed_by_business: true,
           feature_toggles: toggles,
           is_active: true,
+          verification_status: 'pending',
         })
         .select()
         .single();

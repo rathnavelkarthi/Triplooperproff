@@ -684,6 +684,76 @@ function businessInviteHtml(data: BusinessInviteData): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// VERIFICATION EMAILS (manual document review outcome)
+// ═══════════════════════════════════════════════════════════════════
+
+export interface VerificationApprovedData {
+  email: string;
+  businessName: string;
+  loginUrl?: string;
+}
+
+export interface VerificationRejectedData {
+  email: string;
+  businessName: string;
+  reason: string;
+  reuploadUrl?: string;
+}
+
+function verificationApprovedHtml(data: VerificationApprovedData): string {
+  const body = `
+    ${heading('Your documents are verified')}
+    ${subtitle(`Great news — the documents for <strong style="color:${T.textPrimary}">${data.businessName}</strong> have been reviewed and approved by the Triplooper team. Your account is now fully active.`)}
+
+    ${sectionLabel('Status')}
+    <div style="margin:8px 0 24px;">
+      ${statusPill('Verified', T.green, T.bgInfoSoft)}
+    </div>
+
+    <p style="margin:0 0 16px;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7;">You can now sign in and start managing your property — set up rooms, publish your website, and take bookings.</p>
+  `;
+
+  return baseTemplate({
+    preheader: `Your documents are verified — you can now use Triplooper`,
+    businessName: data.businessName,
+    bodyContent: body,
+    accentColor: T.accent,
+    ctaText: 'Go to your dashboard &rarr;',
+    ctaUrl: data.loginUrl || 'https://triplooper.com/admin/login',
+    footerNote: 'Welcome aboard. If you have any questions, just reply to this email.',
+  });
+}
+
+function verificationRejectedHtml(data: VerificationRejectedData): string {
+  const body = `
+    ${heading('We need another look at your documents')}
+    ${subtitle(`Thank you for submitting documents for <strong style="color:${T.textPrimary}">${data.businessName}</strong>. After review, we were unable to verify your account just yet.`)}
+
+    ${sectionLabel('Status')}
+    <div style="margin:8px 0 24px;">
+      ${statusPill('Action needed', T.red, T.bgDangerSoft)}
+    </div>
+
+    ${sectionLabel('Reason')}
+    <div style="background:${T.bgOuter};padding:20px 24px;margin:8px 0 24px;border:1px solid ${T.border};border-left:3px solid ${T.red};border-radius:4px;">
+      <p style="margin:0;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7;">${data.reason}</p>
+    </div>
+
+    <p style="margin:0 0 16px;font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7;">Please sign in and re-upload the corrected document. Our team will review it again promptly.</p>
+  `;
+
+  return baseTemplate({
+    preheader: `Your Triplooper verification needs another document`,
+    businessName: data.businessName,
+    bodyContent: body,
+    accentColor: T.accent,
+    ctaText: 'Re-upload documents &rarr;',
+    ctaUrl: data.reuploadUrl || 'https://triplooper.com/admin/verification',
+    footerNote: 'If you believe this is a mistake, simply reply to this email and we will help.',
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // EXPORTED TRIGGERS (fire-and-forget)
 // ═══════════════════════════════════════════════════════════════════
 
@@ -728,5 +798,23 @@ export async function sendBusinessInvite(data: BusinessInviteData): Promise<bool
     data.email,
     `You're invited to manage ${data.businessName} on Triplooper`,
     businessInviteHtml(data)
+  );
+}
+
+export async function sendVerificationApproved(data: VerificationApprovedData): Promise<boolean> {
+  if (!data.email) return false;
+  return sendResendEmail(
+    data.email,
+    `Your documents are verified — welcome to Triplooper`,
+    verificationApprovedHtml(data)
+  );
+}
+
+export async function sendVerificationRejected(data: VerificationRejectedData): Promise<boolean> {
+  if (!data.email) return false;
+  return sendResendEmail(
+    data.email,
+    `Action needed: your Triplooper verification`,
+    verificationRejectedHtml(data)
   );
 }

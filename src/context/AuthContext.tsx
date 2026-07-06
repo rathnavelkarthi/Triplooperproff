@@ -42,6 +42,10 @@ export type Tenant = {
   feature_toggles: Record<string, boolean> | null;
   business_id: string | null;
   managed_by_business: boolean;
+  verification_status?: 'pending' | 'approved' | 'rejected';
+  verification_reason?: string | null;
+  verified_at?: string | null;
+  phone?: string | null;
 };
 
 export interface User {

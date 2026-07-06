@@ -17,12 +17,53 @@ export default function Billing() {
 
     const selectedRes = reservations.find(r => r.id === selectedResId);
 
+    const getPlanDetails = () => {
+        if (tenant?.plan === 'subscription_small') {
+            return {
+                name: 'Subscription (Max 10 Rooms)',
+                price: '₹15,000 / year',
+                desc: 'Access to all features. 12% monthly commission on booking earnings.',
+                autoPay: true,
+            };
+        } else if (tenant?.plan === 'subscription_large') {
+            return {
+                name: 'Subscription (Unlimited Rooms)',
+                price: '₹21,000 / year',
+                desc: 'Access to all features. 12% monthly commission on booking earnings.',
+                autoPay: true,
+            };
+        } else {
+            return {
+                name: '12% Commission Only',
+                price: '₹0 / year',
+                desc: 'Channel Manager and Restaurant POS disabled. 12% monthly commission on booking earnings.',
+                autoPay: true,
+            };
+        }
+    };
+
+    const planInfo = getPlanDetails();
+
     return (
         <div className="max-w-5xl mx-auto space-y-8 font-sans">
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-[#0E2A38]">Billing & Commission Statements</h1>
-                <p className="text-sm text-gray-400 mt-1">No subscriptions. No monthly fees. Just a simple 12% commission per booking — all enterprise features included.</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
+                <div>
+                    <h1 className="text-xl font-bold text-[#0E2A38]">{planInfo.name}</h1>
+                    <p className="text-xs text-gray-400 mt-1">{planInfo.desc}</p>
+                    <div className="flex items-center gap-4 mt-3">
+                        <span className="text-xs font-mono bg-gray-50 border border-gray-200 text-gray-500 px-2.5 py-1 rounded-lg">
+                            Mandate: {tenant?.razorpay_mandate_id || 'Active (simulated)'}
+                        </span>
+                        <span className="text-xs text-emerald-600 bg-emerald-50 font-bold px-2.5 py-1 rounded-lg flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> AutoPay Active
+                        </span>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <span className="text-xs text-gray-400 block font-semibold">Subscription Cost</span>
+                    <span className="text-2xl font-black text-[#0E2A38] block mt-1">{planInfo.price}</span>
+                </div>
             </div>
 
             {/* Stats Overview */}
@@ -63,9 +104,9 @@ export default function Billing() {
                     <div className="absolute right-0 bottom-0 translate-x-3 translate-y-3 opacity-5 text-emerald-600">
                         <BarChart3 size={120} />
                     </div>
-                    <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Commission Rate</p>
-                    <h3 className="text-3xl font-extrabold text-[#0E2A38] mt-2">12%</h3>
-                    <p className="text-[11px] text-gray-500 mt-1">Per booking · All features unlocked · No monthly fees</p>
+                    <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Commission Payout</p>
+                    <h3 className="text-3xl font-extrabold text-[#0E2A38] mt-2">Monthly</h3>
+                    <p className="text-[11px] text-gray-500 mt-1">Auto-deducted via Razorpay mandate</p>
                 </motion.div>
             </div>
 

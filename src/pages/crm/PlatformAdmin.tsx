@@ -11,7 +11,8 @@ import {
   Send, Copy, Check, X, Search, Mail, Shield,
   Plus, AlertCircle, Clock, CheckCircle2,
   TrendingUp, Receipt, Printer, ExternalLink,
-  BarChart3, CalendarDays, IndianRupee
+  BarChart3, CalendarDays, IndianRupee,
+  ShieldCheck, ShieldAlert, ShieldQuestion, FileText, Loader2, Car, MapPin
 } from 'lucide-react';
 
 interface PlatformUser {
@@ -61,7 +62,8 @@ export default function PlatformAdmin() {
   const { user, isPlatformAdmin } = useAuth();
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'users' | 'bookings'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'bookings' | 'drivers'>('users');
+  const [drivers, setDrivers] = useState<any[]>([]);
   const [invites, setInvites] = useState<BusinessInvite[]>([]);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,6 +72,7 @@ export default function PlatformAdmin() {
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [drawerData, setDrawerData] = useState<PropertyDrawerData | null>(null);
   const [drawerFilter, setDrawerFilter] = useState<'all' | 'today' | 'month'>('month');
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState('');
@@ -263,10 +266,34 @@ export default function PlatformAdmin() {
         .order('created_at', { ascending: false });
 
       if (inviteData) setInvites(inviteData);
+
+      // Load all drivers
+      const { data: driverList } = await supabase
+        .from('drivers')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setDrivers(driverList || []);
+
     } catch (err) {
       console.error('PlatformAdmin: load error', err);
+    } finally {
+      setVerifyingId(null);
     }
-    setLoading(false);
+  };
+
+  const decideDriverVerification = async (driverId: string, action: 'approved' | 'rejected') => {
+    try {
+      const { error } = await supabase
+        .from('drivers')
+        .update({ status: action })
+        .eq('id', driverId);
+
+      if (error) throw error;
+      toast.success(`Driver partner profile marked as ${action}.`);
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update driver status.');
+    }
   };
 
   const deleteUser = async (u: PlatformUser) => {
@@ -550,9 +577,19 @@ export default function PlatformAdmin() {
         >
           Partner Bookings Registry (12% Comm.)
         </button>
+        <button
+          onClick={() => { setActiveTab('drivers'); setSearchQuery(''); }}
+          className={`pb-3 text-sm font-bold border-b-2 px-1 transition-all ${
+            activeTab === 'drivers'
+              ? 'border-[#0E2A38] text-[#0E2A38]'
+              : 'border-transparent text-gray-400 hover:text-gray-650'
+          }`}
+        >
+          Driver Partners ({drivers.length})
+        </button>
       </div>
 
-      {activeTab === 'users' ? (
+      {activeTab === 'users' && (
         <>
           {/* Users Table */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -694,7 +731,9 @@ export default function PlatformAdmin() {
             </div>
           </div>
         </>
-      ) : (
+      )}
+
+      {activeTab === 'bookings' && (
         <>
           {/* Bookings registry tab */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden space-y-4 p-5">
@@ -769,6 +808,130 @@ export default function PlatformAdmin() {
                               }`}>
                                 {res.status}
                               </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {activeTab === 'drivers' && (
+        <>
+          {/* Driver Registry Tab */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden space-y-4 p-5">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h2 className="text-lg font-bold text-[#0E2A38]">Driver Partners</h2>
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search drivers..."
+                  className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm w-64 focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none"
+                />
+              </div>
+            </div>
+
+            {drivers.length === 0 ? (
+              <div className="text-center py-12 text-gray-400 text-sm">No driver accounts registered on the platform.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider bg-gray-50/50">
+                      <th className="px-4 py-3">Driver Profile</th>
+                      <th className="px-4 py-3">Car Info</th>
+                      <th className="px-4 py-3">License Info</th>
+                      <th className="px-4 py-3">GPS Location</th>
+                      <th className="px-4 py-3 text-center">Status</th>
+                      <th className="px-4 py-3 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {drivers
+                      .filter(d => 
+                        d.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        d.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        d.car_number?.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map(d => {
+                        const isApproved = d.status === 'approved';
+                        const isRejected = d.status === 'rejected';
+                        
+                        return (
+                          <tr key={d.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                {d.car_photo && (
+                                  <img 
+                                    src={d.car_photo} 
+                                    alt="Vehicle" 
+                                    className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                                  />
+                                )}
+                                <div>
+                                  <div className="font-bold text-gray-900 text-sm">{d.name}</div>
+                                  <div className="text-xs text-gray-400 font-light">{d.email} &middot; {d.phone}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-gray-800">
+                              {d.car_number}
+                            </td>
+                            <td className="px-4 py-3 text-xs font-mono text-gray-500">
+                              {d.license_info}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-650">
+                              {d.latitude && d.longitude ? (
+                                <div className="space-y-0.5">
+                                  <div className="flex items-center gap-1 font-mono font-bold text-[#0E2A38]">
+                                    <MapPin size={12} className="text-emerald-500" />
+                                    <span>{d.latitude.toFixed(5)}, {d.longitude.toFixed(5)}</span>
+                                  </div>
+                                  {d.location_updated_at && (
+                                    <div className="text-[9px] text-gray-400">
+                                      Updated {new Date(d.location_updated_at).toLocaleTimeString()}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-gray-300 italic">Offline / No GPS</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                isApproved ? 'bg-emerald-50 text-emerald-600' :
+                                isRejected ? 'bg-red-50 text-red-600' :
+                                'bg-amber-50 text-amber-600'
+                              }`}>
+                                {d.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                {d.status !== 'approved' && (
+                                  <button
+                                    onClick={() => decideDriverVerification(d.id, 'approved')}
+                                    className="px-3 py-1.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                  >
+                                    Approve
+                                  </button>
+                                )}
+                                {d.status !== 'rejected' && (
+                                  <button
+                                    onClick={() => decideDriverVerification(d.id, 'rejected')}
+                                    className="px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                  >
+                                    Reject
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );

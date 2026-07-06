@@ -156,6 +156,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
     // Feature toggle check — if the tenant has toggles and this item has a featureKey,
     // hide it when the toggle is explicitly false
     if (item.featureKey && tenant?.feature_toggles && tenant.feature_toggles[item.featureKey] === false) return false;
+    
+    // Commission plan restrictions: no Channel Manager and no Restaurant features
+    if (tenant?.plan === 'commission') {
+      if (item.group === 'Restaurant') return false;
+      if (item.featureKey === 'channel_manager') return false;
+    }
     return true;
   });
 
