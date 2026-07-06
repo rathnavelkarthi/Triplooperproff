@@ -255,8 +255,8 @@ export default function Signup() {
             })();
             await signIn.sso({
                 strategy: 'oauth_google',
-                redirectUrl: `${apexOrigin}/admin/dashboard`,
-                redirectCallbackUrl: `${apexOrigin}/sso-callback`,
+                redirectUrl: `${apexOrigin}/sso-callback`,
+                redirectUrlComplete: `${apexOrigin}/admin/dashboard`,
             });
         } catch (err: any) {
             setError(err?.errors?.[0]?.message || 'Google sign up failed.');

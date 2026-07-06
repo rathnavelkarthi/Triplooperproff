@@ -176,8 +176,8 @@ export default function Login() {
       try {
         await signIn.sso({
           strategy: 'oauth_google',
-          redirectUrl: `${apexOrigin}/admin/dashboard`,
-          redirectCallbackUrl: `${apexOrigin}/sso-callback`,
+          redirectUrl: `${apexOrigin}/sso-callback`,
+          redirectUrlComplete: `${apexOrigin}/admin/dashboard`,
         });
       } catch (ssoError: any) {
         // Alternative: Use Clerk's built-in OAuth
