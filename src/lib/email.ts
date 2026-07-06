@@ -6,7 +6,7 @@
 // WEB-001: the Resend API key must NEVER be in the browser. Email is sent only
 // via the server proxy (api/send-email.ts on Vercel / local express), which
 // holds RESEND_API_KEY server-side. No VITE_RESENDAPIKEY, no direct browser call.
-const FROM = import.meta.env.VITE_RESEND_FROM || 'Triplooper <onboarding@resend.dev>';
+const FROM = import.meta.env.VITE_RESEND_FROM || 'Triplooper <onboarding@triplooper.com>';
 
 // ─── Types ──────────────────────────────────────────────────────
 
