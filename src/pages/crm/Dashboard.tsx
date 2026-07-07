@@ -39,8 +39,8 @@ import {
 } from '../../components/ui/table';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const CHART_COLORS = ['#18181b', '#71717a', '#a1a1aa', '#d4d4d8', '#e4e4e7', '#f4f4f5'];
-const OCC_COLORS = { available: '#f4f4f5', occupied: '#000000', notReady: '#a1a1aa' };
+const CHART_COLORS = ['#000000', '#52525b', '#71717a', '#a1a1aa', '#d4d4d8', '#e4e4e7'];
+const OCC_COLORS = { available: '#c1fbd4', occupied: '#000000', notReady: '#71717a' };
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -216,10 +216,10 @@ export default function Dashboard() {
   const hasData = reservations.length > 0 || rooms.length > 0;
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-6">
+    <div className="max-w-[1600px] mx-auto pb-6" style={{ fontFeatureSettings: '"ss03"' }}>
       {/* Header */}
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-black">Dashboard</h1>
       </div>
 
       {!hasData ? (
@@ -237,11 +237,11 @@ export default function Dashboard() {
                 <motion.div variants={itemVariants}><KpiCard label="Table Utilization" value={`${restaurantData.tableUtilization}%`} sublabel="today" /></motion.div>
               </div>
               <motion.div variants={itemVariants}>
-                <Card className="border border-zinc-200 bg-white shadow-sm rounded-lg">
+                <Card className="border border-zinc-200 bg-white shadow-[0_8px_8px_rgba(0,0,0,0.01),0_4px_4px_rgba(0,0,0,0.015),0_2px_2px_rgba(0,0,0,0.015),0_0_0_1px_rgba(0,0,0,0.05)] rounded-lg">
                   <CardHeader className="pb-2 border-b border-zinc-100">
                     <div className="flex justify-between items-center">
-                      <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Live Kitchen Orders</CardTitle>
-                      <Badge variant="warning">{restaurantData.activeOrders} Active</Badge>
+                      <CardTitle className="text-sm font-semibold tracking-tight text-black">Live Kitchen Orders</CardTitle>
+                      <Badge className="bg-[#c1fbd4] text-zinc-900 border-none hover:bg-[#c1fbd4] font-semibold">{restaurantData.activeOrders} Active</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -251,17 +251,17 @@ export default function Dashboard() {
                           .filter(o => ['pending', 'preparing'].includes(o.status))
                           .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                           .map(order => (
-                            <div key={order.id} className="min-w-[280px] border border-gray-100 bg-gray-50 rounded-xl p-4 snap-start shrink-0">
+                            <div key={order.id} className="min-w-[280px] border border-zinc-200 bg-[#fbfbf5] rounded-xl p-4 shadow-sm snap-start shrink-0">
                               <div className="flex justify-between items-start mb-3">
                                 <div>
-                                  <p className="font-bold text-[#0E2A38] uppercase tracking-wider text-xs">{order.order_type?.replace('_', ' ')}</p>
-                                  <p className="text-sm font-medium text-gray-600">
+                                  <p className="font-bold text-black uppercase tracking-wider text-[10px]">{order.order_type?.replace('_', ' ')}</p>
+                                  <p className="text-sm font-semibold text-zinc-800">
                                     {order.table_id
                                       ? `Table ${restaurantTables.find(t => t.id === order.table_id)?.table_number}`
                                       : (order.customer_name || 'Walk-in')}
                                   </p>
                                 </div>
-                                <Badge variant={order.status === 'pending' ? 'warning' : 'secondary'}>{order.status}</Badge>
+                                <Badge className="bg-black text-white hover:bg-zinc-800 border-none rounded-full text-[10px] font-medium px-2.5 py-0.5">{order.status}</Badge>
                               </div>
                               <div className="space-y-1.5 mt-4">
                                 {order.items?.map((item: any, idx: number) => (
@@ -311,10 +311,10 @@ export default function Dashboard() {
           {/* Occupancy Chart + Calendar */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
             <motion.div variants={itemVariants} className="lg:col-span-3">
-              <Card className="border border-zinc-200 bg-white shadow-sm rounded-lg">
+              <Card className="border border-zinc-200 bg-white shadow-[0_8px_8px_rgba(0,0,0,0.01),0_4px_4px_rgba(0,0,0,0.015),0_2px_2px_rgba(0,0,0,0.015),0_0_0_1px_rgba(0,0,0,0.05)] rounded-lg">
                 <CardHeader className="pb-2 border-b border-zinc-100">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Occupancy</CardTitle>
+                    <CardTitle className="text-sm font-semibold tracking-tight text-black">Occupancy</CardTitle>
                   </div>
                   <div className="flex items-center gap-4 mt-1">
                     {[
@@ -359,24 +359,24 @@ export default function Dashboard() {
           {/* Revenue Overview + Recent Arrivals */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
             <motion.div variants={itemVariants} className="lg:col-span-2">
-              <Card className="border border-zinc-200 bg-white shadow-sm rounded-lg">
+              <Card className="border border-zinc-200 bg-white shadow-[0_8px_8px_rgba(0,0,0,0.01),0_4px_4px_rgba(0,0,0,0.015),0_2px_2px_rgba(0,0,0,0.015),0_0_0_1px_rgba(0,0,0,0.05)] rounded-lg">
                 <CardHeader className="pb-2 border-b border-zinc-100">
-                  <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Revenue Overview</CardTitle>
+                  <CardTitle className="text-sm font-semibold tracking-tight text-black">Revenue Overview</CardTitle>
                   <p className="text-xs text-zinc-400 mt-0.5">Total Revenue</p>
-                  <p className="text-3xl font-semibold tracking-tight text-zinc-900 mt-1">{formatINR(hotelStats.totalRevenue)}</p>
+                  <p className="text-3xl font-semibold tracking-tight text-black mt-1">{formatINR(hotelStats.totalRevenue)}</p>
                 </CardHeader>
-                <CardContent className="pt-0">
+                <CardContent className="pt-3">
                   {/* Revenue split */}
                   <div className="grid grid-cols-2 gap-2 mb-3">
-                    <div className="flex flex-col items-center justify-center bg-gradient-to-br from-[var(--color-ocean-50)] to-white rounded-lg py-3 border border-[var(--color-ocean-100)]">
-                      <DollarSign size={18} className="mb-1 text-[var(--color-ocean-500)]" />
-                      <p className="text-[10px] text-gray-400 mt-1">Offline Revenue</p>
-                      <p className="text-base font-bold text-[#0E2A38]">{formatINR(hotelStats.offlineRevenue)}</p>
+                    <div className="flex flex-col items-center justify-center bg-white rounded-lg py-3 border border-zinc-200 shadow-sm">
+                      <DollarSign size={18} className="mb-1 text-zinc-950" />
+                      <p className="text-[9px] text-zinc-400 mt-1 uppercase font-semibold tracking-wider">Offline Revenue</p>
+                      <p className="text-base font-bold text-black">{formatINR(hotelStats.offlineRevenue)}</p>
                     </div>
-                    <div className="flex flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-white rounded-lg py-3 border border-amber-100">
-                      <TrendingUp size={18} className="mb-1 text-[var(--color-accent)]" />
-                      <p className="text-[10px] text-gray-400 mt-1">Platform Revenue</p>
-                      <p className="text-base font-bold text-[#0E2A38]">{formatINR(hotelStats.platformRevenue)}</p>
+                    <div className="flex flex-col items-center justify-center bg-[#d4f9e0] rounded-lg py-3 border border-[#c1fbd4] shadow-sm">
+                      <TrendingUp size={18} className="mb-1 text-zinc-950" />
+                      <p className="text-[9px] text-zinc-700 mt-1 uppercase font-semibold tracking-wider">Platform Revenue</p>
+                      <p className="text-base font-bold text-black">{formatINR(hotelStats.platformRevenue)}</p>
                     </div>
                   </div>
 
@@ -387,13 +387,13 @@ export default function Dashboard() {
                         <AreaChart data={revenueByMonth}>
                           <defs>
                             <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.3} />
-                              <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
+                              <stop offset="0%" stopColor="#c1fbd4" stopOpacity={0.8} />
+                              <stop offset="100%" stopColor="#c1fbd4" stopOpacity={0.1} />
                             </linearGradient>
                           </defs>
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} />
-                          <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }} formatter={(v: number) => [formatINR(v), 'Revenue']} />
-                          <Area type="monotone" dataKey="total" stroke="var(--color-accent)" strokeWidth={2} fill="url(#revGrad)" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#71717a', fontSize: 10 }} />
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e4e4e7', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: 12 }} formatter={(v: number) => [formatINR(v), 'Revenue']} />
+                          <Area type="monotone" dataKey="total" stroke="#000000" strokeWidth={2} fill="url(#revGrad)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -420,10 +420,10 @@ export default function Dashboard() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="lg:col-span-3">
-              <Card className="border border-zinc-200 bg-white shadow-sm rounded-lg">
+              <Card className="border border-zinc-200 bg-white shadow-[0_8px_8px_rgba(0,0,0,0.01),0_4px_4px_rgba(0,0,0,0.015),0_2px_2px_rgba(0,0,0,0.015),0_0_0_1px_rgba(0,0,0,0.05)] rounded-lg">
                 <CardHeader className="pb-2 border-b border-zinc-100">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Recent Arrivals</CardTitle>
+                    <CardTitle className="text-sm font-semibold tracking-tight text-black">Recent Arrivals</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 px-0">
@@ -513,19 +513,19 @@ function KpiCard({ label, value, sublabel, arrow, icon, accentColor }: {
   accentColor?: string;
 }) {
   return (
-    <Card className="p-5 border border-zinc-200 bg-white shadow-sm rounded-lg transition-all duration-200 hover:border-zinc-300">
+    <Card className="p-5 border border-zinc-200 bg-white shadow-[0_8px_8px_rgba(0,0,0,0.01),0_4px_4px_rgba(0,0,0,0.015),0_2px_2px_rgba(0,0,0,0.015),0_0_0_1px_rgba(0,0,0,0.05)] rounded-lg transition-all duration-200 hover:border-zinc-300">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">{label}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">{label}</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-semibold text-zinc-900 tracking-tight">{value}</span>
+            <span className="text-3xl font-semibold text-black tracking-tight">{value}</span>
             {arrow === 'down-left' && <TrendingDown size={14} className="text-emerald-600" />}
             {arrow === 'up-right' && <TrendingUp size={14} className="text-rose-600" />}
           </div>
           {sublabel && <p className="text-[11px] text-zinc-400 mt-1.5">{sublabel}</p>}
         </div>
         {icon && (
-          <div className="w-10 h-10 rounded-full border border-zinc-100 bg-zinc-50 text-zinc-600 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-full bg-[#c1fbd4] text-zinc-950 flex items-center justify-center shrink-0">
             {icon}
           </div>
         )}
@@ -552,11 +552,11 @@ function CalendarPanel({ rooms, calendarRooms }: {
   });
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden border border-zinc-200 bg-white shadow-sm rounded-lg">
+    <Card className="h-full flex flex-col overflow-hidden border border-zinc-200 bg-white shadow-[0_8px_8px_rgba(0,0,0,0.01),0_4px_4px_rgba(0,0,0,0.015),0_2px_2px_rgba(0,0,0,0.015),0_0_0_1px_rgba(0,0,0,0.05)] rounded-lg">
       <CardHeader className="pb-2 border-b border-zinc-100">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Calendar</CardTitle>
+            <CardTitle className="text-sm font-semibold tracking-tight text-black">Calendar</CardTitle>
             <p className="text-xs text-zinc-400 mt-0.5">Recent activities of {rooms.length} rooms</p>
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-400">
@@ -567,11 +567,11 @@ function CalendarPanel({ rooms, calendarRooms }: {
 
         {/* Week navigation */}
         <div className="flex items-center justify-between mt-2">
-          <button className="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100"><ChevronLeft size={14} className="text-gray-500" /></button>
-          <span className="text-xs font-semibold text-[#0E2A38]">
+          <button className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-zinc-100"><ChevronLeft size={14} className="text-zinc-500" /></button>
+          <span className="text-xs font-semibold text-black">
             {today.toLocaleString('default', { month: 'long', year: 'numeric' })}
           </span>
-          <button className="w-6 h-6 rounded flex items-center justify-center hover:bg-gray-100"><ChevronRight size={14} className="text-gray-500" /></button>
+          <button className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-zinc-100"><ChevronRight size={14} className="text-zinc-500" /></button>
         </div>
 
         {/* Date strip */}
@@ -579,7 +579,7 @@ function CalendarPanel({ rooms, calendarRooms }: {
           {weekDays.map((d, i) => {
             const isToday = d.toDateString() === today.toDateString();
             return (
-              <div key={i} className={`flex flex-col items-center py-1.5 rounded-lg text-center ${isToday ? 'bg-[#0E2A38] text-white' : 'text-gray-500'}`}>
+              <div key={i} className={`flex flex-col items-center py-1.5 rounded-lg text-center ${isToday ? 'bg-black text-white' : 'text-zinc-500'}`}>
                 <span className="text-[10px] font-medium">{String(d.getDate()).padStart(2, '0')}</span>
                 <span className="text-[9px] opacity-70">{dayNames[d.getDay()]}</span>
                 {isToday && <span className="text-[8px] mt-0.5 font-bold uppercase tracking-wider opacity-80">Today</span>}
@@ -620,10 +620,10 @@ function CalendarPanel({ rooms, calendarRooms }: {
         )}
       </CardContent>
 
-      <div className="border-t border-gray-100 p-2">
+      <div className="border-t border-zinc-100 p-2">
         <button 
           onClick={() => navigate('/admin/calendar')}
-          className="w-full py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+          className="w-full py-2 rounded-full border border-black text-xs font-semibold text-black hover:bg-zinc-50 transition-colors"
         >
           Full View
         </button>
