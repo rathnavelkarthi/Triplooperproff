@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCRM } from '../../context/CRMDataContext';
 import { motion } from 'motion/react';
@@ -537,6 +538,7 @@ function CalendarPanel({ rooms, calendarRooms }: {
   rooms: any[];
   calendarRooms: { number: string; guests: { name: string; avatar: string; color: string; checkIn: string; checkOut: string }[] }[];
 }) {
+  const navigate = useNavigate();
   const today = new Date();
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -618,7 +620,10 @@ function CalendarPanel({ rooms, calendarRooms }: {
       </CardContent>
 
       <div className="border-t border-gray-100 p-2">
-        <button className="w-full py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+        <button 
+          onClick={() => navigate('/admin/calendar')}
+          className="w-full py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+        >
           Full View
         </button>
       </div>
