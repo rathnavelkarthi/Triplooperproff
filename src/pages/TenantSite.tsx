@@ -1444,7 +1444,7 @@ export default function TenantSite() {
                         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                             <p className="text-xs text-white/20">&copy; {new Date().getFullYear()} {tenant.business_name}. All rights reserved.</p>
                             <p className="text-xs text-white/20">
-                                Powered by <a href="/" className="text-accent/50 hover:text-accent transition-colors">HospitalityOS</a>
+                                Powered by <a href="/" className="text-accent/50 hover:text-accent transition-colors">Triplooper</a>
                             </p>
                         </div>
                     </div>

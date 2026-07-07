@@ -150,7 +150,7 @@ export type InventoryItem = {
 // --- Initial values ---
 
 const initialCMS: CMSSettings = {
-    heroTitle: 'HospitalityOS',
+    heroTitle: 'Triplooper',
     heroSubtitle: 'All-in-One Hotel & Restaurant Management',
     contactEmail: '',
     contactPhone: '',

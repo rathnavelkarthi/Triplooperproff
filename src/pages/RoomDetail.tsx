@@ -556,7 +556,7 @@ export default function RoomDetail() {
       {/* Footer */}
       <footer className="bg-[#0E2A38] py-8 px-6 text-center">
         <p className="text-xs text-white/20">
-          &copy; {new Date().getFullYear()} {tenant.business_name}. Powered by <a href={hostSubdomain ? "https://superstay.com" : "/"} className="text-[#C9A646]/50 hover:text-[#C9A646] transition-colors">HospitalityOS</a>
+          &copy; {new Date().getFullYear()} {tenant.business_name}. Powered by <a href={hostSubdomain ? "https://superstay.com" : "/"} className="text-[#C9A646]/50 hover:text-[#C9A646] transition-colors">Triplooper</a>
         </p>
       </footer>
 

@@ -485,7 +485,7 @@ export default function ChannelManager() {
                                     <form onSubmit={submitConnection} className="space-y-4">
                                         <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg flex items-start gap-2 mb-2">
                                             <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                                            <p>To connect, you must authorize HospitalityOS within your {selectedMeta.name} Extranet account first.</p>
+                                            <p>To connect, you must authorize Triplooper within your {selectedMeta.name} Extranet account first.</p>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-semibold text-gray-700 mb-1.5">Hotel ID / Property ID</label>

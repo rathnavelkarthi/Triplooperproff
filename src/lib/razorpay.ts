@@ -85,7 +85,7 @@ export async function initiatePayment(
             key: key_id,
             amount,
             currency,
-            name: 'HospitalityOS',
+            name: 'Triplooper',
             description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - ${billingCycle}`,
             order_id,
             prefill: {
@@ -179,7 +179,7 @@ export async function initiateAddonPayment(
             key: key_id,
             amount,
             currency,
-            name: 'HospitalityOS',
+            name: 'Triplooper',
             description: `Add-on: ${addon.name}`,
             order_id,
             prefill: { email: userEmail },
