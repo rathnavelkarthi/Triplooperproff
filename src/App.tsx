@@ -196,6 +196,7 @@ const GuestFoodOrder = lazy(() => import('./pages/guest/GuestFoodOrder'));
 const GuestServices = lazy(() => import('./pages/guest/GuestServices'));
 const GuestBill = lazy(() => import('./pages/guest/GuestBill'));
 const GuestChat = lazy(() => import('./pages/guest/GuestChat'));
+const GuestAccount = lazy(() => import('./pages/GuestAccount'));
 
 // Simple loading fallback
 const PageLoader = () => (
@@ -232,6 +233,8 @@ export default function App() {
                       <Route path="bill" element={<GuestBill />} />
                       <Route path="chat" element={<GuestChat />} />
                     </Route>
+                    {/* Guest Account — booking history */}
+                    <Route path="/my-stays" element={<GuestAccount />} />
                     {/* SSO callback must exist on subdomains too — if Google redirects here we still need to finish the handshake */}
                     <Route path="/sso-callback" element={<SSOCallback />} />
                     <Route path="*" element={<NotFound />} />
@@ -281,6 +284,9 @@ export default function App() {
                     <Route path="bill" element={<GuestBill />} />
                     <Route path="chat" element={<GuestChat />} />
                   </Route>
+
+                  {/* Guest Account — booking history and invoice download */}
+                  <Route path="/my-stays" element={<GuestAccount />} />
 
                   {/* Signup */}
                   <Route path="/signup" element={<Signup />} />

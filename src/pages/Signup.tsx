@@ -106,6 +106,7 @@ export default function Signup() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [businessName, setBusinessName] = useState('');
+    const [businessCity, setBusinessCity] = useState('');
     const [businessType, setBusinessType] = useState<BusinessType>('hotel');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -163,6 +164,10 @@ export default function Signup() {
             setError('Business name is required.');
             return;
         }
+        if (!businessCity.trim()) {
+            setError('Please enter the city where your property is located.');
+            return;
+        }
         setError('');
         setStep(2);
     };
@@ -180,6 +185,7 @@ export default function Signup() {
 
         localStorage.setItem('pending_business_name', businessName);
         localStorage.setItem('pending_business_type', businessType);
+        localStorage.setItem('pending_business_city', businessCity);
         if (inviteToken) {
             localStorage.setItem('pending_invite_token', inviteToken);
         }
@@ -415,6 +421,20 @@ export default function Signup() {
                             value={businessName}
                             onChange={(e) => setBusinessName(e.target.value)}
                             placeholder="e.g. Saffron Spice Villa"
+                            className="w-full h-12 bg-[#FDFBF7] border rounded-xl px-4 text-sm outline-none focus:ring-2 transition-all"
+                            style={{ borderColor: C.line, color: C.teal }}
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label htmlFor={`${idPrefix}-city`} className="block text-[11px] font-bold uppercase tracking-wider" style={{ color: C.muted }}>City / Location</label>
+                        <input
+                            id={`${idPrefix}-city`}
+                            type="text"
+                            required
+                            value={businessCity}
+                            onChange={(e) => setBusinessCity(e.target.value)}
+                            placeholder="e.g. Pondicherry, Ooty, Chennai…"
                             className="w-full h-12 bg-[#FDFBF7] border rounded-xl px-4 text-sm outline-none focus:ring-2 transition-all"
                             style={{ borderColor: C.line, color: C.teal }}
                         />

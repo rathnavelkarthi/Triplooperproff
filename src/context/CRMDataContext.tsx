@@ -28,7 +28,7 @@ export type Reservation = {
     checkIn: string;
     checkOut: string;
     source: string;
-    status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Checked In' | 'Checked Out';
+    status: 'Confirmed' | 'Pending' | 'Cancelled' | 'Checked In' | 'Checked Out' | 'No Show';
     payment: 'Paid' | 'Unpaid' | 'Partial' | 'Refunded';
     payment_method?: string;
     amount?: number;
@@ -40,6 +40,8 @@ export type Reservation = {
     aadhar_extracted_address?: string | null;
     aadhar_extracted_name?: string | null;
     aadhar_dob?: string | null;
+    guest_review_note?: string | null;
+    guest_review_date?: string | null;
 };
 
 export type Room = {
@@ -316,6 +318,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                         aadhar_extracted_address: r.aadhar_extracted_address,
                         aadhar_extracted_name: r.aadhar_extracted_name,
                         aadhar_dob: r.aadhar_dob,
+                        guest_review_note: r.guest_review_note,
+                        guest_review_date: r.guest_review_date,
                     })));
                 } else { setReservations([]); }
 
@@ -538,6 +542,9 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         if (updatedData.payment_method) updatePayload.payment_method = updatedData.payment_method;
         if (updatedData.amount !== undefined) updatePayload.amount = updatedData.amount;
         if (updatedData.gst_amount !== undefined) updatePayload.gst_amount = updatedData.gst_amount;
+        if (updatedData.guest_review_note !== undefined) updatePayload.guest_review_note = updatedData.guest_review_note;
+        if (updatedData.guest_review_date !== undefined) updatePayload.guest_review_date = updatedData.guest_review_date;
+        if (updatedData.source) updatePayload.source = updatedData.source;
         const oldReservation = reservations.find(r => r.id === id);
         const { error } = await supabase.from('reservations').update(updatePayload).eq('id', id);
         if (!error) {

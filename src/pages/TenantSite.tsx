@@ -528,6 +528,7 @@ export default function TenantSite() {
     const [activeMenuCat, setActiveMenuCat] = useState<number | null>(null);
     const [menuSearch, setMenuSearch] = useState('');
     const [pageContent, setPageContent] = useState<any[]>([]);
+    const [nearbyAttractions, setNearbyAttractions] = useState<string[]>([]);
     // Table booking modal state
     const [showTableBooking, setShowTableBooking] = useState(false);
     const [tableBookingSuccess, setTableBookingSuccess] = useState<any>(null);
@@ -567,6 +568,12 @@ export default function TenantSite() {
 
             const { data: contentData } = await supabase.from('page_content').select('*').eq('tenant_id', data.tenant.id);
             if (contentData) setPageContent(contentData);
+
+            // Fetch nearby attractions
+            const { data: attractData } = await supabase.from('cms_settings').select('setting_value').eq('tenant_id', data.tenant.id).eq('setting_key', 'nearby_attractions').maybeSingle();
+            if (attractData?.setting_value) {
+                try { setNearbyAttractions(JSON.parse(attractData.setting_value)); } catch {}
+            }
 
             // Fetch menu data for restaurant/combined tenants
             const bType = data.tenant.business_type;
@@ -1397,6 +1404,33 @@ export default function TenantSite() {
                         <p className="text-xs font-semibold text-accent uppercase tracking-[0.2em] mb-3">About us</p>
                         <h2 className={isApple ? "text-3xl md:text-[40px] font-semibold text-foreground tracking-tight leading-[1.10] mb-8" : "text-4xl md:text-5xl font-bold text-primary tracking-tight mb-8"}>{aboutHeading}</h2>
                         <p className="text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto whitespace-pre-wrap">{aboutText}</p>
+                    </div>
+                </section>
+            )}
+
+            {/* ===== NEARBY ATTRACTIONS ===== */}
+            {nearbyAttractions.length > 0 && (
+                <section id="nearby" className={isApple ? "py-16 px-6 bg-white border-none" : "py-16 px-6 bg-[#FDFBF7] border-t border-gray-100"}>
+                    <div className="max-w-5xl mx-auto">
+                        <div className="text-center mb-10">
+                            <p className="text-xs font-semibold text-accent uppercase tracking-[0.2em] mb-2">Explore</p>
+                            <h2 className={isApple ? "text-3xl md:text-[40px] font-semibold text-foreground tracking-tight" : "text-3xl md:text-4xl font-bold text-primary tracking-tight"}>Nearby Spots &amp; Attractions</h2>
+                            <p className="text-gray-400 text-sm mt-2">Places to visit during your stay</p>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-3">
+                            {nearbyAttractions.map((name, i) => (
+                                <span
+                                    key={i}
+                                    className={isApple
+                                        ? "inline-flex items-center gap-2 bg-[#f5f5f7] text-[#1d1d1f] text-sm font-medium px-4 py-2 rounded-full"
+                                        : "inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium px-4 py-2 rounded-full shadow-sm hover:shadow-md transition-shadow"
+                                    }
+                                >
+                                    <MapPin size={13} className="text-accent shrink-0" />
+                                    {name}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 </section>
             )}

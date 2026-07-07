@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, Plus, ChevronDown, MoreVertical, X, LogOut, FileText, Printer } from 'lucide-react';
+import { Search, Filter, Plus, ChevronDown, MoreVertical, X, LogOut, FileText, Printer, AlertOctagon, Star } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useCRM, Reservation } from '../../context/CRMDataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -8,11 +8,12 @@ import BookingModal from '../../components/crm/BookingModal';
 import { printInvoice } from '../../components/crm/invoiceUtils';
 import { usePlanLimits } from '../../lib/planLimits';
 import UpgradeModal from '../../components/crm/UpgradeModal';
+import { supabase } from '../../lib/supabaseClient';
 
-type StatusFilter = 'All' | 'Confirmed' | 'Checked In' | 'Checked Out' | 'Pending' | 'Cancelled';
+type StatusFilter = 'All' | 'Confirmed' | 'Checked In' | 'Checked Out' | 'Pending' | 'Cancelled' | 'No Show';
 
 export default function Reservations() {
-  const { reservations, rooms, deleteReservation, checkInGuest, checkOutGuest, cmsSettings } = useCRM();
+  const { reservations, rooms, deleteReservation, checkInGuest, checkOutGuest, cmsSettings, updateReservation } = useCRM();
   const { tenant } = useAuth();
   const { canAdd, limitFor, currentCount, plan } = usePlanLimits();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -56,7 +57,7 @@ export default function Reservations() {
 
   // Count reservations by status for the filter tabs
   const statusCounts = useMemo(() => {
-    const counts = { All: reservations.length, Confirmed: 0, 'Checked In': 0, 'Checked Out': 0, Pending: 0, Cancelled: 0 };
+    const counts = { All: reservations.length, Confirmed: 0, 'Checked In': 0, 'Checked Out': 0, Pending: 0, Cancelled: 0, 'No Show': 0 };
     reservations.forEach(r => {
       if (r.status in counts) counts[r.status as keyof typeof counts]++;
     });
@@ -141,7 +142,45 @@ export default function Reservations() {
     setActiveMenuId(null);
   };
 
-  const statusTabs: StatusFilter[] = ['All', 'Confirmed', 'Checked In', 'Pending', 'Checked Out', 'Cancelled'];
+  // --- No Show ---
+  const handleMarkNoShow = async (res: Reservation) => {
+    const hoursUntilCheckIn = (new Date(res.checkIn).getTime() - Date.now()) / (1000 * 60 * 60);
+    const refundMsg = hoursUntilCheckIn > 24
+      ? 'Guest can request a manual refund since check-in is more than 24 hours away.'
+      : 'No refund applies — cancellation is within 24 hours of check-in.';
+    if (!window.confirm(`Mark "${res.guest}" as No Show?\n\n${refundMsg}`)) return;
+    await updateReservation(res.id, { status: 'No Show' });
+    if (res.room_id) {
+      // Free the room back to available
+      await supabase.from('rooms').update({ status: 'Available' }).eq('id', res.room_id);
+    }
+    setActiveMenuId(null);
+  };
+
+  // --- Guest Review (3-day window post checkout) ---
+  const [reviewRes, setReviewRes] = useState<Reservation | null>(null);
+  const [reviewNote, setReviewNote] = useState('');
+  const [savingReview, setSavingReview] = useState(false);
+
+  const canAddReview = (res: Reservation) => {
+    if (res.status !== 'Checked Out') return false;
+    const daysSinceCheckout = (Date.now() - new Date(res.checkOut).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceCheckout <= 3;
+  };
+
+  const handleSaveReview = async () => {
+    if (!reviewRes) return;
+    setSavingReview(true);
+    await updateReservation(reviewRes.id, {
+      guest_review_note: reviewNote,
+      guest_review_date: new Date().toISOString().split('T')[0]
+    });
+    setSavingReview(false);
+    setReviewRes(null);
+    setReviewNote('');
+  };
+
+  const statusTabs: StatusFilter[] = ['All', 'Confirmed', 'Checked In', 'Pending', 'Checked Out', 'Cancelled', 'No Show'];
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -150,6 +189,7 @@ export default function Reservations() {
       case 'Checked Out': return 'bg-blue-100 text-blue-800';
       case 'Pending': return 'bg-yellow-100 text-yellow-800';
       case 'Cancelled': return 'bg-red-100 text-red-800';
+      case 'No Show': return 'bg-gray-800 text-white';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -340,6 +380,34 @@ export default function Reservations() {
                             Generate Bill
                           </button>
 
+                          {/* No Show action */}
+                          {(res.status === 'Confirmed' || res.status === 'Pending') && (
+                            <>
+                              <div className="border-t border-gray-100" />
+                              <button
+                                onClick={() => handleMarkNoShow(res)}
+                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 font-medium"
+                              >
+                                <AlertOctagon size={14} />
+                                Mark as No Show
+                              </button>
+                            </>
+                          )}
+
+                          {/* Guest review (3-day window post checkout) */}
+                          {canAddReview(res) && (
+                            <>
+                              <div className="border-t border-gray-100" />
+                              <button
+                                onClick={() => { setReviewRes(res); setReviewNote(res.guest_review_note || ''); setActiveMenuId(null); }}
+                                className="w-full text-left px-4 py-2.5 text-sm text-[var(--color-ocean-800)] hover:bg-[var(--color-ocean-50)] transition-colors flex items-center gap-2 font-medium"
+                              >
+                                <Star size={14} className="text-[#C9A646]" />
+                                {res.guest_review_note ? 'Edit Guest Review' : 'Add Guest Review'}
+                              </button>
+                            </>
+                          )}
+
                           <div className="border-t border-gray-100 my-1" />
                           <button
                             onClick={() => {
@@ -437,6 +505,42 @@ export default function Reservations() {
         reservationId={editingReservationId}
       />
       <UpgradeModal open={showUpgrade} onClose={() => setShowUpgrade(false)} resource="reservations this month" plan={plan} currentCount={currentCount('reservations')} limit={limitFor('reservations')} />
+
+      {/* Guest Review Modal */}
+      {reviewRes && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <h2 className="font-serif text-lg font-bold text-gray-900">Guest Review</h2>
+                <p className="text-xs text-gray-500 mt-0.5">{reviewRes.guest} — {reviewRes.room}</p>
+              </div>
+              <button onClick={() => setReviewRes(null)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"><X size={18} /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs text-amber-800">
+                <Star size={12} className="inline mr-1.5 text-amber-500" />
+                This review is private and visible only to your staff. You have 3 days after checkout to add or edit this review.
+              </div>
+              <textarea
+                rows={5}
+                maxLength={500}
+                placeholder="Describe the guest's behavior, room condition on departure, any issues, or special notes..."
+                value={reviewNote}
+                onChange={e => setReviewNote(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all"
+              />
+              <p className="text-xs text-gray-400 text-right">{reviewNote.length}/500</p>
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setReviewRes(null)} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button onClick={handleSaveReview} disabled={savingReview} className="px-5 py-2 rounded-xl bg-[#0E2A38] text-white text-sm font-semibold hover:bg-[#091b24] transition-colors disabled:opacity-50">
+                  {savingReview ? 'Saving...' : 'Save Review'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

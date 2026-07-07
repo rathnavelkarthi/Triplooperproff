@@ -13,6 +13,7 @@ import {
   RefreshCw, LaptopIcon, Heart, Search, ChevronDown, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '../lib/supabaseClient';
 
 // Inject luxury fonts and bespoke design system styles
 const masterStyles = `
@@ -214,38 +215,97 @@ export default function LandingPage() {
     { id: 20, name: "Silver Linings Villa", loc: "Coimbatore", type: "Luxury Foothill Villa", price: 8500, rating: "4.91", image: "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&q=80", tag: "Eco Stays" }
   ];
 
-  const properties = [
-    { name: "Anya Paradise", loc: "Pondicherry", rooms: 15, x: 260, y: 190 },
-    { name: "Sai Residency", loc: "Chennai", rooms: 22, x: 280, y: 140 },
-    { name: "Coolspot Cottage", loc: "Ooty", rooms: 9, x: 190, y: 250 },
-    { name: "Daffodil Cottage", loc: "Kodaikanal", rooms: 12, x: 200, y: 280 },
-    { name: "Carvery Residency", loc: "Pondicherry", rooms: 18, x: 255, y: 205 },
-    { name: "Mooongil Illam", loc: "Pondicherry", rooms: 10, x: 245, y: 180 },
-    { name: "Jayam Castle", loc: "Yercaud", rooms: 14, x: 215, y: 210 },
-    { name: "Green Apple Property", loc: "Madurai", rooms: 16, x: 210, y: 310 },
-    { name: "Nest N Rest Cottage", loc: "Ooty", rooms: 6, x: 180, y: 240 },
-    { name: "Pineapple Nest", loc: "Coimbatore", rooms: 8, x: 175, y: 265 },
-    { name: "Royal Park", loc: "Chennai", rooms: 30, x: 290, y: 130 }
-  ];
-
+  const [propertiesList, setPropertiesList] = useState<any[]>(initialProperties);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState("All Stays");
   const [activeDestinationFilter, setActiveDestinationFilter] = useState("All Destinations");
   const [searchDestination, setSearchDestination] = useState("");
-  const [likes, setLikes] = useState<Record<number, boolean>>({});
+  const [likes, setLikes] = useState<Record<number | string, boolean>>({});
 
-  const toggleLike = (id: number, e: React.MouseEvent) => {
+  useEffect(() => {
+    async function loadRealProperties() {
+      try {
+        const { data: tenantsData, error: tenantsError } = await supabase
+          .from('tenants')
+          .select('id, business_name, subdomain, business_type, hero_image_url, city')
+          .eq('is_active', true)
+          .eq('verification_status', 'approved');
+
+        if (tenantsError) throw tenantsError;
+        if (!tenantsData || tenantsData.length === 0) return;
+
+        const { data: testimonialsData } = await supabase
+          .from('testimonials')
+          .select('tenant_id, rating');
+
+        const { data: roomsData } = await supabase
+          .from('rooms')
+          .select('tenant_id, price_per_night, type')
+          .eq('is_available', true);
+
+        const tenantRooms: Record<string, typeof roomsData> = {};
+        roomsData?.forEach(r => {
+          if (!tenantRooms[r.tenant_id]) tenantRooms[r.tenant_id] = [];
+          tenantRooms[r.tenant_id].push(r);
+        });
+
+        const tenantRatings: Record<string, number[]> = {};
+        testimonialsData?.forEach(t => {
+          if (!tenantRatings[t.tenant_id]) tenantRatings[t.tenant_id] = [];
+          tenantRatings[t.tenant_id].push(t.rating);
+        });
+
+        const realProps = tenantsData.map((t, index) => {
+          const ratings = tenantRatings[t.id] || [];
+          const avgRating = ratings.length > 0
+            ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
+            : (4.7 + (index * 0.05) % 0.3).toFixed(2);
+
+          const rooms = tenantRooms[t.id] || [];
+          const minPrice = rooms.length > 0
+            ? Math.min(...rooms.map(r => Number(r.price_per_night)))
+            : 3500 + (index * 500) % 3000;
+
+          const roomTypes = rooms.map(r => r.type).filter(Boolean);
+          const typeLabel = roomTypes[0] || (t.business_type === 'restaurant' ? 'Boutique Bistro' : 'Premium Residency');
+          
+          const tags = ['Beachfront', 'Mountain View', 'Forest Edge', 'City Center', 'Eco Stays'];
+          const tag = tags[index % tags.length];
+
+          return {
+            id: t.id,
+            name: t.business_name,
+            loc: t.city || 'India',
+            type: typeLabel,
+            price: minPrice,
+            rating: avgRating,
+            image: t.hero_image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
+            tag: tag,
+            subdomain: t.subdomain
+          };
+        });
+
+        realProps.sort((a, b) => Number(b.rating) - Number(a.rating));
+        setPropertiesList(realProps);
+      } catch (err) {
+        console.error('Failed to load real properties:', err);
+      }
+    }
+    loadRealProperties();
+  }, []);
+
+  const toggleLike = (id: number | string, e: React.MouseEvent) => {
     e.stopPropagation();
     setLikes(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const filteredProperties = useMemo(() => {
-    return initialProperties.filter(p => {
+    return propertiesList.filter(p => {
       const matchCategory = activeCategoryFilter === "All Stays" || p.tag === activeCategoryFilter;
       const matchDestination = activeDestinationFilter === "All Destinations" || p.loc.toLowerCase() === activeDestinationFilter.toLowerCase();
       const matchSearch = p.name.toLowerCase().includes(searchDestination.toLowerCase()) || p.loc.toLowerCase().includes(searchDestination.toLowerCase());
       return matchCategory && matchDestination && matchSearch;
     });
-  }, [activeCategoryFilter, activeDestinationFilter, searchDestination]);
+  }, [propertiesList, activeCategoryFilter, activeDestinationFilter, searchDestination]);
   return (
     <div 
       ref={containerRef}
@@ -270,6 +330,7 @@ export default function LandingPage() {
               <a href="#os-diagram" className="nav-link hover:text-[#C9A646] transition-colors">The Platform</a>
               <a href="#india-network" className="nav-link hover:text-[#C9A646] transition-colors">Our Network</a>
               <a href="#pricing" className="nav-link hover:text-[#C9A646] transition-colors">Pricing</a>
+              <button onClick={() => navigate('/my-stays')} className="nav-link hover:text-[#C9A646] transition-colors text-left uppercase">My Stays</button>
             </div>
           </div>
 
@@ -313,6 +374,7 @@ export default function LandingPage() {
             <a href="#os-diagram" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">The Platform</a>
             <a href="#india-network" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Our Network</a>
             <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Pricing</a>
+            <button onClick={() => { setMobileMenuOpen(false); navigate('/my-stays'); }} className="text-[#0E2A38] font-bold text-lg text-left">My Stays</button>
             
             <div className="h-px bg-[#C9A646]/10 my-1" />
             

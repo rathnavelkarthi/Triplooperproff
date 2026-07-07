@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Image as ImageIcon, Check, Building, Globe, MessageSquare, Phone } from 'lucide-react';
+import { Save, Image as ImageIcon, Check, Building, Globe, MessageSquare, Phone, MapPin, Plus, X } from 'lucide-react';
 import { useCRM, PageContent } from '../../context/CRMDataContext';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -10,7 +10,43 @@ export default function LandingCMS() {
     const { pageContent, updatePageContent } = useCRM();
     const { tenant } = useAuth();
     const [isUploading, setIsUploading] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'hero' | 'about' | 'contact' | 'whatsapp'>('hero');
+    const [activeTab, setActiveTab] = useState<'hero' | 'about' | 'contact' | 'attractions' | 'whatsapp'>('hero');
+
+    // Nearby Attractions state
+    const [attractionsList, setAttractionsList] = useState<string[]>([]);
+    const [attractionInput, setAttractionInput] = useState('');
+    const [savingAttractions, setSavingAttractions] = useState(false);
+
+    // Load existing attractions from cms_settings on mount
+    useState(() => {
+        if (!tenant?.id) return;
+        supabase.from('cms_settings').select('setting_value').eq('tenant_id', tenant.id).eq('setting_key', 'nearby_attractions').maybeSingle().then(({ data }) => {
+            if (data?.setting_value) {
+                try { setAttractionsList(JSON.parse(data.setting_value)); } catch {}
+            }
+        });
+    });
+
+    const addAttraction = () => {
+        const val = attractionInput.trim();
+        if (!val || attractionsList.includes(val)) return;
+        setAttractionsList(prev => [...prev, val]);
+        setAttractionInput('');
+    };
+
+    const removeAttraction = (name: string) => setAttractionsList(prev => prev.filter(a => a !== name));
+
+    const saveAttractions = async () => {
+        if (!tenant?.id) return;
+        setSavingAttractions(true);
+        await supabase.from('cms_settings').upsert({
+            tenant_id: tenant.id,
+            setting_key: 'nearby_attractions',
+            setting_value: JSON.stringify(attractionsList)
+        }, { onConflict: 'tenant_id,setting_key' });
+        setSavingAttractions(false);
+        toast.success('Nearby attractions saved');
+    };
 
     // Helper to get current content value safely
     const getContent = (section: string, key: string, field: 'content_text' | 'image_url' = 'content_text') => {
@@ -102,6 +138,12 @@ export default function LandingCMS() {
                     className={`px-4 py-3 border-b-2 font-semibold flex items-center gap-2 transition-colors ${activeTab === 'contact' ? 'border-[#0E2A38] text-[#0E2A38]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                 >
                     <Phone size={18} /> Contact Info
+                </button>
+                <button
+                    onClick={() => setActiveTab('attractions')}
+                    className={`px-4 py-3 border-b-2 font-semibold flex items-center gap-2 transition-colors ${activeTab === 'attractions' ? 'border-[#0E2A38] text-[#0E2A38]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                >
+                    <MapPin size={18} /> Nearby Spots
                 </button>
                 <button
                     onClick={() => setActiveTab('whatsapp')}
@@ -314,6 +356,68 @@ export default function LandingCMS() {
 
                     <div className="p-6">
                         <WhatsAppSettings />
+                    </div>
+                </section>
+            )}
+
+            {/* Nearby Attractions Section */}
+            {activeTab === 'attractions' && (
+                <section className="bg-white rounded-b-2xl shadow-sm border border-t-0 border-gray-200 overflow-hidden animate-in fade-in duration-300">
+                    <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                        <div>
+                            <h2 className="text-xl font-bold font-serif text-[#0E2A38]">Nearby Spots &amp; Tourist Destinations</h2>
+                            <p className="text-sm text-gray-500 mt-0.5">These appear on your property's booking page to help guests plan their visit.</p>
+                        </div>
+                        <button
+                            onClick={saveAttractions}
+                            disabled={savingAttractions}
+                            className="flex items-center gap-2 bg-[#0E2A38] text-[#C9A646] px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-[#091b24] transition-colors disabled:opacity-50"
+                        >
+                            <Save size={16} /> {savingAttractions ? 'Saving...' : 'Save'}
+                        </button>
+                    </div>
+
+                    <div className="p-6 space-y-6">
+                        {/* Add new spot input */}
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={attractionInput}
+                                onChange={e => setAttractionInput(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addAttraction(); } }}
+                                placeholder="e.g. Auroville Beach, Matrimandir, French Quarter..."
+                                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#C9A646] outline-none text-sm"
+                            />
+                            <button
+                                onClick={addAttraction}
+                                className="flex items-center gap-1.5 px-4 py-2.5 bg-[#C9A646] text-[#0E2A38] rounded-xl font-bold text-sm hover:bg-[#b8953e] transition-colors"
+                            >
+                                <Plus size={16} /> Add
+                            </button>
+                        </div>
+
+                        {/* Chip list */}
+                        {attractionsList.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {attractionsList.map(name => (
+                                    <span
+                                        key={name}
+                                        className="inline-flex items-center gap-1.5 bg-[#0E2A38]/5 border border-[#0E2A38]/10 text-[#0E2A38] text-xs font-semibold px-3 py-1.5 rounded-xl"
+                                    >
+                                        <MapPin size={11} className="text-[#C9A646]" />
+                                        {name}
+                                        <button onClick={() => removeAttraction(name)} className="text-gray-400 hover:text-red-500 transition-colors ml-1">
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl">
+                                <MapPin size={32} className="mx-auto text-gray-300 mb-2" />
+                                <p className="text-sm text-gray-400">No attractions added yet. Add nearby beaches, temples, markets, or tourist spots above.</p>
+                            </div>
+                        )}
                     </div>
                 </section>
             )}

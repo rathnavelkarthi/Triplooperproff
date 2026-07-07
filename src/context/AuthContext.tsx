@@ -157,6 +157,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       let inviteToken = localStorage.getItem('pending_invite_token');
       const pendingName = localStorage.getItem('pending_business_name');
       const pendingType = localStorage.getItem('pending_business_type') as Tenant['business_type'] | null;
+      const pendingCity = localStorage.getItem('pending_business_city');
 
       try {
         // Automatically recover lost invite token if the user has a pending invite for their email
@@ -244,7 +245,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
                         business_id: businessId,
                         managed_by_business: managedByBusiness,
                         payment_setup: false,
-                        custom_email: email
+                        custom_email: email,
+                        city: pendingCity || null
                     }).eq('id', newTenantId);
 
                     // If they are a standalone owner (no inviteToken), update their role in user_properties to SUPER_ADMIN
@@ -262,6 +264,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
                     localStorage.removeItem('pending_invite_token');
                     localStorage.removeItem('pending_business_name');
                     localStorage.removeItem('pending_business_type');
+                    localStorage.removeItem('pending_business_city');
                     
                     // Restart load sequence now that they are fully onboarded
                     await loadProperties(userId, email, name, 'CLERK', avatarUrl);
