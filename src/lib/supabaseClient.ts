@@ -44,6 +44,15 @@ export function setSupabaseTokenGetter(getter: TokenGetter | null) {
     clerkTokenGetter = getter;
 }
 
+export async function getSupabaseToken(): Promise<string | null> {
+    try {
+        if (!clerkTokenGetter) return null;
+        return (await clerkTokenGetter()) ?? null;
+    } catch {
+        return null;
+    }
+}
+
 export const supabase = createClient(
     supabaseUrl || fallbackUrl,
     supabaseAnonKey || fallbackKey,

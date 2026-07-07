@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase, getSupabaseToken } from './supabaseClient';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -55,8 +55,7 @@ export async function initiatePayment(
     if (!loaded) return { success: false, error: 'Failed to load Razorpay SDK' };
 
     // 1. Create order via edge function
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token;
+    const token = await getSupabaseToken();
 
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -152,8 +151,7 @@ export async function initiateAddonPayment(
     const loaded = await loadRazorpayScript();
     if (!loaded) return { success: false, error: 'Failed to load Razorpay SDK' };
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token;
+    const token = await getSupabaseToken();
 
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
