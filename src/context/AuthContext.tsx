@@ -199,22 +199,34 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           if (bName) {
             const subdomain = generateSubdomain(bName);
 
-            // 1. Create Business Record (using standard client — RLS permits own business creation)
-            const { data: newBusiness, error: bError } = await supabase
-              .from('businesses')
-              .insert({
-                name: bName,
-                owner_id: userId,
-                contact_email: email,
-                max_properties: maxProperties,
-                max_rooms_per_property: maxRooms
-              })
-              .select('*')
-              .single();
+            // 1. Create Business Record ONLY if they are signing up with an invite token!
+            let businessId = null;
+            let managedByBusiness = false;
+            let createBusinessError = null;
 
-            if (bError) console.error('[AuthContext] Failed to create business:', bError);
+            if (inviteToken) {
+              const { data: newBusiness, error: bError } = await supabase
+                .from('businesses')
+                .insert({
+                  name: bName,
+                  owner_id: userId,
+                  contact_email: email,
+                  max_properties: maxProperties,
+                  max_rooms_per_property: maxRooms
+                })
+                .select('*')
+                .single();
 
-            if (!bError && newBusiness) {
+              if (bError) {
+                console.error('[AuthContext] Failed to create business:', bError);
+                createBusinessError = bError;
+              } else if (newBusiness) {
+                businessId = newBusiness.id;
+                managedByBusiness = true;
+              }
+            }
+
+            if (!createBusinessError) {
                 // 2. Create First Tenant (Property) via security-definer RPC
                 const { data: newTenantId, error: tError } = await supabase.rpc('create_tenant', {
                   p_owner_id: userId,
@@ -229,11 +241,19 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
                     // Update business links on the newly created tenant
                     // Set payment_setup = false so they are gated to billing selection page
                     await supabase.from('tenants').update({ 
-                        business_id: newBusiness.id,
-                        managed_by_business: true,
+                        business_id: businessId,
+                        managed_by_business: managedByBusiness,
                         payment_setup: false,
                         custom_email: email
                     }).eq('id', newTenantId);
+
+                    // If they are a standalone owner (no inviteToken), update their role in user_properties to SUPER_ADMIN
+                    if (!inviteToken) {
+                      await supabase.from('user_properties')
+                        .update({ role: 'SUPER_ADMIN' })
+                        .eq('user_id', userId)
+                        .eq('tenant_id', newTenantId);
+                    }
                     
                     // Accept invitation if applicable
                     if (inviteToken) {
@@ -726,6 +746,16 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         return { error: 'This property name is already taken. Please try a different name.' };
       }
       return { error: error.message };
+    }
+    
+    if (newTenantId) {
+      const hasBusiness = business !== null;
+      if (!hasBusiness) {
+        await supabase.from('user_properties')
+          .update({ role: 'SUPER_ADMIN' })
+          .eq('user_id', user.id)
+          .eq('tenant_id', newTenantId);
+      }
     }
     
     await refreshTenant();
