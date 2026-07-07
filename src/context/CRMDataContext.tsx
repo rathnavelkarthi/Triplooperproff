@@ -374,40 +374,64 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         if (!member.password) {
             throw new Error("Password is required for new staff members.");
         }
-
-        const { data: newUserId, error } = await supabase.rpc('create_staff_user', {
-            p_email: member.email,
-            p_password: member.password,
-            p_name: member.name,
-            p_role: member.role,
-            p_phone: member.phone,
-            p_tenant_id: tid()
-        });
-
-        if (error) {
-            console.error("Error creating staff:", error);
-            throw new Error(error.message || "Failed to create staff member.");
+        const tenantId = tid();
+        if (!tenantId) {
+            throw new Error("No active property selected.");
         }
 
-        // Fetch the newly created staff member to get the full formatted object
-        const { data: newStaffData } = await supabase
-            .from('staff')
-            .select('*')
-            .eq('id', newUserId)
-            .single();
+        // Create a REAL Supabase Auth login (not just a staff table row). The
+        // create-staff edge function runs with the service role: it creates the
+        // auth.users entry with the password AND inserts the matching staff row
+        // (same id), then AuthContext can sign the staff member in and resolve
+        // their tenant/role. The old create_staff_user RPC could not create an
+        // auth user from SQL, so staff had no way to log in.
+        const { data, error } = await supabase.functions.invoke('create-staff', {
+            body: {
+                email: member.email.toLowerCase().trim(),
+                password: member.password,
+                name: member.name,
+                phone: member.phone,
+                role: member.role,
+                status: member.status || 'Active',
+                tenant_id: tenantId,
+            },
+        });
 
-        if (newStaffData) {
-            const formattedStaffMember = {
-                ...newStaffData,
-                status: newStaffData.status.charAt(0) + newStaffData.status.slice(1).toLowerCase()
-            } as StaffMember;
+        // Edge function returns { error } in the body for handled failures.
+        if (error || (data && data.error)) {
+            const msg = data?.error || error?.message || "Failed to create staff member.";
+            console.error("Error creating staff:", msg);
+            throw new Error(msg);
+        }
+
+        const newId = data?.user?.id as string | undefined;
+        if (newId) {
+            const formattedStaffMember: StaffMember = {
+                id: newId,
+                name: member.name,
+                email: member.email,
+                phone: member.phone,
+                role: member.role,
+                status: (member.status || 'Active') as StaffMember['status'],
+            };
             setStaff([formattedStaffMember, ...staff]);
         }
     };
 
     const deleteStaff = async (id: string) => {
-        const { error } = await supabase.from('staff').delete().eq('id', id);
-        if (!error) setStaff(staff.filter(s => s.id !== id));
+        // Removing the staff row alone leaves an orphaned auth.users login that
+        // still occupies the email (so it can never be re-added). The delete-staff
+        // edge function removes the auth user AND the staff row atomically with
+        // the service role, scoped to the caller's tenant.
+        const { data, error } = await supabase.functions.invoke('delete-staff', {
+            body: { staff_id: id, tenant_id: tid() },
+        });
+        if (error || (data && data.error)) {
+            const msg = data?.error || error?.message || "Failed to remove staff member.";
+            console.error("Error deleting staff:", msg);
+            throw new Error(msg);
+        }
+        setStaff(prev => prev.filter(s => s.id !== id));
     };
 
     const addReservation = async (reservation: Omit<Reservation, 'id'>) => {

@@ -47,9 +47,11 @@ export default function Staff() {
 
       if (!config?.whatsapp_enabled) return;
 
-      const loginUrl = config.subdomain
-        ? `https://${config.subdomain}.triplooper.com/admin/login`
-        : 'your hotel management portal';
+      // Staff always sign in on the central apex portal. The /admin/* CRM and
+      // Clerk allowed-origins only exist on triplooper.com — tenant subdomains
+      // (e.g. saffronspice.triplooper.com) have no /admin/login route and 404.
+      // AuthContext resolves each staff member's tenant + role after sign-in.
+      const loginUrl = 'https://triplooper.com/admin/login';
 
       const roleName = staffData.role.replace(/_/g, ' ');
 
@@ -244,8 +246,12 @@ export default function Staff() {
                           <div className="border-t border-gray-100 my-1"></div>
                           <button
                             onClick={() => {
-                              if (window.confirm('Are you sure you want to remove this staff member?')) {
-                                deleteStaff(member.id);
+                              if (window.confirm('Are you sure you want to remove this staff member? This deletes their login account.')) {
+                                toast.promise(deleteStaff(member.id), {
+                                  loading: 'Removing staff...',
+                                  success: 'Staff member removed',
+                                  error: (err) => err.message || 'Failed to remove staff',
+                                });
                               }
                               setActiveMenuId(null);
                             }}
@@ -282,7 +288,7 @@ export default function Staff() {
                 onClick={() => {
                   setIsModalOpen(false);
                   setEditingStaffId(null);
-                  setFormData({ name: '', email: '', phone: '', role: 'RECEPTION', status: 'Active' });
+                  setFormData({ name: '', email: '', phone: '', role: 'RECEPTION', status: 'Active', password: '' });
                 }}
                 className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
               >
@@ -347,7 +353,7 @@ export default function Staff() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Role</label>
                   <select
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as typeof formData.role })}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all"
                   >
                     <option value="RECEPTION">Reception</option>

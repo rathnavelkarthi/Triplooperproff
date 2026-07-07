@@ -459,7 +459,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     // Give them a BUSINESS_ADMIN role with no tenant so they can be routed to the business creation page
     // instead of being bounced back to the login screen.
     const isPlatAdmin = isPlatformAdminEmail(email);
-    setUser(buildUser(userId, email, name, isPlatAdmin ? 'PLATFORM_ADMIN' : 'BUSINESS_ADMIN', type, avatarUrl));
+    setUser(buildUser(userId, email, name, isPlatAdmin ? 'PLATFORM_ADMIN' : 'SUPER_ADMIN', type, avatarUrl));
     setProperties([]);
     setTenant(null);
     setLoading(false);

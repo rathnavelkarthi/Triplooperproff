@@ -570,9 +570,9 @@ function checkOutReceiptHtml(data: CheckOutEmailData): string {
 // ═══════════════════════════════════════════════════════════════════
 
 function staffCredentialsHtml(data: StaffCredentialsData): string {
-  const loginUrl = data.subdomain
-    ? `https://${data.subdomain}.triplooper.com/admin/login`
-    : 'https://triplooper.com/admin/login';
+  // Staff always sign in on the central apex portal (see Staff.tsx). Tenant
+  // subdomains have no /admin/login route, so never link staff there.
+  const loginUrl = 'https://triplooper.com/admin/login';
   const roleName = data.role.replace(/_/g, ' ');
 
   const body = `
