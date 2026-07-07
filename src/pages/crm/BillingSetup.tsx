@@ -9,6 +9,7 @@ import {
   Zap, UtensilsCrossed, AlertTriangle, ArrowRight, Loader2,
   Smartphone, Lock, KeyRound, Globe, Wifi, CheckCircle2, X
 } from 'lucide-react';
+import { initiatePayment } from '../../lib/razorpay';
 
 const C = {
   teal: '#0E2A38',
@@ -22,7 +23,7 @@ const C = {
 };
 
 export default function BillingSetup() {
-  const { tenant, refreshTenant, logout } = useAuth();
+  const { tenant, user, refreshTenant, logout } = useAuth();
   const navigate = useNavigate();
   
   const [method, setMethod] = useState<'subscription' | 'commission'>('subscription');
@@ -45,46 +46,27 @@ export default function BillingSetup() {
   };
 
   const handlePaymentSubmit = async () => {
+    if (!user) {
+      toast.error('Authentication required. Please sign in first.');
+      return;
+    }
+
     setPaymentStep('authorizing');
-    
-    // Simulate mandate registration & yearly payment charge (takes 2s)
-    setTimeout(async () => {
-      try {
-        const finalPlan = method === 'commission' 
-          ? 'commission' 
-          : (roomTier === 'small' ? 'subscription_small' : 'subscription_large');
 
-        const maxRoomsVal = method === 'commission'
-          ? 9999
-          : (roomTier === 'small' ? 10 : 9999);
+    const finalPlan = method === 'commission' 
+      ? 'commission' 
+      : (roomTier === 'small' ? 'subscription_small' : 'subscription_large');
 
-        // Update database
-        const { error } = await supabase
-          .from('tenants')
-          .update({
-            plan: finalPlan,
-            payment_setup: true,
-            max_rooms: maxRoomsVal,
-            razorpay_customer_id: 'cust_mock_' + Math.random().toString(36).substring(7),
-            razorpay_subscription_id: method === 'subscription' ? 'sub_mock_' + Math.random().toString(36).substring(7) : null,
-            razorpay_mandate_id: 'mandate_mock_' + Math.random().toString(36).substring(7),
-          })
-          .eq('id', tenant.id);
+    try {
+      const result = await initiatePayment(
+        finalPlan,
+        'yearly',
+        tenant.id,
+        user.email || '',
+        tenant.business_name
+      );
 
-        if (error) throw error;
-
-        // Record initial subscription log if it's the yearly plan
-        if (method === 'subscription') {
-          await supabase.from('subscriptions').insert({
-            tenant_id: tenant.id,
-            plan: finalPlan,
-            status: 'paid',
-            amount: getAmount(),
-            expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-            razorpay_payment_id: 'pay_mock_' + Math.random().toString(36).substring(7),
-          });
-        }
-
+      if (result.success) {
         setPaymentStep('success');
         toast.success('Billing profile & Auto-Pay activated successfully!');
         
@@ -92,13 +74,18 @@ export default function BillingSetup() {
           await refreshTenant();
           navigate('/admin/dashboard');
         }, 1500);
-
-      } catch (err: any) {
-        toast.error(err.message || 'Failed to register mandate.');
+      } else {
+        if (result.error !== 'Payment cancelled') {
+          toast.error(result.error || 'Payment failed');
+        }
         setPaymentStep('select');
         setShowCheckout(false);
       }
-    }, 2000);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to complete payment.');
+      setPaymentStep('select');
+      setShowCheckout(false);
+    }
   };
 
   return (
