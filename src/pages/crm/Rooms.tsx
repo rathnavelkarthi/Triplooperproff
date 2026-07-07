@@ -447,6 +447,24 @@ export default function Rooms() {
                   </button>
                 </div>
               </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Show on website</label>
+                <div className="flex items-center h-[40px]">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={editingRoom.show_on_website !== false}
+                      onChange={(e) => setEditingRoom({ ...editingRoom, show_on_website: e.target.checked })}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-ocean-500)]" />
+                    <span className="ml-3 text-sm font-semibold text-gray-650">
+                      {editingRoom.show_on_website !== false ? 'Yes, display on public site' : 'No, hide from public site'}
+                    </span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">

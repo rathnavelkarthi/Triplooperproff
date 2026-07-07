@@ -31,6 +31,7 @@ export default function RoomsCMS() {
         status: 'Available',
         cleaning_status: 'Clean',
         is_available: true,
+        show_on_website: true,
         tourist_attractions: []
     };
 
@@ -59,6 +60,7 @@ export default function RoomsCMS() {
                 status: room.status,
                 cleaning_status: room.cleaning_status,
                 is_available: room.is_available,
+                show_on_website: room.show_on_website !== false,
                 tourist_attractions: [...(room.tourist_attractions || [])]
             });
         } else {
@@ -358,7 +360,7 @@ export default function RoomsCMS() {
                                                 </div>
                                             </div>
 
-                                            {/* Max Occupancy / Available toggle */}
+                                            {/* Max Occupancy / Available / Show on Site */}
                                             <div className="grid grid-cols-3 gap-3">
                                                 <div>
                                                     <label className="block text-sm text-gray-600 mb-1.5">Max occupancy</label>
@@ -370,8 +372,8 @@ export default function RoomsCMS() {
                                                         {[1, 2, 3, 4, 5, 6, 8, 10].map(n => <option key={n} value={n}>{n}</option>)}
                                                     </select>
                                                 </div>
-                                                <div className="col-span-2">
-                                                    <label className="block text-sm text-gray-600 mb-1.5">Available for booking</label>
+                                                <div>
+                                                    <label className="block text-sm text-gray-600 mb-1.5">Available (PMS)</label>
                                                     <div className="flex items-center h-[38px]">
                                                         <label className="relative inline-flex items-center cursor-pointer">
                                                             <input
@@ -381,7 +383,22 @@ export default function RoomsCMS() {
                                                                 onChange={(e) => setFormData({ ...formData, is_available: e.target.checked })}
                                                             />
                                                             <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500" />
-                                                            <span className="ml-2 text-sm text-gray-600">{formData.is_available ? 'Yes' : 'No'}</span>
+                                                            <span className="ml-2 text-xs text-gray-600">{formData.is_available ? 'Yes' : 'No'}</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm text-gray-600 mb-1.5">Show on Site</label>
+                                                    <div className="flex items-center h-[38px]">
+                                                        <label className="relative inline-flex items-center cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="sr-only peer"
+                                                                checked={formData.show_on_website !== false}
+                                                                onChange={(e) => setFormData({ ...formData, show_on_website: e.target.checked })}
+                                                            />
+                                                            <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500" />
+                                                            <span className="ml-2 text-xs text-gray-600">{formData.show_on_website !== false ? 'Yes' : 'No'}</span>
                                                         </label>
                                                     </div>
                                                 </div>

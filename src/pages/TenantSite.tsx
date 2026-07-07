@@ -64,16 +64,35 @@ function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, init
     const [form, setForm] = useState({ name: '', email: '', phone: '', checkIn: initialCheckIn || '', checkOut: initialCheckOut || '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState<'property' | 'now'>('property');
+    const [payNowOption, setPayNowOption] = useState<'advance' | 'full'>('advance');
 
     const nights = form.checkIn && form.checkOut
         ? Math.max(0, Math.floor((new Date(form.checkOut).getTime() - new Date(form.checkIn).getTime()) / 86400000))
         : 0;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+    const baseTotal = nights * adjustedPrice(room.price_per_night);
+    const hasFullDiscount = paymentMethod === 'now' && payNowOption === 'full';
+    const finalTotal = hasFullDiscount ? Math.round(baseTotal * 0.9) : baseTotal;
+    const advanceAmountToPay = paymentMethod === 'property'
+        ? 0
+        : (payNowOption === 'advance' ? Math.round(baseTotal * 0.2) : finalTotal);
 
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            if ((window as any).Razorpay) {
+                resolve(true);
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handleCreateBooking = async (paidAdvance: number) => {
         const { data, error: rpcError } = await supabase.rpc('create_public_booking', {
             p_subdomain: subdomain,
             p_guest_name: form.name,
@@ -82,11 +101,12 @@ function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, init
             p_room_id: room.id,
             p_check_in: form.checkIn,
             p_check_out: form.checkOut,
+            p_amount: finalTotal,
+            p_advance_amount: paidAdvance,
         });
 
-        setLoading(false);
-        if (rpcError) { setError(rpcError.message); return; }
-        if (data?.error) { setError(data.error); return; }
+        if (rpcError) { setError(rpcError.message); setLoading(false); return; }
+        if (data?.error) { setError(data.error); setLoading(false); return; }
 
         // Trigger WhatsApp confirmation
         if (form.phone && tenantId && businessName) {
@@ -103,7 +123,54 @@ function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, init
             }, tenantId);
         }
 
+        setLoading(false);
         onSuccess(data);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        if (paymentMethod === 'property') {
+            await handleCreateBooking(0);
+        } else {
+            const loaded = await loadRazorpayScript();
+            if (!loaded) {
+                setError('Failed to load Razorpay payment gateway. Please try again.');
+                setLoading(false);
+                return;
+            }
+
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TASEzH1nUWAH3h',
+                amount: advanceAmountToPay * 100, // in paise
+                currency: 'INR',
+                name: 'Triplooper',
+                description: `Room Booking at ${businessName || 'Property'}`,
+                prefill: {
+                    name: form.name,
+                    email: form.email,
+                    contact: form.phone
+                },
+                theme: {
+                    color: '#0E2A38'
+                },
+                handler: async function (response: any) {
+                    toast.success(`Payment successful! ID: ${response.razorpay_payment_id}`);
+                    await handleCreateBooking(advanceAmountToPay);
+                },
+                modal: {
+                    ondismiss: function () {
+                        setError('Payment was cancelled.');
+                        setLoading(false);
+                    }
+                }
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.open();
+        }
     };
 
     return (
@@ -120,29 +187,29 @@ function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, init
                 className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="relative h-32 bg-gradient-to-br from-primary to-primary-hover p-6 flex flex-col justify-end">
+                <div className="relative h-28 bg-gradient-to-br from-primary to-primary-hover p-6 flex flex-col justify-end">
                     <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
                         <X size={16} />
                     </button>
-                    <h3 className="text-white font-bold text-lg">{room.name}</h3>
-                    <p className="text-white/60 text-sm">{room.type}</p>
+                    <h3 className="text-white font-bold text-lg leading-tight">{room.name}</h3>
+                    <p className="text-white/60 text-xs mt-0.5">{room.type}</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {error && <div className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{error}</div>}
+                <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                    {error && <div className="text-red-650 text-xs bg-red-50 px-3 py-2 rounded-lg font-medium">{error}</div>}
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Check-in</label>
                             <input type="date" required value={form.checkIn} onChange={e => setForm({ ...form, checkIn: e.target.value })}
                                 min={new Date().toISOString().split('T')[0]}
-                                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Check-out</label>
                             <input type="date" required value={form.checkOut} onChange={e => setForm({ ...form, checkOut: e.target.value })}
                                 min={form.checkIn || new Date().toISOString().split('T')[0]}
-                                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
                         </div>
                     </div>
 
@@ -150,7 +217,7 @@ function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, init
                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Full name</label>
                         <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                             placeholder="John Doe"
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -158,29 +225,119 @@ function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, init
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Email</label>
                             <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                                 placeholder="you@email.com"
-                                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
                         </div>
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Phone</label>
                             <input type="tel" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                                 placeholder="+91 98765 43210"
-                                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
                         </div>
                     </div>
 
                     {nights > 0 && (
-                        <div className="bg-[#F7F4EF] rounded-xl p-4 flex items-center justify-between">
+                        <div className="space-y-3.5 pt-1.5">
                             <div>
-                                <p className="text-sm text-gray-600">{nights} night{nights > 1 ? 's' : ''} x ₹{adjustedPrice(room.price_per_night).toLocaleString()}</p>
-                                <p className="text-xs text-gray-400 mt-0.5">Taxes included</p>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Payment Method</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('property')}
+                                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                                            paymentMethod === 'property'
+                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                : 'border-gray-200 hover:border-gray-300 text-gray-700 bg-white'
+                                        }`}
+                                    >
+                                        <p className="text-xs font-bold">Pay at Property</p>
+                                        <p className="text-[10px] text-gray-400 mt-1 font-light">Pay cash/card on arrival</p>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('now')}
+                                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                                            paymentMethod === 'now'
+                                                ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                : 'border-gray-200 hover:border-gray-300 text-gray-700 bg-white'
+                                        }`}
+                                    >
+                                        <p className="text-xs font-bold">Pay Now (Online)</p>
+                                        <p className="text-[10px] text-gray-400 mt-1 font-light">Secure online payment</p>
+                                    </button>
+                                </div>
                             </div>
-                            <p className="text-xl font-bold text-primary">₹{(nights * adjustedPrice(room.price_per_night)).toLocaleString()}</p>
+
+                            {paymentMethod === 'now' && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="bg-gray-55 bg-gray-50 border border-gray-150 p-3 rounded-xl space-y-2"
+                                >
+                                    <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-wider">Select Pay Now Option</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPayNowOption('advance')}
+                                            className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                                                payNowOption === 'advance'
+                                                    ? 'border-[#0E2A38] bg-white text-[#0E2A38] ring-1 ring-[#0E2A38]'
+                                                    : 'border-gray-200 bg-white text-gray-650 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            <p className="text-xs font-bold">20% Advance</p>
+                                            <p className="text-xs font-extrabold mt-1 text-gray-800">₹{Math.round(baseTotal * 0.2).toLocaleString('en-IN')}</p>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPayNowOption('full')}
+                                            className={`p-2.5 rounded-lg border text-left transition-all relative overflow-hidden cursor-pointer ${
+                                                payNowOption === 'full'
+                                                    ? 'border-[#0E2A38] bg-white text-[#0E2A38] ring-1 ring-[#0E2A38]'
+                                                    : 'border-gray-200 bg-white text-gray-650 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            <div className="absolute top-0 right-0 bg-[#C9A646] text-white text-[7px] font-black uppercase px-1 py-0.5 rounded-bl">
+                                                -10%
+                                            </div>
+                                            <p className="text-xs font-bold">Full Payment</p>
+                                            <p className="text-xs font-extrabold mt-1 text-gray-800">₹{Math.round(baseTotal * 0.9).toLocaleString('en-IN')}</p>
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            <div className="bg-[#F7F4EF] rounded-xl p-4 space-y-1.5 border border-gray-150 text-sm">
+                                <div className="flex items-center justify-between text-gray-600">
+                                    <span>{nights} night{nights > 1 ? 's' : ''} stay</span>
+                                    <span>₹{baseTotal.toLocaleString('en-IN')}</span>
+                                </div>
+                                {hasFullDiscount && (
+                                    <div className="flex items-center justify-between text-xs text-emerald-600 font-bold">
+                                        <span>10% Full Payment Discount</span>
+                                        <span>- ₹{Math.round(baseTotal * 0.1).toLocaleString('en-IN')}</span>
+                                    </div>
+                                )}
+                                <div className="border-t border-gray-200/60 pt-1.5 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-900">Total Price</p>
+                                        <p className="text-[9px] text-gray-400">Taxes & fees included</p>
+                                    </div>
+                                    <p className="text-lg font-black text-[#0E2A38]">₹{finalTotal.toLocaleString('en-IN')}</p>
+                                </div>
+
+                                {paymentMethod === 'now' && (
+                                    <div className="border-t border-dashed border-gray-200 pt-1.5 flex items-center justify-between text-xs">
+                                        <span className="font-bold text-gray-600">Due Now via Razorpay</span>
+                                        <span className="font-black text-[#C9A646] text-sm">₹{advanceAmountToPay.toLocaleString('en-IN')}</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 
                     <button type="submit" disabled={loading}
-                        className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2">
-                        {loading ? 'Reserving...' : 'Reserve now'}
+                        className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all text-sm disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-md">
+                        {loading ? 'Processing...' : (paymentMethod === 'now' ? `Pay & Confirm Booking` : 'Confirm Booking')}
                         {!loading && <ArrowRight size={16} />}
                     </button>
                 </form>

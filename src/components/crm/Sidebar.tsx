@@ -71,7 +71,10 @@ const navItems: NavItem[] = [
   { name: 'Tables', path: '/admin/tables', icon: Armchair, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'tables' },
   { name: 'Inventory', path: '/admin/inventory', icon: Package, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'inventory' },
 
-  // Finance (removed: Payments, Invoices, Expenses, Profit & Loss)
+  // Finance (restored Invoices, Payments, Expenses)
+  { name: 'Invoices', path: '/admin/invoices', icon: FileText, roles: ['SUPER_ADMIN', 'RECEPTION', 'ACCOUNTANT', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance', featureKey: 'reports' },
+  { name: 'Payments', path: '/admin/payments', icon: CreditCard, roles: ['SUPER_ADMIN', 'ACCOUNTANT', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance', featureKey: 'reports' },
+  { name: 'Expenses', path: '/admin/expenses', icon: Receipt, roles: ['SUPER_ADMIN', 'MANAGER', 'ACCOUNTANT'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance', featureKey: 'reports' },
   { name: 'Reports', path: '/admin/reports', icon: BarChart3, roles: ['SUPER_ADMIN', 'ACCOUNTANT'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance', featureKey: 'reports' },
   { name: 'Savings & Margin', path: '/admin/savings', icon: TrendingUp, roles: ['SUPER_ADMIN', 'MANAGER', 'ACCOUNTANT', 'BUSINESS_ADMIN'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Finance' },
 
@@ -190,6 +193,18 @@ export default function Sidebar({ onClose }: SidebarProps) {
   return (
     <>
       <aside className="w-64 bg-[#0E2A38] border-r border-[#0E2A38]/50 flex flex-col h-full lg:h-screen sticky top-0 shadow-[4px_0_24px_rgba(0,0,0,0.1)] lg:shadow-[4px_0_40px_rgba(14,42,56,0.15)] z-40 relative backdrop-blur-xl">
+        {/* Brand Logo Header */}
+        <div className="px-6 pt-5 pb-1 flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#C9A646] to-[#B08B47] flex items-center justify-center shadow-md">
+            <svg className="w-3.5 h-3.5 text-[#0E2A38]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor"/>
+            </svg>
+          </div>
+          <span className="font-serif text-sm font-black tracking-[0.2em] text-white">
+            TRIP<span className="text-[#C9A646]">LOOPER</span>
+          </span>
+        </div>
+
         {/* Property switcher */}
         <div className={`p-4 pb-2 relative ${switcherOpen ? 'z-50' : 'z-10'}`} ref={switcherRef}>
           <button

@@ -10,7 +10,7 @@ import {
 
 const BUCKET = 'property-documents';
 
-type DocType = 'govt_trade_authorization' | 'govt_complaints_proof' | 'other';
+type DocType = 'govt_trade_authorization' | 'govt_compliance_proof' | 'other';
 
 interface DocSlot {
   type: DocType;
@@ -27,9 +27,9 @@ const DOC_SLOTS: DocSlot[] = [
     required: true,
   },
   {
-    type: 'govt_complaints_proof',
-    label: 'Government Complaints Proof',
-    description: 'Document showing no outstanding government complaints against the property.',
+    type: 'govt_compliance_proof',
+    label: 'Government Compliance Proof',
+    description: 'Document showing no outstanding government compliance issues against the property.',
     required: true,
   },
   {

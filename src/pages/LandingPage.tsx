@@ -229,6 +229,7 @@ export default function LandingPage() {
   ];
 
   const [activeCategoryFilter, setActiveCategoryFilter] = useState("All Stays");
+  const [activeDestinationFilter, setActiveDestinationFilter] = useState("All Destinations");
   const [searchDestination, setSearchDestination] = useState("");
   const [likes, setLikes] = useState<Record<number, boolean>>({});
 
@@ -240,10 +241,11 @@ export default function LandingPage() {
   const filteredProperties = useMemo(() => {
     return initialProperties.filter(p => {
       const matchCategory = activeCategoryFilter === "All Stays" || p.tag === activeCategoryFilter;
+      const matchDestination = activeDestinationFilter === "All Destinations" || p.loc.toLowerCase() === activeDestinationFilter.toLowerCase();
       const matchSearch = p.name.toLowerCase().includes(searchDestination.toLowerCase()) || p.loc.toLowerCase().includes(searchDestination.toLowerCase());
-      return matchCategory && matchSearch;
+      return matchCategory && matchDestination && matchSearch;
     });
-  }, [activeCategoryFilter, searchDestination]);
+  }, [activeCategoryFilter, activeDestinationFilter, searchDestination]);
   return (
     <div 
       ref={containerRef}
@@ -599,32 +601,57 @@ export default function LandingPage() {
       <section id="marketplace" className="py-24 luxury-paper-bg relative grid-light-sand border-t border-[#C9A646]/15">
         <div className="max-w-7xl mx-auto px-6 space-y-12">
           
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-3 text-left">
-              <span className="text-[10px] text-[#C9A646] font-medium tracking-[0.25em] uppercase font-mono">Live Marketplace directory</span>
-              <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0E2A38] leading-none">
-                Explore stays powered by <span className="italic font-light text-[#C9A646]">TripLooper</span>
-              </h2>
-              <p className="text-zinc-500 text-xs sm:text-sm font-light">
-                Secure direct checkout guaranteed. Every booking on these cards goes 100% direct to the stay operator.
-              </p>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="space-y-3 text-left">
+                <span className="text-[10px] text-[#C9A646] font-medium tracking-[0.25em] uppercase font-mono">Live Marketplace directory</span>
+                <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0E2A38] leading-none">
+                  Explore stays powered by <span className="italic font-light text-[#C9A646]">TripLooper</span>
+                </h2>
+                <p className="text-zinc-500 text-xs sm:text-sm font-light">
+                  Secure direct checkout guaranteed. Every booking on these cards goes 100% direct to the stay operator.
+                </p>
+              </div>
+
+              {/* Category tabs */}
+              <div className="flex flex-col gap-2 shrink-0">
+                <span className="text-[9px] text-[#C9A646] font-extrabold uppercase tracking-wider text-left md:text-right">Filter by category</span>
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbars">
+                  {["All Stays", "Beachfront", "Mountain View", "Heritage Quarter", "Eco Stays", "City Center"].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveCategoryFilter(tab)}
+                      className={`px-3.5 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                        activeCategoryFilter === tab 
+                          ? 'border-[#0E2A38] bg-[#0E2A38] text-white shadow-md shadow-[#0E2A38]/10' 
+                          : 'border-[#C9A646]/20 bg-[#FAF9F6] text-[#0E2A38]/75 hover:border-[#0E2A38]/35 hover:bg-white'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Category tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbars shrink-0">
-              {["All Stays", "Beachfront", "Mountain View", "Heritage Quarter", "Eco Stays", "City Center"].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveCategoryFilter(tab)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
-                    activeCategoryFilter === tab 
-                      ? 'border-[#0E2A38] bg-[#0E2A38] text-white shadow-md shadow-[#0E2A38]/10' 
-                      : 'border-[#C9A646]/20 bg-[#FAF9F6] text-[#0E2A38]/75 hover:border-[#0E2A38]/35 hover:bg-white'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+            {/* Destination tabs */}
+            <div className="flex flex-col gap-2 border-t border-[#C9A646]/10 pt-4">
+              <span className="text-[9px] text-[#C9A646] font-extrabold uppercase tracking-wider text-left">Explore Destinations</span>
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbars">
+                {["All Destinations", "Pondicherry", "Ooty", "Kodaikanal", "Yercaud", "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli"].map(dest => (
+                  <button
+                    key={dest}
+                    onClick={() => setActiveDestinationFilter(dest)}
+                    className={`px-3.5 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                      activeDestinationFilter === dest 
+                        ? 'border-[#C9A646] bg-[#C9A646] text-white shadow-md shadow-[#C9A646]/10' 
+                        : 'border-[#C9A646]/20 bg-white text-zinc-700 hover:border-[#C9A646]/40 hover:bg-zinc-50'
+                    }`}
+                  >
+                    {dest}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

@@ -57,6 +57,7 @@ export type Room = {
     is_available: boolean;
     maintenance_notes?: string | null;
     tourist_attractions?: string[];
+    show_on_website?: boolean;
 };
 
 export type PageContent = {

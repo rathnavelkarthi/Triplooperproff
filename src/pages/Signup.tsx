@@ -10,6 +10,7 @@ import {
     Building2, UtensilsCrossed, Layers, ArrowRight, Check, Mail,
     CheckCircle2, ShieldCheck, Wallet, CalendarCheck, MessageCircle,
     TrendingUp, Star, ChevronDown, Clock, BadgeCheck, Globe, Sparkles, MapPin,
+    Eye, EyeOff
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────────
@@ -113,6 +114,7 @@ export default function Signup() {
     const [verifyCode, setVerifyCode] = useState('');
     const [googleLoading, setGoogleLoading] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Invite flow
     const [searchParams] = useSearchParams();
@@ -491,17 +493,26 @@ export default function Signup() {
                     </div>
                     <div className="space-y-1.5">
                         <label htmlFor={`${idPrefix}-password`} className="block text-[11px] font-bold uppercase tracking-wider" style={{ color: C.muted }}>Password</label>
-                        <input
-                            id={`${idPrefix}-password`}
-                            type="password"
-                            required
-                            autoComplete="new-password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="At least 6 characters"
-                            className="w-full h-12 bg-[#FDFBF7] border rounded-xl px-4 text-sm outline-none focus:ring-2 transition-all"
-                            style={{ borderColor: C.line, color: C.teal }}
-                        />
+                        <div className="relative">
+                            <input
+                                id={`${idPrefix}-password`}
+                                type={showPassword ? "text" : "password"}
+                                required
+                                autoComplete="new-password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="At least 6 characters"
+                                className="w-full h-12 bg-[#FDFBF7] border rounded-xl pl-4 pr-10 text-sm outline-none focus:ring-2 transition-all"
+                                style={{ borderColor: C.line, color: C.teal }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                     </div>
 
                     {businessName && (

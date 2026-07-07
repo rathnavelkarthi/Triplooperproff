@@ -61,7 +61,7 @@ interface PropertyDrawerData {
 
 const getVerificationBadge = (p: PlatformUser['properties'][0], docs: any[] = []) => {
   const hasTradeAuth = docs.some(d => d.doc_type === 'govt_trade_authorization');
-  const hasComplaints = docs.some(d => d.doc_type === 'govt_complaints_proof');
+  const hasCompliance = docs.some(d => d.doc_type === 'govt_compliance_proof');
   
   if (p.verification_status === 'approved') {
     return {
@@ -77,7 +77,7 @@ const getVerificationBadge = (p: PlatformUser['properties'][0], docs: any[] = []
       status: 'rejected'
     };
   }
-  if (hasTradeAuth && hasComplaints) {
+  if (hasTradeAuth && hasCompliance) {
     return {
       text: 'Pending - Review Ready',
       bgColor: 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse',

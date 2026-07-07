@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, MoreVertical, Shield, Mail, Phone, X } from 'lucide-react';
+import { Search, Plus, MoreVertical, Shield, Mail, Phone, X, Eye, EyeOff } from 'lucide-react';
 import { useCRM, StaffMember } from '../../context/CRMDataContext';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -17,6 +17,7 @@ export default function Staff() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -121,6 +122,7 @@ export default function Staff() {
 
       setIsModalOpen(false);
       setEditingStaffId(null);
+      setShowPassword(false);
       setFormData({ name: '', email: '', phone: '', role: 'RECEPTION', status: 'Active', password: '' });
     } catch (error) {
       console.error(error);
@@ -288,6 +290,7 @@ export default function Staff() {
                 onClick={() => {
                   setIsModalOpen(false);
                   setEditingStaffId(null);
+                  setShowPassword(false);
                   setFormData({ name: '', email: '', phone: '', role: 'RECEPTION', status: 'Active', password: '' });
                 }}
                 className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
@@ -337,14 +340,23 @@ export default function Staff() {
               {!editingStaffId && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all"
-                    placeholder="Enter a secure password for this staff member"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all pr-10"
+                      placeholder="Enter a secure password for this staff member"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
               )}
 
