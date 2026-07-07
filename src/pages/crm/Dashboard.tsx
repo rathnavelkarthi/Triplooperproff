@@ -192,6 +192,7 @@ export default function Dashboard() {
     const today = new Date().toISOString().slice(0, 10);
     return rooms.slice(0, 4).map(room => {
       const roomReservations = reservations.filter(r => {
+        if (r.room_id && room.id && String(r.room_id) === String(room.id)) return true;
         const rNum = r.room?.replace(/\D/g, '');
         const mNum = (room.number || room.room_number || '')?.toString().replace(/\D/g, '');
         return rNum && mNum && rNum === mNum;
