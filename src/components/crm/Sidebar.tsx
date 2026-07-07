@@ -204,8 +204,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
               )}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-semibold text-white truncate">{tenant?.business_name || 'Select property'}</p>
-              <p className="text-[10px] text-[#C9A646] uppercase tracking-[0.15em]">{typeLabel[businessType as BusinessType] || 'Workspace'}</p>
+              <p className="text-sm font-semibold text-white leading-tight break-words">{tenant?.business_name || 'Select property'}</p>
+              <p className="text-[10px] text-[#C9A646]/80 uppercase tracking-[0.12em] mt-0.5">{typeLabel[businessType as BusinessType] || 'Workspace'}</p>
             </div>
             <ChevronDown size={14} className={`text-white/40 transition-transform ${switcherOpen ? 'rotate-180' : ''}`} />
           </button>
@@ -340,9 +340,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
               <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border border-white/20 shadow-sm" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">{user.name}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-[10px] text-[#C9A646] uppercase tracking-widest truncate">{user.role.replace('_', ' ')}</p>
-                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                <div className="flex flex-col gap-1 mt-1">
+                  <p className="text-[9px] text-[#C9A646] uppercase tracking-wider font-semibold">
+                    {user.role === 'PLATFORM_ADMIN' ? 'Platform Admin' : user.role.replace('_', ' ')}
+                  </p>
+                  <span className="w-fit text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
                     12% Commission
                   </span>
                 </div>
