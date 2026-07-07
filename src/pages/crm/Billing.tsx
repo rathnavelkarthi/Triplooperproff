@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { CreditCard, Receipt, BarChart3, TrendingUp } from 'lucide-react';
+import { CreditCard, Receipt, BarChart3, TrendingUp, Sparkles, Shield, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCRM } from '../../context/CRMDataContext';
+import { initiatePayment } from '../../lib/razorpay';
+import { toast } from 'sonner';
 
 export default function Billing() {
-    const { tenant } = useAuth();
+    const { tenant, user, refreshTenant } = useAuth();
     const { reservations } = useCRM();
     const [selectedResId, setSelectedResId] = useState<string | null>(null);
+    const [upgradePlan, setUpgradePlan] = useState<'subscription_small' | 'subscription_large' | null>(null);
+    const [loading, setLoading] = useState(false);
 
     // Calculate commission stats
     const activeBookings = reservations.filter(r => r.status !== 'Cancelled');
@@ -16,6 +20,44 @@ export default function Billing() {
     const totalCommission = totalRevenue * 0.12;
 
     const selectedRes = reservations.find(r => r.id === selectedResId);
+
+    const handleInitiateUpgrade = (plan: 'subscription_small' | 'subscription_large') => {
+        setUpgradePlan(plan);
+    };
+
+    const handleConfirmUpgrade = async () => {
+        if (!upgradePlan) return;
+        if (!tenant || !user) {
+            toast.error('Authentication required. Please sign in first.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await initiatePayment(
+                upgradePlan,
+                'yearly',
+                tenant.id,
+                user.email || '',
+                tenant.business_name
+            );
+
+            if (result.success) {
+                toast.success('Successfully upgraded to subscription!');
+                setUpgradePlan(null);
+                await refreshTenant();
+                window.location.reload();
+            } else {
+                if (result.error !== 'Payment cancelled') {
+                    toast.error(result.error || 'Upgrade failed');
+                }
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Upgrade failed');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getPlanDetails = () => {
         if (tenant?.plan === 'subscription_small') {
@@ -109,6 +151,67 @@ export default function Billing() {
                     <p className="text-[11px] text-gray-500 mt-1">Auto-deducted via Razorpay mandate</p>
                 </motion.div>
             </div>
+
+            {/* Upgrade to Subscription Section */}
+            {tenant?.plan === 'commission' && (
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-3xl p-6 shadow-sm space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-lg font-bold text-[#0E2A38] flex items-center gap-2">
+                                <Sparkles className="text-amber-655 text-amber-600" size={20} />
+                                Upgrade to Subscription & Unlock All Tools
+                            </h2>
+                            <p className="text-xs text-gray-600 mt-1">
+                                Enable the OTA Channel Manager, Restaurant POS, Table Management, and Unlimited Rooms.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white border border-gray-150 rounded-2xl p-5 hover:shadow-md transition-all flex flex-col justify-between">
+                            <div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                                    Starter Tier
+                                </span>
+                                <h3 className="text-base font-bold text-[#0E2A38] mt-3">Subscription (Max 10 Rooms)</h3>
+                                <p className="text-xs text-gray-400 mt-1 font-light">
+                                    Perfect for small boutique properties wanting full automation.
+                                </p>
+                            </div>
+                            <div className="pt-4 border-t border-gray-50 mt-4 flex items-center justify-between">
+                                <span className="text-lg font-extrabold text-[#0E2A38]">₹15,000 <span className="text-[11px] text-gray-400 font-normal">/ year</span></span>
+                                <button
+                                    onClick={() => handleInitiateUpgrade('subscription_small')}
+                                    className="px-4 py-2 bg-[#0E2A38] hover:bg-[#18455B] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                                >
+                                    Choose Plan
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="bg-white border border-gray-150 rounded-2xl p-5 hover:shadow-md transition-all flex flex-col justify-between">
+                            <div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full">
+                                    Unlimited Tier
+                                </span>
+                                <h3 className="text-base font-bold text-[#0E2A38] mt-3">Subscription (Unlimited Rooms)</h3>
+                                <p className="text-xs text-gray-400 mt-1 font-light">
+                                    No room limits. Unrestricted channel synchronization and Restaurant POS.
+                                </p>
+                            </div>
+                            <div className="pt-4 border-t border-gray-50 mt-4 flex items-center justify-between">
+                                <span className="text-lg font-extrabold text-[#0E2A38]">₹21,000 <span className="text-[11px] text-gray-400 font-normal">/ year</span></span>
+                                <button
+                                    onClick={() => handleInitiateUpgrade('subscription_large')}
+                                    className="px-4 py-2 bg-[#0E2A38] hover:bg-[#18455B] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                                >
+                                    Choose Plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Billing List */}
             <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-6">
@@ -277,6 +380,76 @@ export default function Billing() {
                                 className="px-6 py-2.5 text-xs font-bold text-white bg-[#0E2A38] hover:bg-[#ef4d23] rounded-xl transition-colors shadow-sm"
                             >
                                 Print Bill / Invoice
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Upgrade Confirmation Modal */}
+            {upgradePlan && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl relative border border-gray-100 space-y-6">
+                        <button
+                            onClick={() => setUpgradePlan(null)}
+                            className="absolute top-4 right-4 text-gray-450 hover:text-gray-900 text-xl font-bold font-sans cursor-pointer"
+                        >
+                            &times;
+                        </button>
+
+                        <div className="text-center space-y-2">
+                            <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto">
+                                <Sparkles size={22} />
+                            </div>
+                            <h3 className="text-lg font-bold text-[#0E2A38]">Confirm Plan Upgrade</h3>
+                            <p className="text-xs text-gray-400">
+                                You are about to upgrade to the **{upgradePlan === 'subscription_small' ? 'Subscription (Max 10 Rooms)' : 'Subscription (Unlimited Rooms)'}** plan.
+                            </p>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200/50 rounded-2xl p-4 space-y-3 text-left">
+                            <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <Shield size={14} /> What is going to happen:
+                            </h4>
+                            <ul className="space-y-2 text-xs text-blue-700 leading-relaxed font-light">
+                                <li className="flex items-start gap-2">
+                                    <span className="text-blue-500 font-bold">•</span>
+                                    <span>Your registered GPay/Card will be charged **₹{upgradePlan === 'subscription_small' ? '15,000' : '21,000'}** for the yearly subscription.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-blue-500 font-bold">•</span>
+                                    <span>**Channel Manager (OTA Sync)** and **Restaurant POS** features will be immediately unlocked.</span>
+                                </li>
+                                <li className="flex items-start gap-2">
+                                    <span className="text-blue-500 font-bold">•</span>
+                                    <span>Your billing plan will update, and you will continue paying the 12% monthly commission on booking earnings.</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setUpgradePlan(null)}
+                                className="flex-1 py-3 text-xs font-bold text-gray-500 hover:bg-gray-50 border border-gray-200 rounded-xl transition-colors cursor-pointer"
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmUpgrade}
+                                className="flex-1 py-3 text-xs font-bold text-white bg-[#0E2A38] hover:bg-[#1a3d4f] rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={13} />
+                                        Processing...
+                                    </>
+                                ) : (
+                                    <>
+                                        Confirm & Pay
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
