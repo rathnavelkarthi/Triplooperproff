@@ -310,6 +310,27 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         }
       }
 
+      const isPlatAdmin = isPlatformAdminEmail(email);
+      if (isPlatAdmin) {
+        const { data: allTenants, error: tError } = await supabase
+          .from('tenants')
+          .select('*');
+        
+        if (allTenants && allTenants.length > 0) {
+          setProperties(allTenants as Tenant[]);
+          const savedId = localStorage.getItem(ACTIVE_PROPERTY_KEY);
+          const active = (savedId && allTenants.find(t => t.id === savedId)) || allTenants[0];
+          
+          if (active) {
+            setTenant(active as Tenant);
+            localStorage.setItem(ACTIVE_PROPERTY_KEY, active.id);
+            setUser(buildUser(userId, email, name, 'PLATFORM_ADMIN', type, avatarUrl));
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
       // 1. Try to find the tenant link in user_properties
       const { data: links, error: linkError } = await supabase
         .from('user_properties')
@@ -591,6 +612,15 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
             errors: clerkErr?.errors,
             message: clerkErr?.message,
           });
+          const firstError = clerkErr?.errors?.[0];
+          if (firstError) {
+            const code = firstError.code;
+            // If it is a direct password error or account lock or missing password (OAuth user), do not fall back.
+            if (code === 'form_password_incorrect' || code === 'form_password_nil' || code === 'user_locked') {
+              setLoading(false);
+              return { error: firstError.longMessage || firstError.message || 'Incorrect password.' };
+            }
+          }
           console.log('[AuthContext] Clerk login failed, trying Supabase fallback...');
         }
       }
