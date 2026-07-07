@@ -168,13 +168,13 @@ export default function Login() {
         if (isLocalhost) return window.location.origin;
         const parts = hostname.split('.');
         // For host like saffronspice.triplooper.com → keep the last two parts (triplooper.com)
-        const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
+        // If it's a vercel domain, keep the whole hostname as the apex
+        const apexHost = hostname.endsWith('.vercel.app') ? hostname : (parts.length > 2 ? parts.slice(-2).join('.') : hostname);
         return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
       })();
 
-      // Try alternative approach if main one fails
       try {
-        await signIn.sso({
+        await signIn.authenticateWithRedirect({
           strategy: 'oauth_google',
           redirectUrl: `${apexOrigin}/sso-callback`,
           redirectUrlComplete: `${apexOrigin}/admin/dashboard`,

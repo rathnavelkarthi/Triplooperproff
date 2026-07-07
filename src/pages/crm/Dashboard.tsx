@@ -38,8 +38,8 @@ import {
 } from '../../components/ui/table';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const CHART_COLORS = ['#0E2A38', '#C9A646', '#10b981', '#64748b', '#f59e0b', '#6366f1'];
-const OCC_COLORS = { available: '#c8e6c9', occupied: '#4caf50', notReady: '#e0e0e0' };
+const CHART_COLORS = ['#18181b', '#71717a', '#a1a1aa', '#d4d4d8', '#e4e4e7', '#f4f4f5'];
+const OCC_COLORS = { available: '#f4f4f5', occupied: '#000000', notReady: '#a1a1aa' };
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -216,8 +216,8 @@ export default function Dashboard() {
   return (
     <div className="max-w-[1600px] mx-auto pb-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="font-serif text-2xl font-bold text-[#0E2A38]">Dashboard</h1>
+      <div className="flex justify-between items-center mb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Dashboard</h1>
       </div>
 
       {!hasData ? (
@@ -235,10 +235,10 @@ export default function Dashboard() {
                 <motion.div variants={itemVariants}><KpiCard label="Table Utilization" value={`${restaurantData.tableUtilization}%`} sublabel="today" /></motion.div>
               </div>
               <motion.div variants={itemVariants}>
-                <Card>
-                  <CardHeader className="pb-2">
+                <Card className="border border-zinc-200 bg-white shadow-sm rounded-lg">
+                  <CardHeader className="pb-2 border-b border-zinc-100">
                     <div className="flex justify-between items-center">
-                      <CardTitle className="font-serif text-lg text-[#0E2A38]">Live Kitchen Orders</CardTitle>
+                      <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Live Kitchen Orders</CardTitle>
                       <Badge variant="warning">{restaurantData.activeOrders} Active</Badge>
                     </div>
                   </CardHeader>
@@ -309,10 +309,10 @@ export default function Dashboard() {
           {/* Occupancy Chart + Calendar */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
             <motion.div variants={itemVariants} className="lg:col-span-3">
-              <Card>
-                <CardHeader className="pb-2">
+              <Card className="border border-zinc-200 bg-white shadow-sm rounded-lg">
+                <CardHeader className="pb-2 border-b border-zinc-100">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="font-serif text-lg text-[#0E2A38]">Occupancy</CardTitle>
+                    <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Occupancy</CardTitle>
                   </div>
                   <div className="flex items-center gap-4 mt-1">
                     {[
@@ -357,11 +357,11 @@ export default function Dashboard() {
           {/* Revenue Overview + Recent Arrivals */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
             <motion.div variants={itemVariants} className="lg:col-span-2">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="font-serif text-lg text-[#0E2A38]">Revenue Overview</CardTitle>
-                  <p className="text-xs text-gray-400 mt-0.5">Total Revenue</p>
-                  <p className="text-2xl font-bold text-[#0E2A38] font-serif">{formatINR(hotelStats.totalRevenue)}</p>
+              <Card className="border border-zinc-200 bg-white shadow-sm rounded-lg">
+                <CardHeader className="pb-2 border-b border-zinc-100">
+                  <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Revenue Overview</CardTitle>
+                  <p className="text-xs text-zinc-400 mt-0.5">Total Revenue</p>
+                  <p className="text-3xl font-semibold tracking-tight text-zinc-900 mt-1">{formatINR(hotelStats.totalRevenue)}</p>
                 </CardHeader>
                 <CardContent className="pt-0">
                   {/* Revenue split */}
@@ -418,10 +418,10 @@ export default function Dashboard() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="lg:col-span-3">
-              <Card>
-                <CardHeader className="pb-2">
+              <Card className="border border-zinc-200 bg-white shadow-sm rounded-lg">
+                <CardHeader className="pb-2 border-b border-zinc-100">
                   <div className="flex justify-between items-center">
-                    <CardTitle className="font-serif text-lg text-[#0E2A38]">Recent Arrivals</CardTitle>
+                    <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Recent Arrivals</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 px-0">
@@ -478,12 +478,12 @@ export default function Dashboard() {
 // ─── Empty state ──────────────────────────────────────────────────────────────
 function EmptyState({ isRestaurant }: { isRestaurant: boolean }) {
   return (
-    <Card className="p-10 text-center">
-      <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 mx-auto mb-4">
-        <BarChart3 size={28} className="text-gray-300" />
+    <Card className="p-10 text-center border border-zinc-200 bg-white shadow-sm rounded-lg">
+      <div className="w-16 h-16 rounded-full bg-zinc-50 flex items-center justify-center border border-zinc-100 mx-auto mb-4">
+        <BarChart3 size={28} className="text-zinc-300" />
       </div>
-      <h3 className="font-serif text-xl font-bold text-[#0E2A38] mb-2">Welcome to your Dashboard</h3>
-      <p className="text-gray-500 text-sm max-w-md mx-auto">
+      <h3 className="text-lg font-semibold text-zinc-900 tracking-tight mb-2">Welcome to your Dashboard</h3>
+      <p className="text-zinc-500 text-sm max-w-md mx-auto">
         {isRestaurant
           ? 'Set up your menu and start taking orders — your metrics will appear here.'
           : 'Add rooms and create reservations — your metrics will appear here.'}
@@ -510,22 +510,20 @@ function KpiCard({ label, value, sublabel, arrow, icon, accentColor }: {
   icon?: React.ReactNode;
   accentColor?: string;
 }) {
-  const color = accentColor || 'var(--color-ocean-500)';
   return (
-    <Card className="p-4 hover:shadow-md transition-all duration-300 group relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-1 h-full rounded-r-full transition-all duration-300 group-hover:w-1.5" style={{ backgroundColor: color }} />
+    <Card className="p-5 border border-zinc-200 bg-white shadow-sm rounded-lg transition-all duration-200 hover:border-zinc-300">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-medium text-gray-500 mb-1">{label}</p>
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-[#0E2A38] tracking-tight">{value}</span>
-            {arrow === 'down-left' && <TrendingDown size={16} className="text-[#2E7D5B]" />}
-            {arrow === 'up-right' && <TrendingUp size={16} className="text-red-500" />}
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">{label}</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-semibold text-zinc-900 tracking-tight">{value}</span>
+            {arrow === 'down-left' && <TrendingDown size={14} className="text-emerald-600" />}
+            {arrow === 'up-right' && <TrendingUp size={14} className="text-rose-600" />}
           </div>
-          {sublabel && <p className="text-[11px] text-gray-400 mt-1.5">{sublabel}</p>}
+          {sublabel && <p className="text-[11px] text-zinc-400 mt-1.5">{sublabel}</p>}
         </div>
         {icon && (
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}14`, color }}>
+          <div className="w-10 h-10 rounded-full border border-zinc-100 bg-zinc-50 text-zinc-600 flex items-center justify-center shrink-0">
             {icon}
           </div>
         )}
@@ -551,12 +549,12 @@ function CalendarPanel({ rooms, calendarRooms }: {
   });
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden">
-      <CardHeader className="pb-2 border-b border-gray-50">
+    <Card className="h-full flex flex-col overflow-hidden border border-zinc-200 bg-white shadow-sm rounded-lg">
+      <CardHeader className="pb-2 border-b border-zinc-100">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="font-serif text-lg text-[#0E2A38]">Calendar</CardTitle>
-            <p className="text-xs text-gray-400 mt-0.5">Recent activities of {rooms.length} rooms</p>
+            <CardTitle className="text-sm font-semibold tracking-tight text-zinc-900">Calendar</CardTitle>
+            <p className="text-xs text-zinc-400 mt-0.5">Recent activities of {rooms.length} rooms</p>
           </div>
           <div className="flex items-center gap-1 text-xs text-gray-400">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" /><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
