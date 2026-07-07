@@ -436,7 +436,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
       // 3. Fallback for Staff (Supabase users)
       if (type === 'SUPABASE') {
-        const { data: staffData, error: sError } = await supabase
+        const { data: staffData, error: sError } = await supabaseAuth
           .from('staff')
           .select('*')
           .eq('id', userId)
@@ -448,7 +448,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         }
 
         if (staffData) {
-          const { data: tenantData, error: stError } = await supabase
+          const { data: tenantData, error: stError } = await supabaseAuth
             .from('tenants')
             .select('*')
             .eq('id', staffData.tenant_id)
