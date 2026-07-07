@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useCRM } from '../context/CRMDataContext';
 import { toast } from 'sonner';

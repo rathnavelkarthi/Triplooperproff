@@ -1,5 +1,5 @@
+import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
-import { useRef } from 'react';
 import { TrendingDown, Clock, Layers, TrendingUp, Zap, Target } from 'lucide-react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 
@@ -24,7 +24,7 @@ const solutions: StatCard[] = [
     { icon: Target, value: '1', label: 'Unified platform', color: 'var(--color-primary)' },
 ];
 
-function StatCardComponent({ card, index, dark, reduced }: { card: StatCard; index: number; dark?: boolean; reduced?: boolean }) {
+function StatCardComponent({ card, index, dark, reduced }: { card: StatCard; index: number; dark?: boolean; reduced?: boolean; key?: any }) {
     return (
         <motion.div
             initial={reduced ? {} : { opacity: 0, x: -30 }}

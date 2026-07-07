@@ -253,7 +253,7 @@ export default function Signup() {
                 const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
                 return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
             })();
-            await signIn.sso({
+            await (signIn as any).sso({
                 strategy: 'oauth_google',
                 redirectUrl: `${apexOrigin}/sso-callback`,
                 redirectUrlComplete: `${apexOrigin}/admin/dashboard`,

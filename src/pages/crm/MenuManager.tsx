@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useCRM, MenuCategory, MenuItem } from '../../context/CRMDataContext';
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, GripVertical, Leaf, X, Check, Search, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';

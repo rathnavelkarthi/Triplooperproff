@@ -17,6 +17,7 @@ function ActiveIndicator() {
 
 interface NavigationItemProps {
   item: NavItem;
+  key?: any;
 }
 
 export default function NavigationItem({ item }: NavigationItemProps) {

@@ -150,7 +150,7 @@ export default function Expenses() {
     acc[e.category] = (acc[e.category] || 0) + Number(e.amount);
     return acc;
   }, {} as Record<string, number>);
-  const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+  const topCategory = Object.entries(categoryTotals).sort((a, b) => Number(b[1]) - Number(a[1]))[0]?.[0] || '-';
 
   const SortIcon = ({ field }: { field: string }) => {
     if (sortField !== field) return <ChevronDown size={14} className="text-gray-300" />;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 
@@ -270,7 +270,7 @@ export default function TableOrder() {
 
 function MenuItemCard({ item, cartQty, onAdd, onPlus, onMinus }: {
     item: { id: number; name: string; description: string; price: number; image_url: string | null; is_veg: boolean };
-    cartQty: number; onAdd: () => void; onPlus: () => void; onMinus: () => void;
+    cartQty: number; onAdd: () => void; onPlus: () => void; onMinus: () => void; key?: any;
 }) {
     return (
         <div className="flex gap-3 px-4 py-3">

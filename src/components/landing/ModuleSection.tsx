@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion } from 'motion/react';
 import { Check, Calendar, Users, CreditCard, BarChart3, UtensilsCrossed, ShoppingCart, QrCode, ClipboardList, TrendingUp, PieChart, FileText } from 'lucide-react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';

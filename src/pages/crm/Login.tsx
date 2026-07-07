@@ -174,7 +174,7 @@ export default function Login() {
       })();
 
       try {
-        await signIn.authenticateWithRedirect({
+        await (signIn as any).authenticateWithRedirect({
           strategy: 'oauth_google',
           redirectUrl: `${apexOrigin}/sso-callback`,
           redirectUrlComplete: `${apexOrigin}/admin/dashboard`,
