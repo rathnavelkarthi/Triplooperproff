@@ -73,6 +73,30 @@ export default function Dashboard() {
   const { reservations, rooms, foodOrders, restaurantTables, menuItems } = useCRM();
   const [waStats, setWaStats] = useState<{ sent: number; total: number } | null>(null);
 
+  // Date filter for daily statement
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [dayExpenses, setDayExpenses] = useState<any[]>([]);
+  const [loadingExpenses, setLoadingExpenses] = useState<boolean>(false);
+
+  // Load expenses for selected date
+  React.useEffect(() => {
+    if (!tenant?.id || !selectedDate) return;
+    setLoadingExpenses(true);
+    import('../../lib/supabaseClient').then(({ supabase }) => {
+      supabase
+        .from('expenses')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .eq('date', selectedDate)
+        .then(({ data, error }) => {
+          setLoadingExpenses(false);
+          if (data) {
+            setDayExpenses(data);
+          }
+        });
+    });
+  }, [tenant?.id, selectedDate]);
+
   React.useEffect(() => {
     if (!tenant?.id) return;
     import('../../lib/supabaseClient').then(({ supabase }) => {
@@ -91,6 +115,59 @@ export default function Dashboard() {
 
   const isHotel = !tenant?.business_type || tenant?.business_type === 'hotel' || tenant?.business_type === 'combined';
   const isRestaurant = tenant?.business_type === 'restaurant' || tenant?.business_type === 'combined';
+
+  // Compute selected day transactions
+  const dailyTransactions = useMemo(() => {
+    const list: any[] = [];
+    
+    // 1. Reservations matching check-in date
+    reservations.forEach(r => {
+      if (r.checkIn === selectedDate) {
+        list.push({
+          id: r.id,
+          type: 'Room Booking',
+          desc: `${r.guest || 'Guest'} (${r.room || 'Room'})`,
+          status: r.payment === 'PAID' ? 'paid' : 'pending',
+          amount: r.amount || 0,
+          isExpense: false
+        });
+      }
+    });
+
+    // 2. Food orders matching date
+    foodOrders.forEach(o => {
+      if (o.created_at?.slice(0, 10) === selectedDate) {
+        list.push({
+          id: `Order #${o.id}`,
+          type: 'Food Order',
+          desc: o.is_room_service ? `Room Service (${o.customer_name || 'Guest'})` : `Dine-in / Walk-in`,
+          status: o.payment_status === 'paid' ? 'paid' : 'pending',
+          amount: o.total_amount || 0,
+          isExpense: false
+        });
+      }
+    });
+
+    // 3. Expenses matching date
+    dayExpenses.forEach(e => {
+      list.push({
+        id: e.id,
+        type: 'Expense',
+        desc: `${e.description || e.category} (${e.vendor || 'Vendor'})`,
+        status: 'paid',
+        amount: e.amount || 0,
+        isExpense: true
+      });
+    });
+
+    // Summaries
+    const roomTotal = list.filter(item => item.type === 'Room Booking').reduce((sum, item) => sum + item.amount, 0);
+    const foodTotal = list.filter(item => item.type === 'Food Order').reduce((sum, item) => sum + item.amount, 0);
+    const expenseTotal = list.filter(item => item.isExpense).reduce((sum, item) => sum + item.amount, 0);
+    const netTotal = (roomTotal + foodTotal) - expenseTotal;
+
+    return { list, roomTotal, foodTotal, expenseTotal, netTotal };
+  }, [reservations, foodOrders, dayExpenses, selectedDate]);
 
   // ── Hotel KPI data ───────────────────────────────────────────────────────
   const hotelStats = useMemo(() => {
@@ -226,6 +303,94 @@ export default function Dashboard() {
         <EmptyState isRestaurant={isRestaurant && !isHotel} />
       ) : (
         <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-3">
+
+          {/* Daily Transaction & Bill Report */}
+          <motion.div variants={itemVariants}>
+            <Card className="border border-zinc-200 bg-white shadow-[0_8px_8px_rgba(0,0,0,0.01),0_4px_4px_rgba(0,0,0,0.015),0_2px_2px_rgba(0,0,0,0.015),0_0_0_1px_rgba(0,0,0,0.05)] rounded-lg">
+              <CardHeader className="pb-4 border-b border-zinc-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                  <CardTitle className="text-sm font-semibold tracking-tight text-black">Daily Transactions & Bills</CardTitle>
+                  <p className="text-xs text-zinc-400 mt-0.5">Filter and review itemized daily statements</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-zinc-500">Filter Date:</span>
+                  <input 
+                    type="date" 
+                    value={selectedDate} 
+                    onChange={(e) => setSelectedDate(e.target.value)} 
+                    className="px-4 py-1.5 border border-zinc-200 rounded-full text-xs font-semibold bg-white text-black focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {/* Summary boxes */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                  <div className="bg-[#fbfbf5] border border-zinc-200 rounded-xl p-4 shadow-sm text-center">
+                    <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-1">Room Revenue</p>
+                    <p className="text-lg font-bold text-black">{formatINR(dailyTransactions.roomTotal)}</p>
+                  </div>
+                  <div className="bg-[#fbfbf5] border border-zinc-200 rounded-xl p-4 shadow-sm text-center">
+                    <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-1">Food Revenue</p>
+                    <p className="text-lg font-bold text-black">{formatINR(dailyTransactions.foodTotal)}</p>
+                  </div>
+                  <div className="bg-[#fbfbf5] border border-zinc-200 rounded-xl p-4 shadow-sm text-center">
+                    <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-1">Expenses</p>
+                    <p className="text-lg font-bold text-rose-600">-{formatINR(dailyTransactions.expenseTotal)}</p>
+                  </div>
+                  <div className={`border rounded-xl p-4 shadow-sm text-center ${dailyTransactions.netTotal >= 0 ? 'bg-[#d4f9e0] border-[#c1fbd4]' : 'bg-rose-50 border-rose-100'}`}>
+                    <p className="text-[10px] text-zinc-600 uppercase font-semibold tracking-wider mb-1">Net Income</p>
+                    <p className={`text-lg font-bold ${dailyTransactions.netTotal >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {dailyTransactions.netTotal < 0 ? '-' : ''}{formatINR(Math.abs(dailyTransactions.netTotal))}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Table list */}
+                {dailyTransactions.list.length > 0 ? (
+                  <div className="border border-zinc-200 rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-zinc-50">
+                        <TableRow className="border-b border-zinc-200">
+                          <TableHead className="text-xs text-zinc-500 pl-4">Type</TableHead>
+                          <TableHead className="text-xs text-zinc-500">Description</TableHead>
+                          <TableHead className="text-xs text-zinc-500">Status</TableHead>
+                          <TableHead className="text-xs text-zinc-500 text-right pr-4">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {dailyTransactions.list.map((item, idx) => (
+                          <TableRow key={idx} className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                            <TableCell className="pl-4 py-3 text-xs font-semibold">
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wider uppercase ${
+                                item.type === 'Room Booking' ? 'bg-zinc-100 text-zinc-800' :
+                                item.type === 'Food Order' ? 'bg-[#c1fbd4] text-zinc-800' :
+                                'bg-rose-100 text-rose-800'
+                              }`}>
+                                {item.type}
+                              </span>
+                            </TableCell>
+                            <TableCell className="py-3 text-xs font-medium text-zinc-900">{item.desc}</TableCell>
+                            <TableCell className="py-3 text-xs">
+                              <Badge className={`border-none rounded-full text-[9px] font-medium px-2 py-0.5 ${
+                                item.status === 'paid' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100' : 'bg-amber-100 text-amber-800 hover:bg-amber-100'
+                              }`}>
+                                {item.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className={`py-3 text-right pr-4 text-xs font-semibold ${item.isExpense ? 'text-rose-600' : 'text-zinc-900'}`}>
+                              {item.isExpense ? '-' : ''}{formatINR(item.amount)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-400 text-center py-8">No bills or transactions recorded on this day.</p>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Restaurant KPIs */}
           {isRestaurant && restaurantData && (
