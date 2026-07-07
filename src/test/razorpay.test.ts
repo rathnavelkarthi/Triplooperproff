@@ -2,21 +2,24 @@ import { describe, it, expect } from 'vitest';
 import { PLAN_PRICES, ADDON_PRICES } from '../lib/razorpay';
 
 describe('PLAN_PRICES', () => {
-  it('has growth, pro, and enterprise plans', () => {
-    expect(Object.keys(PLAN_PRICES)).toEqual(['growth', 'pro', 'enterprise']);
+  it('has growth, pro, enterprise, and new subscription/commission plans', () => {
+    expect(Object.keys(PLAN_PRICES)).toEqual(['growth', 'pro', 'enterprise', 'subscription_small', 'subscription_large', 'commission']);
   });
 
   it('each plan has monthly and yearly pricing', () => {
-    for (const plan of Object.values(PLAN_PRICES)) {
+    for (const [name, plan] of Object.entries(PLAN_PRICES)) {
       expect(plan.monthly).toBeDefined();
       expect(plan.yearly).toBeDefined();
-      expect(plan.monthly.amount).toBeGreaterThan(0);
-      expect(plan.yearly.amount).toBeGreaterThan(0);
+      if (name !== 'commission') {
+        expect(plan.monthly.amount).toBeGreaterThan(0);
+        expect(plan.yearly.amount).toBeGreaterThan(0);
+      }
     }
   });
 
   it('yearly is cheaper per month than monthly', () => {
-    for (const [, plan] of Object.entries(PLAN_PRICES)) {
+    for (const [name, plan] of Object.entries(PLAN_PRICES)) {
+      if (name === 'commission') continue;
       const monthlyAnnualized = plan.monthly.amount * 12;
       expect(plan.yearly.amount).toBeLessThan(monthlyAnnualized);
     }
