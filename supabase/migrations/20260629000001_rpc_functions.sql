@@ -60,6 +60,7 @@ $$;
 -- get_tenant_site(p_subdomain) -> jsonb
 -- { tenant, rooms[], testimonials[], settings{}, chef_specials[], gallery[] }
 -- ============================================================
+drop function if exists get_tenant_site(text);
 create or replace function get_tenant_site(p_subdomain text)
 returns jsonb
 language plpgsql
@@ -180,6 +181,7 @@ $$;
 -- ============================================================
 -- check_room_availability -> table(is_available, total_price)
 -- ============================================================
+drop function if exists check_room_availability(text, bigint, date, date);
 create or replace function check_room_availability(
   p_subdomain text,
   p_room_id bigint,
@@ -244,6 +246,7 @@ $$;
 -- ============================================================
 -- apply_coupon -> table(is_valid, amount, message)
 -- ============================================================
+drop function if exists apply_coupon(text, text, bigint, int);
 create or replace function apply_coupon(
   p_subdomain text,
   p_code text,
@@ -421,6 +424,7 @@ $$;
 -- ============================================================
 -- get_guest_session(p_token) -> table(...) one row
 -- ============================================================
+drop function if exists get_guest_session(text);
 create or replace function get_guest_session(p_token text)
 returns table(
   token_id uuid,

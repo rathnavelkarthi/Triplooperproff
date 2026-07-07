@@ -117,13 +117,16 @@ revoke all on function public.auth_tenant_ids() from public;
 grant execute on function public.auth_tenant_ids() to authenticated;
 
 -- Membership tables ------------------------------------------------
+drop policy if exists "up_self" on user_properties;
 create policy "up_self" on user_properties
   for select using (user_id = (auth.jwt() ->> 'sub'));
 
+drop policy if exists "tenants_member_rw" on tenants;
 create policy "tenants_member_rw" on tenants
   for all using (id in (select public.auth_tenant_ids()))
   with check (id in (select public.auth_tenant_ids()));
 
+drop policy if exists "businesses_owner_rw" on businesses;
 create policy "businesses_owner_rw" on businesses
   for all using (owner_id = (auth.jwt() ->> 'sub'))
   with check (owner_id = (auth.jwt() ->> 'sub'));
@@ -144,11 +147,12 @@ declare
 begin
   foreach tbl in array tenant_tables loop
     execute format($f$
+      drop policy if exists %I on %I;
       create policy %I on %I
         for all
         using (tenant_id in (select public.auth_tenant_ids()))
         with check (tenant_id in (select public.auth_tenant_ids()));
-    $f$, tbl || '_tenant_rw', tbl);
+    $f$, tbl || '_tenant_rw', tbl, tbl || '_tenant_rw', tbl);
   end loop;
 end $$;
 

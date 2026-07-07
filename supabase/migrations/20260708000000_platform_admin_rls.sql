@@ -44,8 +44,10 @@ end;
 $$;
 
 -- Add policies to business_invites to allow select and update by token
+drop policy if exists "invite_token_select" on public.business_invites;
 create policy "invite_token_select" on public.business_invites
   for select using (true);
 
+drop policy if exists "invite_token_update" on public.business_invites;
 create policy "invite_token_update" on public.business_invites
   for update using (true);

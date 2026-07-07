@@ -60,6 +60,7 @@ end;
 $$;
 
 -- 4. Redefine get_tenant_site function to include tourist_attractions
+drop function if exists public.get_tenant_site(text);
 create or replace function public.get_tenant_site(p_subdomain text)
 returns jsonb
 language plpgsql
@@ -115,7 +116,7 @@ begin
         'id', c.id, 'name', c.name, 'description', c.description,
         'price', c.price, 'image_url', c.image_url, 'is_veg', c.is_veg
       ) order by c.sort_order, c.id)
-      from chef_specials c where c.tenant_id = v_tenant.id and c.is_available = true
+      from menu_items c where c.tenant_id = v_tenant.id and c.is_chef_special = true and c.is_available = true
     ), '[]'::jsonb),
     'gallery', coalesce((
       select jsonb_agg(jsonb_build_object(
