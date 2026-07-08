@@ -31,7 +31,27 @@ export interface BookingConfirmationData {
   source: string;
   reservationId: string;
   businessName: string;
+  businessAddress?: string;
+  businessPhone?: string;
   guestToken?: string;
+  guestsCount?: number;
+}
+
+export interface OwnerBookingNotificationData {
+  ownerEmail: string;
+  bookingNumber: string;
+  guestName: string;
+  guestLocation?: string;
+  totalGuests: number;
+  totalRooms: number;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  roomType: string;
+  basePrice: number;
+  gstAmount: number;
+  totalPrice: number;
+  businessName: string;
 }
 
 export interface BookingCancelledData {
@@ -408,41 +428,191 @@ function welcomeEmailHtml(data: WelcomeEmailData): string {
 // 2. BOOKING CONFIRMATION
 // ═══════════════════════════════════════════════════════════════════
 
-function bookingConfirmationHtml(data: BookingConfirmationData): string {
+export function bookingConfirmationHtml(data: BookingConfirmationData): string {
   const refId = `#${data.reservationId.slice(0, 8).toUpperCase()}`;
+  const addressBlock = data.businessAddress ? `
+    <div style="background:${T.bgInfoSoft}; border: 1px solid ${T.border}; border-radius: 8px; padding: 16px 20px; margin: 24px 0; text-align: left;">
+      <p style="margin: 0 0 4px 0; font-family:${ff}; font-size: 11px; font-weight: 600; color: ${T.textTertiary}; text-transform: uppercase; letter-spacing: 1px;">Where is the Property</p>
+      <p style="margin: 0 0 6px 0; font-family:${ff}; font-size: 15px; font-weight: 700; color: #0E2A38;">${data.businessName}</p>
+      <p style="margin: 0; font-family:${ff}; font-size: 13px; color: ${T.textSecondary}; line-height: 1.5; white-space: pre-wrap;">${data.businessAddress}</p>
+      ${data.businessPhone ? `<p style="margin: 8px 0 0 0; font-family:${ff}; font-size: 13px; color: ${T.textSecondary}; font-weight: 500;">Phone: ${data.businessPhone}</p>` : ''}
+    </div>
+  ` : '';
+
   const body = `
-    ${heading('Booking Confirmed')}
-    ${subtitle(`Great news! A reservation at <strong style="color:${T.textPrimary}">${data.businessName}</strong> has been confirmed.`)}
+    ${heading('Your booking is confirmed!')}
+    ${subtitle(`Thanks ${data.guestName}! Your stay at <strong style="color:${T.textPrimary}">${data.businessName}</strong> is fully booked and confirmed.`)}
+
+    ${addressBlock}
 
     ${sectionLabel('Reservation details')}
     ${detailCard([
-      ['Reference', refId, true],
-      ['Guest', data.guestName, true],
-      ['Room', `${data.roomType}${data.roomNumber ? ` &middot; ${data.roomNumber}` : ''}`],
-      ['Check-in', fmtDate(data.checkIn)],
-      ['Check-out', fmtDate(data.checkOut)],
-      ['Source', data.source],
-      ['Payment', getStatusPill(data.paymentStatus)],
+      ['Booking Reference', refId, true],
+      ['Guest Name', data.guestName, true],
+      ['Room Type', `${data.roomType}${data.roomNumber ? ` &middot; Room ${data.roomNumber}` : ''}`],
+      ['Guests', `${data.guestsCount || 2} Guest${(data.guestsCount || 2) > 1 ? 's' : ''}`],
+      ['Check-in Date', fmtDate(data.checkIn)],
+      ['Check-out Date', fmtDate(data.checkOut)],
+      ['Stay Duration', `${Math.max(1, Math.ceil((new Date(data.checkOut).getTime() - new Date(data.checkIn).getTime()) / (1000 * 60 * 60 * 24)))} night(s)`],
+      ['Booking Channel', data.source],
+      ['Payment Status', getStatusPill(data.paymentStatus)],
     ], T.green)}
 
-    ${sectionLabel('Payment summary')}
+    ${sectionLabel('Pricing details')}
     ${amountBlock(
       [
-        ['Room charges', fmtCurrency(data.amount - data.gstAmount)],
-        ['GST', fmtCurrency(data.gstAmount)],
+        ['Room charges (Base)', fmtCurrency(data.amount - data.gstAmount)],
+        ['Goods & Services Tax (12%)', fmtCurrency(data.gstAmount)],
       ],
-      'Total',
+      'Total Price',
       fmtCurrency(data.amount)
     )}
   `;
 
   return baseTemplate({
-    preheader: `Booking confirmed for ${data.guestName} — ${fmtDate(data.checkIn)} at ${data.businessName}`,
+    preheader: `Stay Confirmed — Booking #${data.reservationId.substring(0, 8).toUpperCase()} at ${data.businessName}`,
     businessName: data.businessName,
     bodyContent: body,
-    ctaText: data.guestToken ? 'Access Guest Portal &rarr;' : undefined,
+    ctaText: data.guestToken ? 'Access Guest Portal / Download Invoice &rarr;' : undefined,
     ctaUrl: data.guestToken ? `https://triplooper.com/guest/${data.guestToken}` : undefined,
-    footerNote: 'For changes or cancellations, please contact the front desk or manage from your dashboard.',
+    footerNote: 'This invoice serves as your booking confirmation. You can view or print your digital PDF invoice from the guest portal.',
+  });
+}
+
+export function ownerBookingInvoiceHtml(data: OwnerBookingNotificationData): string {
+  const refId = `TRP${data.bookingNumber.replace(/[^0-9]/g, '') || Math.floor(1000000000 + Math.random() * 9000000000)}`;
+  const commission = Math.round(data.basePrice * 0.12);
+  const commissionableAmount = data.basePrice;
+  const nights = data.nights;
+  const ratePerNight = Math.round(data.basePrice / nights);
+
+  const body = `
+    <!-- HEADER -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 24px;">
+      <tr>
+        <td style="font-family:${ff}; font-size: 22px; font-weight: 700; color: #0E2A38; letter-spacing: 0.5px;">
+          Triplooper.com
+        </td>
+        <td style="font-family:${ff}; font-size: 13px; color: ${T.textSecondary}; text-align: right; font-weight: 500;">
+          Booking Number:<br/>
+          <strong style="font-family:${mono}; font-size: 14px; color: ${T.textPrimary}; font-weight: 700;">${refId}</strong>
+        </td>
+      </tr>
+    </table>
+
+    <!-- MAIN BODY TABLES -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse: collapse; margin-bottom: 24px;">
+      <tr>
+        <!-- Left: Guest info -->
+        <td style="width: 50%; padding-right: 20px; vertical-align: top;">
+          <h2 style="font-family:${ff}; font-size: 14px; font-weight: 700; color: #0E2A38; margin: 0 0 12px 0;">Guest Information</h2>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:${ff}; font-size: 13px; line-height: 1.6; color: ${T.textSecondary};">
+            <tr><td style="font-weight: 600; color: ${T.textPrimary};">${data.guestName}</td></tr>
+            <tr><td>${data.guestLocation || 'India'}</td></tr>
+            <tr><td style="padding-top: 12px; font-weight: 600; color: ${T.textPrimary};">Total Guests:</td></tr>
+            <tr><td>${data.totalGuests}</td></tr>
+            <tr><td style="padding-top: 12px; font-weight: 600; color: ${T.textPrimary};">Total Units/Rooms:</td></tr>
+            <tr><td>${data.totalRooms}</td></tr>
+            <tr><td style="padding-top: 12px; font-weight: 600; color: ${T.textPrimary};">Preferred Language:</td></tr>
+            <tr><td>English</td></tr>
+            <tr><td style="padding-top: 12px; font-weight: 600; color: ${T.textPrimary};">Approximate Arrival Time:</td></tr>
+            <tr><td>No time provided</td></tr>
+          </table>
+        </td>
+        <!-- Right: Check-in / out -->
+        <td style="width: 50%; padding-left: 20px; vertical-align: top; border-left: 1px solid ${T.border};">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:${ff}; font-size: 13px; line-height: 1.6; color: ${T.textSecondary};">
+            <tr>
+              <td style="font-weight: 600; color: ${T.textPrimary}; padding-bottom: 4px;">Check-in:</td>
+            </tr>
+            <tr>
+              <td style="font-size: 14px; font-weight: 700; color: #0E2A38; padding-bottom: 12px;">${fmtDate(data.checkIn)}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600; color: ${T.textPrimary}; padding-bottom: 4px;">Check-out:</td>
+            </tr>
+            <tr>
+              <td style="font-size: 14px; font-weight: 700; color: #0E2A38; padding-bottom: 12px;">${fmtDate(data.checkOut)}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: 600; color: ${T.textPrimary}; padding-bottom: 4px;">Length of Stay:</td>
+            </tr>
+            <tr>
+              <td style="font-size: 14px; font-weight: 700; color: #0E2A38;">${data.nights} night${data.nights > 1 ? 's' : ''}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- HORIZONTAL RULE -->
+    <div style="height: 1px; background: ${T.border}; margin: 24px 0;"></div>
+
+    <!-- COMMISSION SUMMARY -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:${ff}; margin-bottom: 24px;">
+      <tr>
+        <td style="font-size: 15px; font-weight: 700; color: ${T.textPrimary};">Total Price:</td>
+        <td style="font-size: 18px; font-weight: 800; color: #0E2A38; text-align: right;">${fmtCurrency(data.totalPrice)}</td>
+      </tr>
+      <tr>
+        <td style="font-size: 13px; color: ${T.textSecondary}; padding-top: 8px;">Commission (12%):</td>
+        <td style="font-size: 13px; font-weight: 600; color: ${T.red}; text-align: right; padding-top: 8px;">${fmtCurrency(commission)}</td>
+      </tr>
+      <tr>
+        <td style="font-size: 13px; color: ${T.textSecondary}; padding-top: 8px;">Commissionable Amount:</td>
+        <td style="font-size: 13px; font-weight: 600; color: ${T.textPrimary}; text-align: right; padding-top: 8px;">${fmtCurrency(commissionableAmount)}</td>
+      </tr>
+    </table>
+
+    <!-- HORIZONTAL RULE -->
+    <div style="height: 1px; background: ${T.border}; margin: 24px 0;"></div>
+
+    <!-- ROOM DETAILS -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-family:${ff}; font-size: 13px; line-height: 1.6; color: ${T.textSecondary};">
+      <tr>
+        <td colspan="2" style="font-size: 15px; font-weight: 700; color: #0E2A38; padding-bottom: 4px;">
+          ${data.roomType}
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2" style="color: ${T.textSecondary}; padding-bottom: 12px;">
+          No meal
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-bottom: 8px;">
+          ${fmtDate(data.checkIn).split(',')[1]?.trim() || data.checkIn} - ${fmtDate(data.checkOut).split(',')[1]?.trim() || data.checkOut}
+          <br/>
+          <span style="font-size: 11px; color: ${T.textTertiary};">Standard Rate</span>
+        </td>
+        <td style="text-align: right; font-weight: 550; color: ${T.textPrimary}; vertical-align: middle; padding-bottom: 8px;">
+          ${data.nights} x ${fmtCurrency(ratePerNight)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding-top: 8px; border-top: 1px solid ${T.borderLight};">
+          Goods & services tax (12%)
+        </td>
+        <td style="text-align: right; font-weight: 550; color: ${T.textPrimary}; padding-top: 8px; border-top: 1px solid ${T.borderLight};">
+          ${fmtCurrency(data.gstAmount)}
+        </td>
+      </tr>
+      <tr>
+        <td style="font-size: 14px; font-weight: 700; color: #0E2A38; padding-top: 12px; border-top: 1px solid ${T.border};">
+          Total unit/room price
+        </td>
+        <td style="font-size: 14px; font-weight: 700; color: #0E2A38; text-align: right; padding-top: 12px; border-top: 1px solid ${T.border};">
+          ${fmtCurrency(data.totalPrice)}
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return baseTemplate({
+    preheader: `New reservation booking invoice — Room price: ${fmtCurrency(data.totalPrice)}`,
+    businessName: data.businessName,
+    bodyContent: body,
+    footerNote: 'This is an official commission invoice generated by Triplooper. Commission of 12% is automatically tracked.',
   });
 }
 
@@ -767,6 +937,11 @@ export async function sendBookingConfirmation(data: BookingConfirmationData): Pr
   return sendResendEmail(data.guestEmail, `Booking confirmed — ${data.guestName} at ${data.businessName}`, bookingConfirmationHtml(data));
 }
 
+export async function sendOwnerBookingNotification(data: OwnerBookingNotificationData): Promise<boolean> {
+  if (!data.ownerEmail) return false;
+  return sendResendEmail(data.ownerEmail, `New Reservation Booking Invoice — ${data.guestName} at ${data.businessName}`, ownerBookingInvoiceHtml(data));
+}
+
 export async function sendBookingCancelled(data: BookingCancelledData): Promise<boolean> {
   if (!data.guestEmail) return false;
   return sendResendEmail(data.guestEmail, `Booking cancelled — ${data.businessName}`, bookingCancelledHtml(data));
@@ -847,5 +1022,84 @@ export async function sendCustomEmail(data: CustomEmailData): Promise<boolean> {
     data.subject,
     customEmailHtml(data)
   );
+}
+
+// Combined helper to trigger both emails concurrently
+export async function triggerBookingEmails(bookingDetails: {
+  reservationId: string;
+  guestName: string;
+  guestEmail: string;
+  guestPhone?: string;
+  guestLocation?: string;
+  roomType: string;
+  roomNumber?: string;
+  checkIn: string;
+  checkOut: string;
+  amount: number;
+  gstAmount: number;
+  paymentStatus: string;
+  source: string;
+  businessName: string;
+  businessAddress?: string;
+  businessPhone?: string;
+  ownerEmail?: string | null;
+  guestToken?: string;
+}) {
+  const promises: Promise<any>[] = [];
+
+  // 1. Send Guest Email
+  if (bookingDetails.guestEmail) {
+    promises.push(
+      sendBookingConfirmation({
+        guestName: bookingDetails.guestName,
+        guestEmail: bookingDetails.guestEmail,
+        roomType: bookingDetails.roomType,
+        roomNumber: bookingDetails.roomNumber || '',
+        checkIn: bookingDetails.checkIn,
+        checkOut: bookingDetails.checkOut,
+        amount: bookingDetails.amount,
+        gstAmount: bookingDetails.gstAmount,
+        paymentStatus: bookingDetails.paymentStatus,
+        source: bookingDetails.source,
+        reservationId: bookingDetails.reservationId,
+        businessName: bookingDetails.businessName,
+        businessAddress: bookingDetails.businessAddress,
+        businessPhone: bookingDetails.businessPhone,
+        guestToken: bookingDetails.guestToken,
+        guestsCount: 2, // default
+      })
+    );
+  }
+
+  // 2. Send Owner Email
+  if (bookingDetails.ownerEmail) {
+    const nights = Math.max(1, Math.ceil(
+      (new Date(bookingDetails.checkOut).getTime() - new Date(bookingDetails.checkIn).getTime()) / (1000 * 60 * 60 * 24)
+    ));
+    promises.push(
+      sendOwnerBookingNotification({
+        ownerEmail: bookingDetails.ownerEmail,
+        bookingNumber: bookingDetails.reservationId,
+        guestName: bookingDetails.guestName,
+        guestLocation: bookingDetails.guestLocation || 'India',
+        totalGuests: 2, // default
+        totalRooms: 1, // default
+        checkIn: bookingDetails.checkIn,
+        checkOut: bookingDetails.checkOut,
+        nights,
+        roomType: bookingDetails.roomType,
+        basePrice: bookingDetails.amount - bookingDetails.gstAmount,
+        gstAmount: bookingDetails.gstAmount,
+        totalPrice: bookingDetails.amount,
+        businessName: bookingDetails.businessName,
+      })
+    );
+  }
+
+  try {
+    await Promise.all(promises);
+  } catch (err) {
+    console.error('[Triplooper Email] Failed to trigger booking emails:', err);
+  }
 }
 

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { sendWhatsAppConfirmation } from '../lib/whatsapp';
+import { triggerBookingEmails } from '../lib/email';
 
 // Types
 type Room = {
@@ -178,6 +179,27 @@ export default function RoomDetail() {
         guestToken: data.token,
       }, tenant.id);
     }
+
+    // Trigger Email confirmation (Guest + Owner)
+    triggerBookingEmails({
+      reservationId: data.booking_id,
+      guestName: form.name,
+      guestEmail: form.email || '',
+      guestPhone: form.phone,
+      roomType: room!.type || room!.name || 'Standard Room',
+      roomNumber: (room as any).room_number || '',
+      checkIn: form.checkIn,
+      checkOut: form.checkOut,
+      amount: finalPrice,
+      gstAmount: Math.round(finalPrice - (finalPrice / 1.12)),
+      paymentStatus: advanceAmount > 0 ? 'Paid' : 'Unpaid',
+      source: 'Website',
+      businessName: tenant.business_name || 'Our Hotel',
+      businessAddress: settings.contactAddress || '',
+      businessPhone: settings.contactPhone || '',
+      ownerEmail: tenant.custom_email,
+      guestToken: data.token,
+    });
 
     setBookSuccess(data);
   };

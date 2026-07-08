@@ -81,14 +81,25 @@ export default function Booking() {
   const handlePaymentConfirm = async () => {
     // Save to Supabase
     try {
+      const roomPrice = bookingData.room?.price || 0;
+      const baseAmount = roomPrice * nights;
+      const gstAmount = Math.round(baseAmount * 0.12);
+      const totalAmount = baseAmount + gstAmount;
+
       await addReservation({
         guest: bookingData.guestDetails.fullName,
+        guest_email: bookingData.guestDetails.email,
+        guest_phone: bookingData.guestDetails.phone,
+        guest_location: bookingData.guestDetails.address || '',
         room: bookingData.room?.name || 'Standard Room',
+        room_id: bookingData.room?.id,
         checkIn: bookingData.checkIn,
         checkOut: bookingData.checkOut,
         source: 'Website',
         status: 'Confirmed',
         payment: 'Paid',
+        amount: totalAmount,
+        gst_amount: gstAmount,
       });
 
       handleNextStep();

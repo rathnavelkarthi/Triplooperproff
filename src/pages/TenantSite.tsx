@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { sendWhatsAppConfirmation } from '../lib/whatsapp';
+import { triggerBookingEmails } from '../lib/email';
 
 // --- Types ---
 type Room = {
@@ -122,6 +123,27 @@ function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, init
                 guestToken: data.token,
             }, tenantId);
         }
+
+        // Trigger Email confirmation (Guest + Owner)
+        triggerBookingEmails({
+            reservationId: data.booking_id,
+            guestName: form.name,
+            guestEmail: form.email || '',
+            guestPhone: form.phone,
+            roomType: room.type || room.name || 'Standard Room',
+            roomNumber: (room as any).room_number || '',
+            checkIn: form.checkIn,
+            checkOut: form.checkOut,
+            amount: finalTotal,
+            gstAmount: Math.round(finalTotal - (finalTotal / 1.12)),
+            paymentStatus: paidAdvance > 0 || paymentMethod !== 'property' ? 'Paid' : 'Unpaid',
+            source: 'Website',
+            businessName: businessName || 'Our Hotel',
+            businessAddress: siteData?.cms_settings?.contactAddress || '',
+            businessPhone: siteData?.cms_settings?.contactPhone || '',
+            ownerEmail: siteData?.tenant?.custom_email,
+            guestToken: data.token,
+        });
 
         setLoading(false);
         onSuccess(data);

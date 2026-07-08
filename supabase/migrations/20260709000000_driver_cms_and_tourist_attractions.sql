@@ -42,7 +42,8 @@ begin
     ),
     'tenant', jsonb_build_object(
       'id', v_tenant.id, 'business_name', v_tenant.business_name,
-      'subdomain', v_tenant.subdomain, 'logo_url', v_tenant.logo_url
+      'subdomain', v_tenant.subdomain, 'logo_url', v_tenant.logo_url,
+      'custom_email', v_tenant.custom_email
     ),
     'all_rooms', coalesce((
       select jsonb_agg(jsonb_build_object(
@@ -90,7 +91,8 @@ begin
       'google_place_id', v_tenant.google_place_id,
       'google_review_url', v_tenant.google_review_url,
       'hero_image_url', v_tenant.hero_image_url,
-      'sections_visible', v_tenant.sections_visible
+      'sections_visible', v_tenant.sections_visible,
+      'custom_email', v_tenant.custom_email
     ),
     'rooms', coalesce((
       select jsonb_agg(jsonb_build_object(

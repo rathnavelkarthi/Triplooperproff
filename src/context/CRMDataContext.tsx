@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 import { mapReservationStatus, mapPaymentStatus, mapUIToDBStatus } from '../lib/booking';
-import { sendBookingConfirmation, sendBookingCancelled, sendBookingStatusChange, sendCheckInEmail, sendCheckOutEmail } from '../lib/email';
+import { sendBookingConfirmation, sendBookingCancelled, sendBookingStatusChange, sendCheckInEmail, sendCheckOutEmail, triggerBookingEmails } from '../lib/email';
 import { sendWhatsAppConfirmation } from '../lib/whatsapp';
 
 // --- Hotel Types ---
@@ -480,23 +480,26 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                     console.error('Failed to retrieve guest token for email:', tErr);
                 }
 
-                if (reservation.guest_email) {
-                    sendBookingConfirmation({
-                        guestName: reservation.guest,
-                        guestEmail: reservation.guest_email,
-                        roomType: reservation.room,
-                        roomNumber: reservation.room_id ? String(reservation.room_id) : '',
-                        checkIn: reservation.checkIn,
-                        checkOut: reservation.checkOut,
-                        amount: reservation.amount || 0,
-                        gstAmount: reservation.gst_amount || 0,
-                        paymentStatus: reservation.payment,
-                        source: reservation.source,
-                        reservationId: newId,
-                        businessName: tenant?.business_name || 'Our Hotel',
-                        guestToken: token || undefined,
-                    });
-                }
+                await triggerBookingEmails({
+                    reservationId: newId,
+                    guestName: reservation.guest,
+                    guestEmail: reservation.guest_email || '',
+                    guestPhone: reservation.guest_phone,
+                    guestLocation: reservation.guest_location,
+                    roomType: reservation.room,
+                    roomNumber: reservation.room_id ? String(reservation.room_id) : '',
+                    checkIn: reservation.checkIn,
+                    checkOut: reservation.checkOut,
+                    amount: reservation.amount || 0,
+                    gstAmount: reservation.gst_amount || 0,
+                    paymentStatus: reservation.payment,
+                    source: reservation.source,
+                    businessName: tenant?.business_name || 'Our Hotel',
+                    businessAddress: cmsSettings?.contactAddress || '',
+                    businessPhone: cmsSettings?.contactPhone || '',
+                    ownerEmail: tenant?.custom_email,
+                    guestToken: token || undefined,
+                });
 
                 if (reservation.guest_phone) {
                     sendWhatsAppConfirmation({
