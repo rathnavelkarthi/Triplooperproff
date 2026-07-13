@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Wifi, Phone, Coffee, Sparkles, MessageSquare, Receipt, Clock, MapPin, Upload, FileText, CheckCircle2, AlertTriangle, Eye, EyeOff, Loader2, Calendar } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { toast } from 'sonner';
+import posthog from 'posthog-js';
 
 export default function GuestPortal() {
   const { session, token } = useGuest();
@@ -131,6 +132,8 @@ export default function GuestPortal() {
       const apiKey = (import.meta.env.VITE_GEMINI_API_KEY || '') as string;
 
       if (apiKey) {
+        const traceId = crypto.randomUUID();
+        const startTime = Date.now();
         try {
           console.log('[OCR] Gemini API Key found. Initiating real AI extraction...');
           const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -161,9 +164,23 @@ export default function GuestPortal() {
           }
 
           const result = await response.json();
+          const latency = (Date.now() - startTime) / 1000;
+
+          posthog.capture('$ai_generation', {
+            $ai_trace_id: traceId,
+            $ai_span_name: 'aadhaar_ocr',
+            $ai_model: 'gemini-2.5-flash',
+            $ai_provider: 'google',
+            $ai_input_tokens: result.usageMetadata?.promptTokenCount ?? null,
+            $ai_output_tokens: result.usageMetadata?.candidatesTokenCount ?? null,
+            $ai_latency: latency,
+            $ai_http_status: response.status,
+            $ai_stop_reason: result.candidates?.[0]?.finishReason ?? null,
+          });
+
           const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
           console.log('[OCR] Raw response from Gemini:', rawText);
-          
+
           // Clean markdown formatting if any
           const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
           const parsed = JSON.parse(cleanJson);
@@ -180,6 +197,16 @@ export default function GuestPortal() {
           toast.success('Real AI OCR scan successful! Please review and confirm.');
           return;
         } catch (err) {
+          const latency = (Date.now() - startTime) / 1000;
+          posthog.capture('$ai_generation', {
+            $ai_trace_id: traceId,
+            $ai_span_name: 'aadhaar_ocr',
+            $ai_model: 'gemini-2.5-flash',
+            $ai_provider: 'google',
+            $ai_latency: latency,
+            $ai_is_error: true,
+            $ai_error: err instanceof Error ? err.message : String(err),
+          });
           console.error('[OCR] Gemini AI extraction failed, falling back to smart simulation:', err);
         }
       }

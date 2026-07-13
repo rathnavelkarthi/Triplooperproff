@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { sendWelcomeEmail } from '../lib/email';
 import { supabase } from '../lib/supabaseClient';
 import { useClerk, useSignIn } from '@clerk/react';
+import posthog from 'posthog-js';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Building2, UtensilsCrossed, Layers, ArrowRight, Check, Mail,
@@ -169,6 +170,9 @@ export default function Signup() {
             return;
         }
         setError('');
+        posthog.capture('signup_started', {
+            business_type: businessType,
+        });
         setStep(2);
     };
 
@@ -199,6 +203,10 @@ export default function Signup() {
             setNeedsVerification(true);
             setIsLoading(false);
         } else {
+            posthog.capture('signup_completed', {
+                business_type: businessType,
+            });
+            posthog.identify(email, { business_type: businessType });
             sendWelcomeEmail({ email, businessName, businessType });
             if (inviteToken) {
                 await supabase.from('business_invites').update({ status: 'accepted' }).eq('token', inviteToken);

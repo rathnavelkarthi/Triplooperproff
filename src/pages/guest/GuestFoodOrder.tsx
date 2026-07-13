@@ -3,6 +3,7 @@ import { useGuest } from './GuestLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { ShoppingCart, Check, X, Search, ChevronRight, AlertCircle, Trash2, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
+import posthog from 'posthog-js';
 
 type Category = { id: number; name: string; sort_order: number; is_active: boolean };
 type MenuItem = { 
@@ -163,6 +164,11 @@ export default function GuestFoodOrder() {
 
       if (itemsErr) throw itemsErr;
 
+      posthog.capture('guest_food_order_placed', {
+        order_id: order.id,
+        item_count: cartCount,
+        total_amount: cartTotal,
+      });
       setOrderedId(order.id);
       setCart(new Map());
       setShowCart(false);

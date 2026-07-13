@@ -49,3 +49,4 @@ easystay_whatsapp_outreach_n8n.json
 test-results/
 triplooper data/
 dist2/
+.env

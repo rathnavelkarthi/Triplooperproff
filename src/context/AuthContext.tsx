@@ -3,6 +3,7 @@ import { useUser, useClerk, useSignIn, useSignUp, useSession } from '@clerk/reac
 import { supabase, supabaseAuth, setSupabaseTokenGetter } from '../lib/supabaseClient';
 import { generateSubdomain, hasPermission as checkPermission, DEMO_EMAIL } from '../lib/booking';
 import { Session } from '@supabase/supabase-js';
+import posthog from 'posthog-js';
 
 export type Role = 'SUPER_ADMIN' | 'MANAGER' | 'RECEPTION' | 'HOUSEKEEPING' | 'ACCOUNTANT' | 'SERVER' | 'BUSINESS_ADMIN' | 'PLATFORM_ADMIN';
 
@@ -584,6 +585,12 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     setLoading(false);
   }, [clerkUser?.id, userLoaded, supabaseSession?.user?.id, isDemoMode]);
 
+  useEffect(() => {
+    if (user?.id && user.email) {
+      posthog.identify(user.id, { email: user.email, role: user.role });
+    }
+  }, [user?.id]);
+
   const login = async (email: string, password: string): Promise<{ error: string | null }> => {
     try {
       // Only set loading if not already loading to avoid flicker loops
@@ -742,6 +749,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error('Error during sign out', e);
     }
+    posthog.reset();
     setIsDemoMode(false);
     localStorage.removeItem('is_demo_mode');
     setUser(null); setTenant(null); setProperties([]);

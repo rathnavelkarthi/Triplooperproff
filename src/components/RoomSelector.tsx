@@ -1,5 +1,6 @@
 import { Users, Wind, Wifi, Bath } from 'lucide-react';
 import { motion } from 'motion/react';
+import posthog from 'posthog-js';
 import { useCRM } from '../context/CRMDataContext';
 import { useOccupancyPricing } from '../hooks/useOccupancyPricing';
 
@@ -30,7 +31,15 @@ export default function RoomSelector({ selectedRoomId, onSelectRoom, nights }: R
               key={room.id}
               className={`bg-white rounded-2xl overflow-hidden shadow-sm border-2 transition-all duration-300 flex flex-col sm:flex-row group cursor-pointer
                 ${isSelected ? 'border-[var(--color-ocean-500)] ring-4 ring-[var(--color-ocean-50)]' : 'border-transparent hover:border-gray-200 hover:shadow-md'}`}
-              onClick={() => onSelectRoom({ id: String(room.id), name: room.name, price: adjustedPrice(room.price_per_night) })}
+              onClick={() => {
+                posthog.capture('room_selected', {
+                  room_id: String(room.id),
+                  room_name: room.name,
+                  price_per_night: adjustedPrice(room.price_per_night),
+                  nights,
+                });
+                onSelectRoom({ id: String(room.id), name: room.name, price: adjustedPrice(room.price_per_night) });
+              }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.4 }}

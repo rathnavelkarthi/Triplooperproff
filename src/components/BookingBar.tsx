@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Calendar, Users, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import posthog from 'posthog-js';
 
 export default function BookingBar() {
   const [checkIn, setCheckIn] = useState('');
@@ -17,6 +18,12 @@ export default function BookingBar() {
     // Parse simple guest count for the booking page
     const guestCount = parseInt(guests.split(' ')[0], 10) || 2;
     params.append('guests', guestCount.toString());
+
+    posthog.capture('availability_checked', {
+      check_in: checkIn || null,
+      check_out: checkOut || null,
+      guests: guestCount,
+    });
 
     navigate(`/book?${params.toString()}`);
   };

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useClerk, useSignIn } from '@clerk/react';
 import { motion } from 'motion/react';
+import posthog from 'posthog-js';
 
 /* ─────────────────────────────────────────────────────────────
    Imagery — served from the Unsplash CDN (same external-CDN model
@@ -128,6 +129,8 @@ export default function Login() {
       setError(result.error);
       setIsLoading(false);
     } else {
+      posthog.capture('admin_login_success', { method: 'email' });
+      posthog.identify(email);
       navigate('/admin/dashboard');
     }
   };

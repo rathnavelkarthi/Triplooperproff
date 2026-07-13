@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Sparkles, Trash, Plus, Check, Clock, RefreshCw, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow, parseISO } from 'date-fns';
+import posthog from 'posthog-js';
 
 type ServiceRequest = {
   id: number;
@@ -102,6 +103,10 @@ export default function GuestServices() {
 
       if (error) throw error;
 
+      posthog.capture('guest_service_requested', {
+        request_type: selectedType,
+        priority,
+      });
       toast.success('Your request has been sent to staff.');
       setDescription('');
       setSelectedType('housekeeping');

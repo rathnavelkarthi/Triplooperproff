@@ -1,5 +1,6 @@
 import { CreditCard, Smartphone, ShieldCheck, Lock } from 'lucide-react';
 import { useState } from 'react';
+import posthog from 'posthog-js';
 
 interface PaymentSectionProps {
   onConfirm: () => void;
@@ -122,8 +123,14 @@ export default function PaymentSection({ onConfirm, totalAmount }: PaymentSectio
         </div>
 
         {/* Action Button */}
-        <button 
-          onClick={onConfirm}
+        <button
+          onClick={() => {
+            posthog.capture('booking_payment_confirmed', {
+              payment_method: paymentMethod,
+              total_amount: totalAmount,
+            });
+            onConfirm();
+          }}
           className="w-full py-4 bg-[var(--color-ocean-600)] hover:bg-[var(--color-ocean-800)] text-white rounded-xl font-bold text-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
         >
           <Lock size={18} />

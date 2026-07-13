@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import posthog from 'posthog-js';
 
 interface GuestFormProps {
   guestDetails: any;
@@ -24,6 +25,10 @@ export default function GuestForm({ guestDetails, onChange, onSubmit }: GuestFor
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
+      posthog.capture('guest_details_submitted', {
+        has_special_requests: !!guestDetails.specialRequests,
+        has_address: !!guestDetails.address,
+      });
       onSubmit();
     }
   };

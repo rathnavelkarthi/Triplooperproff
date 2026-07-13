@@ -1,8 +1,10 @@
 import { motion } from 'motion/react';
 import { CheckCircle, Calendar, Users, MapPin, Download, MessageCircle, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 import { jsPDF } from "jspdf";
 import { toPng } from 'html-to-image';
+import posthog from 'posthog-js';
 import { useCRM } from '../context/CRMDataContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -58,6 +60,16 @@ export default function ConfirmationPage({ bookingData }: ConfirmationPageProps)
   const taxes = Math.round(roomPrice * 0.12);
   const total = roomPrice + taxes;
 
+  useEffect(() => {
+    posthog.capture('booking_completed', {
+      booking_id: bookingId,
+      room_name: room?.name,
+      nights,
+      total_amount: total,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
@@ -66,6 +78,11 @@ export default function ConfirmationPage({ bookingData }: ConfirmationPageProps)
   const handleDownloadInvoice = async () => {
     const element = document.getElementById('invoice-content');
     if (!element) return;
+
+    posthog.capture('invoice_downloaded', {
+      booking_id: bookingId,
+      room_name: room?.name,
+    });
 
     try {
       const dataUrl = await toPng(element, {
@@ -202,6 +219,7 @@ export default function ConfirmationPage({ bookingData }: ConfirmationPageProps)
               href={`https://wa.me/${hotelWhatsap}?text=${whatsappMessage}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => posthog.capture('whatsapp_confirmation_clicked', { booking_id: bookingId })}
               className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold transition-colors shadow-sm"
             >
               <MessageCircle size={18} />
