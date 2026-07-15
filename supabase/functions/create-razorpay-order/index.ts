@@ -44,6 +44,8 @@ serve(async (req) => {
       amount = 1500000; // ₹15,000 yearly
     } else if (plan === 'subscription_large') {
       amount = 2100000; // ₹21,000 yearly
+    } else if (plan === 'subscription_test') {
+      amount = 100; // ₹1 for testing
     } else if (plan === 'commission') {
       amount = 100; // ₹1 authorization charge for mandate setup
     } else {

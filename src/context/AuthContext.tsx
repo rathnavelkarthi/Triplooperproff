@@ -673,7 +673,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
       // After create, inspect the resource's status field.
       if (signUpRef.current.status === 'complete') {
-        const clerkId = signUpRef.current.id;
+        const clerkId = signUpRef.current.createdUserId || signUpRef.current.id;
         const fin = await signUpRef.current.finalize();
         if (fin.error) throw fin.error;
         if (clerkId) {
@@ -716,7 +716,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       if (verifyRes.error) throw verifyRes.error;
 
       if (signUpRef.current.status === 'complete') {
-        const clerkId = signUpRef.current.id;
+        const clerkId = signUpRef.current.createdUserId || signUpRef.current.id;
         const fin = await signUpRef.current.finalize();
         if (fin.error) throw fin.error;
 

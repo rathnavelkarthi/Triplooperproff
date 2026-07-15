@@ -9,6 +9,7 @@ export const PLAN_PRICES: Record<string, Record<string, { amount: number; displa
     enterprise: { monthly: { amount: 9999, display: '₹9,999' }, yearly: { amount: 95999, display: '₹95,999' } },
     subscription_small: { monthly: { amount: 1500, display: '₹1,500' }, yearly: { amount: 15000, display: '₹15,000' } },
     subscription_large: { monthly: { amount: 2100, display: '₹2,100' }, yearly: { amount: 21000, display: '₹21,000' } },
+    subscription_test: { monthly: { amount: 1, display: '₹1' }, yearly: { amount: 1, display: '₹1' } },
     commission: { monthly: { amount: 0, display: '₹0' }, yearly: { amount: 0, display: '₹0' } }
 };
 

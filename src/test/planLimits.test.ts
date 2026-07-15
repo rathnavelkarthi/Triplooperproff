@@ -5,7 +5,7 @@ describe('PLAN_LIMITS', () => {
   it('has all plan tiers including new subscription and commission models', () => {
     expect(Object.keys(PLAN_LIMITS)).toEqual([
       'starter', 'growth', 'pro', 'enterprise',
-      'subscription_small', 'subscription_large', 'commission'
+      'subscription_small', 'subscription_large', 'subscription_test', 'commission'
     ]);
   });
 

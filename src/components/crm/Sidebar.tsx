@@ -150,10 +150,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const filteredNavItems = navItems.filter(item => {
     // Role check — hasPermission grants platform admins everything (short-circuit)
     // and otherwise checks the user's role against the item's allowed roles.
-    // A unified check is required: items like the Hotel group list BUSINESS_ADMIN
-    // alongside SUPER_ADMIN/MANAGER/etc., so special-casing BUSINESS_ADMIN here
-    // would wrongly hide those items from every other allowed role.
-    if (!hasPermission(item.roles)) return false;
+    // Special case for Business group to allow SUPER_ADMIN with no tenant to see them (fixes dangling signup)
+    if (item.group === 'Business') {
+      const isAllowed = user.role === 'BUSINESS_ADMIN' || (user.role === 'SUPER_ADMIN' && !tenant) || user.role === 'PLATFORM_ADMIN';
+      if (!isAllowed) return false;
+    } else {
+      if (!hasPermission(item.roles)) return false;
+    }
     // Business type check
     if (!item.businessTypes.includes(businessType as BusinessType)) return false;
     // Feature toggle check — if the tenant has toggles and this item has a featureKey,

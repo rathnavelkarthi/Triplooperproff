@@ -26,8 +26,9 @@ export default function BillingSetup() {
   const { tenant, user, refreshTenant, logout } = useAuth();
   const navigate = useNavigate();
   
+  const isTestingMode = import.meta.env.DEV || window.location.search.includes('test=true') || window.location.hostname === 'localhost';
   const [method, setMethod] = useState<'subscription' | 'commission'>('subscription');
-  const [roomTier, setRoomTier] = useState<'small' | 'large'>('small');
+  const [roomTier, setRoomTier] = useState<'small' | 'large' | 'test'>(isTestingMode ? 'test' : 'small');
   const [loading, setLoading] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentStep, setPaymentStep] = useState<'select' | 'authorizing' | 'success'>('select');
@@ -37,6 +38,7 @@ export default function BillingSetup() {
 
   const getAmount = () => {
     if (method === 'commission') return 0;
+    if (roomTier === 'test') return 1;
     return roomTier === 'small' ? 15000 : 21000;
   };
 
@@ -55,7 +57,7 @@ export default function BillingSetup() {
 
     const finalPlan = method === 'commission' 
       ? 'commission' 
-      : (roomTier === 'small' ? 'subscription_small' : 'subscription_large');
+      : (roomTier === 'test' ? 'subscription_test' : (roomTier === 'small' ? 'subscription_small' : 'subscription_large'));
 
     try {
       const result = await initiatePayment(
@@ -130,7 +132,21 @@ export default function BillingSetup() {
 
             <div className="p-4 bg-gray-50 rounded-2xl space-y-3">
               <p className="text-xs font-bold text-[#0E2A38] uppercase tracking-wider">Select Property Room Count</p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className={`grid gap-3 ${isTestingMode ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                {isTestingMode && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setRoomTier('test'); setMethod('subscription'); }}
+                    className={`p-3 rounded-xl border text-center transition-all ${
+                      roomTier === 'test' && method === 'subscription'
+                        ? 'bg-[#0E2A38] text-white border-transparent'
+                        : 'bg-white text-[#0E2A38] border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="text-sm font-bold">Test Plan</p>
+                    <p className="text-[11px] opacity-70">₹1 / year</p>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setRoomTier('small'); setMethod('subscription'); }}

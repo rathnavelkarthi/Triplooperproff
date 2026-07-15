@@ -58,9 +58,9 @@ function Stars({ count }: { count: number }) {
 }
 
 // --- Booking Modal ---
-function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, initialCheckIn, initialCheckOut, tenantId, businessName }: {
+function BookingModal({ room, subdomain, onClose, onSuccess, adjustedPrice, initialCheckIn, initialCheckOut, tenantId, businessName, siteData }: {
     room: Room; subdomain: string; onClose: () => void; onSuccess: (data: any) => void; adjustedPrice: (base: number) => number;
-    initialCheckIn?: string; initialCheckOut?: string; tenantId?: string; businessName?: string;
+    initialCheckIn?: string; initialCheckOut?: string; tenantId?: string; businessName?: string; siteData?: any;
 }) {
     const [form, setForm] = useState({ name: '', email: '', phone: '', checkIn: initialCheckIn || '', checkOut: initialCheckOut || '' });
     const [loading, setLoading] = useState(false);
@@ -1714,6 +1714,7 @@ export default function TenantSite() {
                         initialCheckOut={heroCheckOut}
                         tenantId={tenant?.id}
                         businessName={tenant?.business_name}
+                        siteData={siteData}
                     />
                 )}
                 {bookingSuccess && (

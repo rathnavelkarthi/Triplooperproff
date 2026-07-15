@@ -3,7 +3,7 @@ import { PLAN_PRICES, ADDON_PRICES } from '../lib/razorpay';
 
 describe('PLAN_PRICES', () => {
   it('has growth, pro, enterprise, and new subscription/commission plans', () => {
-    expect(Object.keys(PLAN_PRICES)).toEqual(['growth', 'pro', 'enterprise', 'subscription_small', 'subscription_large', 'commission']);
+    expect(Object.keys(PLAN_PRICES)).toEqual(['growth', 'pro', 'enterprise', 'subscription_small', 'subscription_large', 'subscription_test', 'commission']);
   });
 
   it('each plan has monthly and yearly pricing', () => {

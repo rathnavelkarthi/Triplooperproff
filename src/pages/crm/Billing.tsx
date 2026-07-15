@@ -10,28 +10,29 @@ export default function Billing() {
     const { tenant, user, refreshTenant } = useAuth();
     const { reservations } = useCRM();
     const [selectedResId, setSelectedResId] = useState<string | null>(null);
-    const [upgradePlan, setUpgradePlan] = useState<'subscription_small' | 'subscription_large' | null>(null);
+    const isTestingMode = import.meta.env.DEV || window.location.search.includes('test=true') || window.location.hostname === 'localhost';
+    const [upgradePlan, setUpgradePlan] = useState<'subscription_small' | 'subscription_large' | 'subscription_test' | null>(null);
     const [loading, setLoading] = useState(false);
-
+ 
     // Calculate commission stats
     const activeBookings = reservations.filter(r => r.status !== 'Cancelled');
     const totalBookings = activeBookings.length;
     const totalRevenue = activeBookings.reduce((sum, r) => sum + (r.amount || 0), 0);
     const totalCommission = totalRevenue * 0.12;
-
+ 
     const selectedRes = reservations.find(r => r.id === selectedResId);
-
-    const handleInitiateUpgrade = (plan: 'subscription_small' | 'subscription_large') => {
+ 
+    const handleInitiateUpgrade = (plan: 'subscription_small' | 'subscription_large' | 'subscription_test') => {
         setUpgradePlan(plan);
     };
-
+ 
     const handleConfirmUpgrade = async () => {
         if (!upgradePlan) return;
         if (!tenant || !user) {
             toast.error('Authentication required. Please sign in first.');
             return;
         }
-
+ 
         setLoading(true);
         try {
             const result = await initiatePayment(
@@ -41,7 +42,7 @@ export default function Billing() {
                 user.email || '',
                 tenant.business_name
             );
-
+ 
             if (result.success) {
                 toast.success('Successfully upgraded to subscription!');
                 setUpgradePlan(null);
@@ -58,9 +59,16 @@ export default function Billing() {
             setLoading(false);
         }
     };
-
+ 
     const getPlanDetails = () => {
-        if (tenant?.plan === 'subscription_small') {
+        if (tenant?.plan === 'subscription_test') {
+            return {
+                name: 'Subscription (Test Plan - ₹1)',
+                price: '₹1 / year',
+                desc: 'Access to all features (Testing Mode). 12% monthly commission on booking earnings.',
+                autoPay: true,
+            };
+        } else if (tenant?.plan === 'subscription_small') {
             return {
                 name: 'Subscription (Max 10 Rooms)',
                 price: '₹15,000 / year',
@@ -167,7 +175,30 @@ export default function Billing() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className={`grid grid-cols-1 gap-4 ${isTestingMode ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+                        {isTestingMode && (
+                            <div className="bg-white border border-gray-150 rounded-2xl p-5 hover:shadow-md transition-all flex flex-col justify-between">
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
+                                        Test Tier
+                                    </span>
+                                    <h3 className="text-base font-bold text-[#0E2A38] mt-3">Subscription (Test Plan - ₹1)</h3>
+                                    <p className="text-xs text-gray-400 mt-1 font-light">
+                                        Test checkout, order creation, signature verification, and limits.
+                                    </p>
+                                </div>
+                                <div className="pt-4 border-t border-gray-50 mt-4 flex items-center justify-between">
+                                    <span className="text-lg font-extrabold text-[#0E2A38]">₹1 <span className="text-[11px] text-gray-400 font-normal">/ year</span></span>
+                                    <button
+                                        onClick={() => handleInitiateUpgrade('subscription_test')}
+                                        className="px-4 py-2 bg-[#0E2A38] hover:bg-[#18455B] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        Choose Plan
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="bg-white border border-gray-150 rounded-2xl p-5 hover:shadow-md transition-all flex flex-col justify-between">
                             <div>
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
@@ -403,7 +434,7 @@ export default function Billing() {
                             </div>
                             <h3 className="text-lg font-bold text-[#0E2A38]">Confirm Plan Upgrade</h3>
                             <p className="text-xs text-gray-400">
-                                You are about to upgrade to the **{upgradePlan === 'subscription_small' ? 'Subscription (Max 10 Rooms)' : 'Subscription (Unlimited Rooms)'}** plan.
+                                You are about to upgrade to the **{upgradePlan === 'subscription_small' ? 'Subscription (Max 10 Rooms)' : (upgradePlan === 'subscription_test' ? 'Subscription (Test Plan - ₹1)' : 'Subscription (Unlimited Rooms)')}** plan.
                             </p>
                         </div>
 
@@ -414,7 +445,7 @@ export default function Billing() {
                             <ul className="space-y-2 text-xs text-blue-700 leading-relaxed font-light">
                                 <li className="flex items-start gap-2">
                                     <span className="text-blue-500 font-bold">•</span>
-                                    <span>Your registered GPay/Card will be charged **₹{upgradePlan === 'subscription_small' ? '15,000' : '21,000'}** for the yearly subscription.</span>
+                                    <span>Your registered GPay/Card will be charged **₹{upgradePlan === 'subscription_small' ? '15,000' : (upgradePlan === 'subscription_test' ? '1' : '21,000')}** for the yearly subscription.</span>
                                 </li>
                                 <li className="flex items-start gap-2">
                                     <span className="text-blue-500 font-bold">•</span>

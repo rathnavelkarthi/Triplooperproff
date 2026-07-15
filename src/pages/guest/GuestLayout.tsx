@@ -1,7 +1,11 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useParams, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { Coffee, Shield, Calendar, Receipt, MessageSquare, Menu, X, ArrowLeft } from 'lucide-react';
+import { Coffee, Shield, Calendar, Receipt, MessageSquare, ArrowLeft } from 'lucide-react';
+import OtpGate from '../../components/guest/OtpGate';
+
+// Portal access is verified once per token per browser session.
+const verifiedKey = (token: string) => `guest_otp_ok:${token}`;
 
 export interface GuestSession {
   token_id: string;
@@ -46,6 +50,8 @@ export default function GuestLayout() {
   const [session, setSession] = useState<GuestSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [verified, setVerified] = useState(() =>
+    !!token && sessionStorage.getItem(verifiedKey(token)) === '1');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -114,6 +120,27 @@ export default function GuestLayout() {
             Visit Triplooper
           </a>
         </div>
+      </div>
+    );
+  }
+
+  // OTP gate — session is valid but the guest hasn't proven they own the
+  // booking's WhatsApp number in this browser session yet.
+  if (!verified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white p-6 font-sans">
+        <OtpGate
+          purpose="portal"
+          token={token || undefined}
+          phoneHint={session.guest_phone}
+          theme="dark"
+          title={session.business_name}
+          subtitle="For your security, verify the WhatsApp number on your booking to open your guest portal."
+          onVerified={() => {
+            if (token) sessionStorage.setItem(verifiedKey(token), '1');
+            setVerified(true);
+          }}
+        />
       </div>
     );
   }

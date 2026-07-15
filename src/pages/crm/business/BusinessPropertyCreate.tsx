@@ -116,7 +116,7 @@ export default function BusinessPropertyCreate() {
     try {
       let currentBusiness = business;
 
-      // Self-healing fallback: If business is missing from context, try direct lookup
+      // Self-healing fallback: If business is missing from context, try direct lookup or create one!
       if (!currentBusiness?.id && user?.id) {
         const { data: bData, error: bError } = await supabase
           .from('businesses')
@@ -132,6 +132,29 @@ export default function BusinessPropertyCreate() {
           setError(`Business lookup failed: ${bError.message}. Please refresh the page.`);
           setCreating(false);
           return;
+        } else {
+          // No business found, let's create a default one for this user.
+          console.log('[BusinessPropertyCreate] No business found, creating default business for user:', user.id);
+          const { data: newBusiness, error: createBError } = await supabase
+            .from('businesses')
+            .insert({
+              name: `${propName} Group` || 'My Hospitality Business',
+              owner_id: user.id,
+              contact_email: user.email,
+              max_properties: 5,
+              max_rooms_per_property: 15
+            })
+            .select('*')
+            .single();
+
+          if (newBusiness) {
+            currentBusiness = newBusiness;
+          } else {
+            console.error('[BusinessPropertyCreate] Failed to auto-create business:', createBError);
+            setError(`Failed to initialize business account: ${createBError?.message || 'Unknown error'}`);
+            setCreating(false);
+            return;
+          }
         }
       }
 

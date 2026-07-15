@@ -12,6 +12,7 @@ export const PLAN_LIMITS: Record<string, Record<ResourceType, number>> = {
     enterprise: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     subscription_small: { rooms: 10, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     subscription_large: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
+    subscription_test: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     commission: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
 };
 
@@ -22,6 +23,7 @@ const PLAN_LABELS: Record<string, string> = {
     enterprise: 'Enterprise',
     subscription_small: 'Subscription (Max 10 Rooms)',
     subscription_large: 'Subscription (Unlimited Rooms)',
+    subscription_test: 'Subscription (Test Plan - ₹1)',
     commission: '12% Commission Only',
 };
 

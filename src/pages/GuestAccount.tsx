@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { History, Mail, ArrowRight, LogOut, FileText, Printer, X, Calendar, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { LogOut, FileText, Printer, X, Calendar, MapPin } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
 import InvoicePrintTemplate, { InvoiceData } from '../components/crm/InvoicePrintTemplate';
 import { printInvoice } from '../components/crm/invoiceUtils';
+import OtpGate from '../components/guest/OtpGate';
 
 type StayRecord = {
   id: string;
@@ -72,48 +71,21 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function GuestAccount() {
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(false);
   const [stays, setStays] = useState<StayRecord[] | null>(null);
   const [guestName, setGuestName] = useState('');
   const [viewInvoice, setViewInvoice] = useState<StayRecord | null>(null);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
 
-  const handleLookup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() && !phone.trim()) { toast.error('Enter your email or phone number.'); return; }
-    setLoading(true);
-    try {
-      let q = supabase
-        .from('reservations')
-        .select('id,guest_name,check_in,check_out,room_type,status,payment_status,amount,gst_amount,payment_method,guest_email,guest_phone,guest_location,tenant_id')
-        .order('check_in', { ascending: false });
-
-      if (email.trim() && phone.trim()) {
-        q = q.or(`guest_email.ilike.${email.trim()},guest_phone.ilike.${phone.trim()}`);
-      } else if (email.trim()) {
-        q = q.ilike('guest_email', email.trim());
-      } else {
-        q = q.ilike('guest_phone', phone.trim());
-      }
-
-      const { data, error } = await q;
-      if (error) throw error;
-      if (!data?.length) { toast.error('No bookings found. Try a different email or phone.'); setLoading(false); return; }
-
-      // Enrich with tenant names
-      const tIds = [...new Set(data.map(r => r.tenant_id).filter(Boolean))];
-      const { data: tData } = await supabase.from('tenants').select('id,business_name').in('id', tIds);
-      const tMap: Record<string, string> = {};
-      tData?.forEach(t => { tMap[t.id] = t.business_name; });
-
-      const enriched = data.map(r => ({ ...r, business_name: tMap[r.tenant_id] || 'Property' }));
-      setStays(enriched);
-      setGuestName(enriched[0]?.guest_name || 'Guest');
-    } catch { toast.error('Something went wrong. Please try again.'); }
-    finally { setLoading(false); }
+  // OTP verify returns bookings already enriched with business_name via the
+  // guest_stays_for_phone RPC — no client-side reservations query needed.
+  const handleVerified = ({ stays: verified }: { stays?: unknown[] }) => {
+    const list = (verified || []) as StayRecord[];
+    const withName = list.map(s => ({ ...s, business_name: s.business_name || 'Property' }));
+    setStays(withName);
+    setGuestName(withName[0]?.guest_name || 'Guest');
   };
+
+  const resetSearch = () => { setStays(null); setGuestName(''); };
 
   const filteredStays = (stays || []).filter(s => {
     if (filter === 'all') return true;
@@ -134,47 +106,22 @@ export default function GuestAccount() {
       <nav className="sticky top-0 z-40 bg-[#FAFAF8]/90 backdrop-blur-xl border-b border-[#C9A646]/15 px-6 h-16 flex items-center justify-between">
         <a href="/" className="font-playfair text-xl font-black tracking-widest text-[#0E2A38]">TRIP<span className="text-[#C9A646]">LOOPER</span></a>
         {stays && (
-          <button onClick={() => { setStays(null); setEmail(''); setPhone(''); }} className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-[#0E2A38] transition-colors">
-            <LogOut size={13} /> Search again
+          <button onClick={resetSearch} className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-[#0E2A38] transition-colors">
+            <LogOut size={13} /> Log out
           </button>
         )}
       </nav>
 
       <main className="max-w-3xl mx-auto px-6 py-14">
-        {/* Lookup form */}
+        {/* OTP gate */}
         {!stays && (
-          <div className="max-w-md mx-auto">
-            <div className="text-center mb-10">
-              <div className="w-16 h-16 rounded-3xl bg-[#0E2A38] flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#0E2A38]/15">
-                <History size={26} className="text-[#C9A646]" />
-              </div>
-              <h1 className="font-playfair text-3xl font-bold text-[#0E2A38] mb-2">My Stays</h1>
-              <p className="text-gray-500 text-sm max-w-xs mx-auto leading-relaxed">Enter the email or phone number used when you booked to see all your stays.</p>
-            </div>
-            <form onSubmit={handleLookup} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 space-y-5">
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400">Email</label>
-                <div className="relative">
-                  <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com"
-                    className="w-full pl-9 pr-4 h-12 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#C9A646] focus:ring-2 focus:ring-[#C9A646]/20 transition-all" />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-gray-100" /><span className="text-[10px] uppercase tracking-widest text-gray-400">or</span><div className="flex-1 h-px bg-gray-100" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400">Phone</label>
-                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+91 98765 43210"
-                  className="w-full px-4 h-12 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#C9A646] focus:ring-2 focus:ring-[#C9A646]/20 transition-all" />
-              </div>
-              <button type="submit" disabled={loading}
-                className="w-full h-12 bg-[#0E2A38] hover:bg-[#123545] text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md shadow-[#0E2A38]/15 disabled:opacity-50 transition-all active:scale-[0.99]">
-                {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><span>View My Stays</span><ArrowRight size={14} className="text-[#C9A646]" /></>}
-              </button>
-              <p className="text-center text-xs text-gray-400">No account needed — just your booking details.</p>
-            </form>
-          </div>
+          <OtpGate
+            purpose="my_stays"
+            theme="light"
+            title="My Stays"
+            subtitle="Enter the WhatsApp number you booked with — we’ll send a one-time code to view all your stays."
+            onVerified={handleVerified}
+          />
         )}
 
         {/* Stays list */}

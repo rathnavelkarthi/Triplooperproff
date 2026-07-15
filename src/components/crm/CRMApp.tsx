@@ -75,6 +75,15 @@ export default function CRMApp() {
     return <Navigate to="/admin/login" replace />;
   }
 
+  // If the user has no tenant, they must be redirected to business/properties dashboard to set up one.
+  // Platform admins are exempt.
+  const hasNoTenant = user.role !== 'PLATFORM_ADMIN' && !tenant;
+  const onBusinessRoute = location.pathname.startsWith('/admin/business');
+
+  if (hasNoTenant && !onBusinessRoute) {
+    return <Navigate to="/admin/business" replace />;
+  }
+
   // Verification gate: a property owner whose tenant is not yet approved is
   // locked to /admin/verification until the platform admin approves it.
   // Platform admins are exempt. Existing/live tenants are grandfathered as
