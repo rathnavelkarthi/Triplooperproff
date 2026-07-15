@@ -38,10 +38,8 @@ export default function SaaSNavbar() {
             <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
                 <div className="flex justify-between items-center">
                     {/* Wordmark */}
-                    <Link to="/" className="flex items-center gap-2 z-50 relative">
-                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                            <Zap size={16} className="text-white fill-current" />
-                        </div>
+                    <Link to="/" className="flex items-center gap-2.5 z-50 relative">
+                        <img src="/logo.jpeg" alt="Triplooper Logo" className="w-8 h-8 rounded-lg object-contain" />
                         <span className="text-lg font-bold text-foreground tracking-tight">
                             Trip Looper
                         </span>

@@ -197,12 +197,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
     <>
       <aside className="w-64 bg-[#0E2A38] border-r border-[#0E2A38]/50 flex flex-col h-full lg:h-screen sticky top-0 shadow-[4px_0_24px_rgba(0,0,0,0.1)] lg:shadow-[4px_0_40px_rgba(14,42,56,0.15)] z-40 relative backdrop-blur-xl">
         {/* Brand Logo Header */}
-        <div className="px-6 pt-5 pb-1 flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#C9A646] to-[#B08B47] flex items-center justify-center shadow-md">
-            <svg className="w-3.5 h-3.5 text-[#0E2A38]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor"/>
-            </svg>
-          </div>
+        <div className="px-6 pt-5 pb-1 flex items-center gap-2.5">
+          <img src="/logo.jpeg" alt="Triplooper Logo" className="w-6 h-6 rounded-lg object-contain" />
           <span className="font-serif text-sm font-black tracking-[0.2em] text-white">
             TRIP<span className="text-[#C9A646]">LOOPER</span>
           </span>

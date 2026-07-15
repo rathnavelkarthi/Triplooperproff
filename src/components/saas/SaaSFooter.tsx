@@ -25,10 +25,8 @@ export default function SaaSFooter() {
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-14">
                     {/* Brand */}
                     <div className="col-span-2 md:col-span-1">
-                        <Link to="/" className="flex items-center gap-2 mb-4">
-                            <div className="w-7 h-7 bg-accent rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-xs">T</span>
-                            </div>
+                        <Link to="/" className="flex items-center gap-2.5 mb-4">
+                            <img src="/logo.jpeg" alt="Triplooper Logo" className="w-7 h-7 rounded-lg object-contain" />
                             <span className="text-base font-bold text-background tracking-tight">
                                 Trip <span className="text-accent">Looper</span>
                             </span>

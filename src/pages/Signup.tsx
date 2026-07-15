@@ -628,8 +628,11 @@ export default function Signup() {
                     : { background: 'transparent', borderBottom: '1px solid transparent' }}
             >
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <Link to="/" className="font-playfair text-xl font-black tracking-widest transition-colors" style={{ color: scrolled ? C.teal : '#fff' }}>
-                        TRIP<span style={{ color: C.gold }}>LOOPER</span>
+                    <Link to="/" className="flex items-center gap-2.5 transition-colors">
+                        <img src="/logo.jpeg" alt="Triplooper Logo" className="w-8 h-8 rounded-lg object-contain" />
+                        <span className="font-playfair text-xl font-black tracking-widest" style={{ color: scrolled ? C.teal : '#fff' }}>
+                            TRIP<span style={{ color: C.gold }}>LOOPER</span>
+                        </span>
                     </Link>
                     <div className="flex items-center gap-5 text-sm">
                         <Link to="/admin/login" className="font-semibold hover:opacity-70 transition-opacity" style={{ color: scrolled ? C.teal : 'rgba(255,255,255,0.92)' }}>Sign in</Link>
@@ -914,8 +917,11 @@ export default function Signup() {
             {/* ── FOOTER ── */}
             <footer className="py-10 px-6" style={{ background: C.tealDeep }}>
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                    <Link to="/" className="font-playfair text-lg font-black tracking-widest text-white">
-                        TRIP<span style={{ color: C.gold }}>LOOPER</span>
+                    <Link to="/" className="flex items-center gap-2.5">
+                        <img src="/logo.jpeg" alt="Triplooper Logo" className="w-7 h-7 rounded-lg object-contain" />
+                        <span className="font-playfair text-lg font-black tracking-widest text-white">
+                            TRIP<span style={{ color: C.gold }}>LOOPER</span>
+                        </span>
                     </Link>
                     <div className="flex gap-6 text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
                         <Link to="/" className="hover:text-white/70 transition-colors">Home</Link>
