@@ -209,6 +209,27 @@ export default function Login() {
     }
   };
 
+  const handleForgotPassword = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (clerk.openSignIn) {
+      const apexOrigin = (() => {
+        const { protocol, hostname, port } = window.location;
+        const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+        if (isLocalhost) return window.location.origin;
+        const parts = hostname.split('.');
+        const apexHost = hostname.endsWith('.vercel.app') ? hostname : (parts.length > 2 ? parts.slice(-2).join('.') : hostname);
+        return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
+      })();
+      clerk.openSignIn({
+        initialValues: { emailAddress: email },
+        forceRedirectUrl: `${apexOrigin}/admin/dashboard`,
+        fallbackRedirectUrl: `${apexOrigin}/admin/dashboard`,
+      });
+    } else {
+      window.open("https://wa.me/919345244727?text=Hi%2C%20I%20need%20help%20resetting%20my%20Triplooper%20password", "_blank");
+    }
+  };
+
   const handleDemoLogin = () => {
     setIsLoading(true);
     loginAsDemo();
@@ -389,14 +410,13 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
               />
               <div className="flex justify-start px-1">
-                <a
-                  href="https://wa.me/919345244727?text=Hi%2C%20I%20need%20help%20resetting%20my%20Triplooper%20password"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[12px] font-medium text-[#AAB8C5] hover:text-[#F7F4EF] transition-colors duration-200"
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-[12px] font-medium text-[#AAB8C5] hover:text-[#F7F4EF] transition-colors duration-200 bg-transparent border-none cursor-pointer p-0"
                 >
                   Forgot password?
-                </a>
+                </button>
               </div>
             </div>
 
