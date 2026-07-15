@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../context/AuthContext';
 import { sendWelcomeEmail } from '../lib/email';
 import { supabase } from '../lib/supabaseClient';
-import { useClerk, useSignIn } from '@clerk/react';
+import { useClerk, useSignUp } from '@clerk/react';
 import posthog from 'posthog-js';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -126,7 +126,7 @@ export default function Signup() {
 
     const { signup, verifyEmail } = useAuth();
     const clerk = useClerk();
-    const { signIn, fetchStatus } = useSignIn();
+    const { signUp } = useSignUp();
     const navigate = useNavigate();
 
     // Nav goes transparent over the dark hero, solid once the user scrolls.
@@ -243,14 +243,14 @@ export default function Signup() {
         setGoogleLoading(true);
         try {
             const ready = await new Promise<boolean>((resolve) => {
-                if (signIn) return resolve(true);
+                if (signUp) return resolve(true);
                 const start = Date.now();
                 const iv = setInterval(() => {
-                    if (signIn) { clearInterval(iv); resolve(true); }
+                    if (signUp) { clearInterval(iv); resolve(true); }
                     else if (Date.now() - start > 10000) { clearInterval(iv); resolve(false); }
                 }, 100);
             });
-            if (!ready || !signIn) {
+            if (!ready || !signUp) {
                 setError('Authentication service failed to load. Please refresh the page.');
                 setGoogleLoading(false);
                 return;
@@ -269,11 +269,23 @@ export default function Signup() {
                 const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
                 return `${protocol}//${apexHost}${port ? `:${port}` : ''}`;
             })();
-            await (signIn as any).sso({
-                strategy: 'oauth_google',
-                redirectUrl: `${apexOrigin}/sso-callback`,
-                redirectUrlComplete: `${apexOrigin}/admin/dashboard`,
-            });
+
+            try {
+                await (signUp as any).authenticateWithRedirect({
+                    strategy: 'oauth_google',
+                    redirectUrl: `${apexOrigin}/sso-callback`,
+                    redirectUrlComplete: `${apexOrigin}/admin/dashboard`,
+                });
+            } catch (ssoError: any) {
+                if (clerk.openSignUp) {
+                    await clerk.openSignUp({
+                        forceRedirectUrl: `${apexOrigin}/admin/dashboard`,
+                        fallbackRedirectUrl: `${apexOrigin}/admin/dashboard`,
+                    });
+                } else {
+                    throw ssoError;
+                }
+            }
         } catch (err: any) {
             setError(err?.errors?.[0]?.message || 'Google sign up failed.');
             setGoogleLoading(false);
