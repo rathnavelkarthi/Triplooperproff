@@ -45,13 +45,13 @@ const IMG = {
     ctaBg: U('1520250497591-112f2f40a3f4', 1600),
 };
 
-const SHOWCASE: { img: string; name: string; loc: string; rating: string; tag: string }[] = [
-    { img: U('1582719508461-905c673771fd', 640), name: 'Serai Backwater Villa', loc: 'Alleppey, Kerala', rating: '4.9', tag: 'Villa' },
-    { img: U('1618773928121-c32242e63f39', 640), name: 'The Saffron Suites', loc: 'Udaipur, Rajasthan', rating: '4.8', tag: 'Hotel' },
-    { img: U('1551882547-ff40c63fe5fa', 640), name: 'Cliffside Retreat', loc: 'Varkala, Kerala', rating: '4.9', tag: 'Resort' },
-    { img: U('1611892440504-42a792e24d32', 640), name: 'Cedar House Homestay', loc: 'Manali, Himachal', rating: '4.7', tag: 'Homestay' },
-    { img: U('1445019980597-93fa8acb246c', 640), name: 'Coastal Table & Rooms', loc: 'Panjim, Goa', rating: '4.8', tag: 'Hotel + Dining' },
-    { img: U('1571896349842-33c89424de2d', 640), name: 'The Heritage Haveli', loc: 'Jaipur, Rajasthan', rating: '5.0', tag: 'Boutique' },
+const DEFAULT_SHOWCASE: { img: string; name: string; loc: string; rating: string; tag: string; url: string }[] = [
+    { img: U('1582719508461-905c673771fd', 640), name: 'Serai Backwater Villa', loc: 'Alleppey, Kerala', rating: '4.9', tag: 'Villa', url: '#' },
+    { img: U('1618773928121-c32242e63f39', 640), name: 'The Saffron Suites', loc: 'Udaipur, Rajasthan', rating: '4.8', tag: 'Hotel', url: '#' },
+    { img: U('1551882547-ff40c63fe5fa', 640), name: 'Cliffside Retreat', loc: 'Varkala, Kerala', rating: '4.9', tag: 'Resort', url: '#' },
+    { img: U('1611892440504-42a792e24d32', 640), name: 'Cedar House Homestay', loc: 'Manali, Himachal', rating: '4.7', tag: 'Homestay', url: '#' },
+    { img: U('1445019980597-93fa8acb246c', 640), name: 'Coastal Table & Rooms', loc: 'Panjim, Goa', rating: '4.8', tag: 'Hotel + Dining', url: '#' },
+    { img: U('1571896349842-33c89424de2d', 640), name: 'The Heritage Haveli', loc: 'Jaipur, Rajasthan', rating: '5.0', tag: 'Boutique', url: '#' },
 ];
 
 const GRAIN =
@@ -117,6 +117,71 @@ export default function Signup() {
     const [googleLoading, setGoogleLoading] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showcaseProperties, setShowcaseProperties] = useState<any[]>(DEFAULT_SHOWCASE);
+
+    // Dynamic showcase properties loader
+    useEffect(() => {
+        const fetchProperties = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('tenants')
+                    .select('id, business_name, business_type, subdomain, logo_url')
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    const mapped = data.map((t, idx) => {
+                        let tag = 'Hotel';
+                        if (t.business_type === 'restaurant') tag = 'Restaurant';
+                        else if (t.business_type === 'combined') tag = 'Hotel + Restaurant';
+
+                        const fallbackImages = [
+                            U('1566073771259-6a8506099945', 640),
+                            U('1582719508461-905c673771fd', 640),
+                            U('1564501049412-61c2a3083791', 640),
+                        ];
+                        const img = t.logo_url || fallbackImages[idx % fallbackImages.length];
+
+                        const url = (() => {
+                            const { protocol, hostname, port } = window.location;
+                            const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+                            if (isLocalhost) {
+                                return `${protocol}//${t.subdomain}.localhost${port ? `:${port}` : ''}`;
+                            }
+                            const parts = hostname.split('.');
+                            const apexHost = parts.length > 2 ? parts.slice(-2).join('.') : hostname;
+                            return `${protocol}//${t.subdomain}.${apexHost}`;
+                        })();
+
+                        return {
+                            img,
+                            name: t.business_name,
+                            loc: 'India',
+                            rating: (4.7 + (idx * 0.1) % 0.4).toFixed(1),
+                            tag,
+                            url
+                        };
+                    });
+
+                    const merged = [...mapped];
+                    if (merged.length < 6) {
+                        const remaining = 6 - merged.length;
+                        merged.push(...DEFAULT_SHOWCASE.slice(0, remaining));
+                    }
+                    setShowcaseProperties(merged);
+                } else {
+                    setShowcaseProperties(DEFAULT_SHOWCASE);
+                }
+            } catch (err) {
+                console.error('Failed to fetch showcase properties:', err);
+                setShowcaseProperties(DEFAULT_SHOWCASE);
+            }
+        };
+
+        fetchProperties();
+    }, []);
 
     // Invite flow
     const [searchParams] = useSearchParams();
@@ -762,11 +827,14 @@ export default function Signup() {
                     <div className="absolute right-0 top-0 bottom-0 w-16 md:w-28 z-10 pointer-events-none" style={{ background: `linear-gradient(270deg, ${C.cream} 0%, transparent 100%)` }} />
 
                     <div className="tl-marquee-track flex gap-5 w-max">
-                        {[...SHOWCASE, ...SHOWCASE].map((p, i) => (
-                            <article
+                        {[...showcaseProperties, ...showcaseProperties].map((p, i) => (
+                            <a
                                 key={i}
-                                className="group relative w-[280px] sm:w-[320px] shrink-0 rounded-3xl overflow-hidden border bg-white"
-                                style={{ borderColor: C.line, boxShadow: '0 14px 40px rgba(14,42,56,0.10)' }}
+                                href={p.url}
+                                target={p.url === '#' ? undefined : '_blank'}
+                                rel={p.url === '#' ? undefined : 'noopener noreferrer'}
+                                className="group relative w-[280px] sm:w-[320px] shrink-0 rounded-3xl overflow-hidden border bg-white block transition-shadow hover:shadow-[0_20px_50px_rgba(14,42,56,0.15)] text-left"
+                                style={{ borderColor: C.line, boxShadow: '0 14px 40px rgba(14,42,56,0.10)', textDecoration: 'none' }}
                             >
                                 <div className="relative aspect-[4/3] overflow-hidden">
                                     <img
@@ -783,13 +851,13 @@ export default function Signup() {
                                         <Star size={10} className="fill-current" /> {p.rating}
                                     </span>
                                     <div className="absolute bottom-3 left-4 right-4 text-white">
-                                        <p className="font-playfair font-bold text-lg leading-tight">{p.name}</p>
-                                        <p className="text-[11px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.82)' }}>
+                                        <p className="font-playfair font-bold text-lg leading-tight m-0">{p.name}</p>
+                                        <p className="text-[11px] flex items-center gap-1 mt-1 mb-0" style={{ color: 'rgba(255,255,255,0.82)' }}>
                                             <MapPin size={11} /> {p.loc}
                                         </p>
                                     </div>
                                 </div>
-                            </article>
+                            </a>
                         ))}
                     </div>
                 </div>
