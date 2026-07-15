@@ -171,7 +171,25 @@ const clerkConfig = {
       name: 'clerk.react',
       version: '6.0.1',
     }
-  })
+  }),
+  appearance: {
+    variables: {
+      colorPrimary: '#0E2A38',
+      colorBackground: '#ffffff',
+      colorInputBackground: '#FDFBF7',
+      colorInputText: '#0E2A38',
+      colorText: '#0E2A38',
+      colorTextSecondary: '#5A6B72',
+      fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+      borderRadius: '16px',
+    },
+    elements: {
+      card: 'shadow-[0_20px_50px_rgba(14,42,56,0.08)] border border-[#E7E1D6]',
+      socialButtonsBlockButton: 'border border-[#E7E1D6] hover:bg-[#FDFBF7] transition-all',
+      formButtonPrimary: 'bg-[#0E2A38] hover:bg-[#1a3d4f] text-white transition-all font-bold',
+      footerActionLink: 'text-[#C9A646] hover:text-[#B08B47] font-bold',
+    }
+  }
 };
 
 // Lazy load route components
