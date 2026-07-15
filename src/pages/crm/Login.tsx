@@ -454,21 +454,6 @@ export default function Login() {
             {googleLoading ? 'Redirecting…' : 'Continue with Google'}
           </motion.button>
 
-          {/* Demo Login Option */}
-          <div className="mt-8 pt-6 border-t border-[#AAB8C5]/10">
-            <motion.button
-              type="button"
-              onClick={handleDemoLogin}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-3 rounded-lg border border-[#C9A646]/30 bg-[#C9A646]/5 hover:bg-[#C9A646]/10 text-[#C9A646] text-sm font-semibold tracking-wide transition-all shadow-sm"
-            >
-              Try the demo — instant access
-            </motion.button>
-            <p className="mt-3 text-[11px] text-[#AAB8C5]/50 text-center uppercase tracking-widest font-medium">
-              No account required for demo
-            </p>
-          </div>
 
           <div className="mt-6 text-center">
             <p className="text-[13px] text-[#AAB8C5]/70">
