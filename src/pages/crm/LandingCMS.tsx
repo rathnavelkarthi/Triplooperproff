@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Save, Image as ImageIcon, Check, Building, Globe, MessageSquare, Phone, MapPin, Plus, X } from 'lucide-react';
 import { useCRM, PageContent } from '../../context/CRMDataContext';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, setForceFreshToken } from '../../lib/supabaseClient';
 import { toast } from 'sonner';
 import WhatsAppSettings from '../../components/crm/WhatsAppSettings';
 
@@ -96,7 +96,9 @@ export default function LandingCMS() {
             const ext = file.name.split('.').pop();
             const filePath = `${tenant?.id}/${section}-${key}-${Date.now()}.${ext}`;
 
+            setForceFreshToken(true);
             const { error } = await supabase.storage.from('site-assets').upload(filePath, file, { upsert: true });
+            setForceFreshToken(false);
             if (error) {
                 toast.error('Upload failed: ' + error.message, { id: toastId });
                 return;

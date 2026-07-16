@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCRM, MenuCategory, MenuItem } from '../../context/CRMDataContext';
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, GripVertical, Leaf, X, Check, Search, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, setForceFreshToken } from '../../lib/supabaseClient';
 import { toast } from 'sonner';
 import { usePlanLimits } from '../../lib/planLimits';
 import UpgradeModal from '../../components/crm/UpgradeModal';
@@ -65,7 +65,9 @@ export default function MenuManager() {
             const ext = file.name.split('.').pop();
             const filePath = `${tenant.id}/menu/item-${Date.now()}.${ext}`;
 
+            setForceFreshToken(true);
             const { error } = await supabase.storage.from('site-assets').upload(filePath, file, { upsert: true });
+            setForceFreshToken(false);
             if (error) { toast.error('Upload failed: ' + error.message, { id: toastId }); return; }
 
             const { data: urlData } = supabase.storage.from('site-assets').getPublicUrl(filePath);

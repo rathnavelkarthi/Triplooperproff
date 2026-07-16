@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, setForceFreshToken } from '../../lib/supabaseClient';
 import { toast } from 'sonner';
 import {
     Eye, Save, Upload, Trash2, Plus, GripVertical, ChevronDown, ChevronUp,
@@ -214,7 +214,9 @@ export default function WebsiteEditor() {
         const ext = file.name.split('.').pop();
         const filePath = `${tenant.id}/${path}-${Date.now()}.${ext}`;
 
+        setForceFreshToken(true);
         const { error } = await supabase.storage.from('site-assets').upload(filePath, file, { upsert: true });
+        setForceFreshToken(false);
         if (error) { toast.error('Upload failed: ' + error.message); return null; }
 
         const { data } = supabase.storage.from('site-assets').getPublicUrl(filePath);

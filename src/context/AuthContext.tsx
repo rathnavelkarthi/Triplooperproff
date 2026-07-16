@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { useUser, useClerk, useSignIn, useSignUp, useSession } from '@clerk/react';
-import { supabase, supabaseAuth, setSupabaseTokenGetter } from '../lib/supabaseClient';
+import { supabase, supabaseAuth, setSupabaseTokenGetter, shouldForceFreshToken } from '../lib/supabaseClient';
 import { generateSubdomain, hasPermission as checkPermission, DEMO_EMAIL } from '../lib/booking';
 import { Session } from '@supabase/supabase-js';
 import posthog from 'posthog-js';
@@ -527,8 +527,24 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     setSupabaseTokenGetter(async () => {
       if (clerkSession) {
         try {
-          const t = await clerkSession.getToken();
-          if (t) return t;
+          const force = shouldForceFreshToken();
+          let t = await clerkSession.getToken(force ? { skipCache: true } : undefined);
+          if (t) {
+            try {
+              const base64Url = t.split('.')[1];
+              const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+              const payload = JSON.parse(atob(base64));
+              const now = Math.floor(Date.now() / 1000);
+              // If token expires in less than 15 seconds, bypass cache and fetch a new one
+              if (now >= (payload.exp - 15)) {
+                t = await clerkSession.getToken({ skipCache: true });
+              }
+            } catch {
+              // If parsing failed (e.g. invalid format), refresh to be safe
+              t = await clerkSession.getToken({ skipCache: true });
+            }
+            return t;
+          }
         } catch { /* fall through to supabase session */ }
       }
       return supabaseSession?.access_token ?? null;

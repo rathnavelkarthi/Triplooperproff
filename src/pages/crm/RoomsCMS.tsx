@@ -3,7 +3,7 @@ import { Plus, Edit2, Trash2, Image as ImageIcon, X, Check, Search, Upload } fro
 import { motion, AnimatePresence } from 'motion/react';
 import { useCRM, Room } from '../../context/CRMDataContext';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, setForceFreshToken } from '../../lib/supabaseClient';
 import { toast } from 'sonner';
 import { usePlanLimits } from '../../lib/planLimits';
 import UpgradeModal from '../../components/crm/UpgradeModal';
@@ -81,7 +81,9 @@ export default function RoomsCMS() {
             const ext = file.name.split('.').pop();
             const filePath = `${tenant.id}/rooms/room-${Date.now()}.${ext}`;
 
+            setForceFreshToken(true);
             const { error } = await supabase.storage.from('site-assets').upload(filePath, file, { upsert: true });
+            setForceFreshToken(false);
             if (error) { toast.error('Upload failed: ' + error.message, { id: toastId }); return; }
 
             const { data: urlData } = supabase.storage.from('site-assets').getPublicUrl(filePath);

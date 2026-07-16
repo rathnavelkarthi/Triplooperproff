@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, setForceFreshToken } from '../../lib/supabaseClient';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import {
@@ -84,9 +84,11 @@ export default function PropertyVerification() {
       const ext = file.name.split('.').pop();
       const filePath = `${tenant.id}/${slot.type}-${Date.now()}.${ext}`;
 
+      setForceFreshToken(true);
       const { error: upErr } = await supabase.storage
         .from(BUCKET)
         .upload(filePath, file, { upsert: true });
+      setForceFreshToken(false);
       if (upErr) throw new Error(upErr.message);
 
       const { error: rowErr } = await supabase.from('property_documents').insert({
@@ -101,6 +103,7 @@ export default function PropertyVerification() {
       toast.success(`${slot.label} uploaded.`);
       await loadDocuments();
     } catch (err: any) {
+      setForceFreshToken(false);
       toast.error('Upload failed: ' + (err.message || 'unknown error'));
     } finally {
       setUploading(null);

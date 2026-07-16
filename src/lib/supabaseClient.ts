@@ -38,6 +38,15 @@ const fallbackKey = 'placeholder-key';
 type TokenGetter = () => Promise<string | null> | string | null;
 
 let clerkTokenGetter: TokenGetter | null = null;
+let forceFreshToken = false;
+
+export function setForceFreshToken(force: boolean) {
+    forceFreshToken = force;
+}
+
+export function shouldForceFreshToken(): boolean {
+    return forceFreshToken;
+}
 
 /** Registered once by AuthContext after Clerk's session is available. */
 export function setSupabaseTokenGetter(getter: TokenGetter | null) {

@@ -484,12 +484,22 @@ export default function WhatsAppSettings() {
                             <XCircle size={40} className="text-red-400 mx-auto mb-3" />
                             <p className="text-sm text-red-600 font-medium mb-1">Connection failed</p>
                             <p className="text-xs text-red-400 mb-4">{connectionError}</p>
-                            <button
-                                onClick={handleConnect}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-xl transition-all text-sm"
-                            >
-                                <RefreshCw size={15} /> Try Again
-                            </button>
+                            <div className="flex items-center justify-center gap-3">
+                                <button
+                                    onClick={handleConnect}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-xl transition-all text-sm shadow-sm"
+                                >
+                                    <RefreshCw size={15} /> Try Again
+                                </button>
+                                <button
+                                    onClick={handleDisconnect}
+                                    disabled={isDisconnecting}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 font-semibold rounded-xl transition-all text-sm shadow-sm disabled:opacity-50"
+                                >
+                                    {isDisconnecting ? <Loader2 size={15} className="animate-spin" /> : <Unplug size={15} />}
+                                    Reset Instance
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
