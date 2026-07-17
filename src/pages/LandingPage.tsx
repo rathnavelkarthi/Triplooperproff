@@ -17,6 +17,11 @@ import { supabase } from '../lib/supabaseClient';
 
 // Inject luxury fonts and bespoke design system styles
 const masterStyles = `
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 100px;
+  }
+
   .font-playfair {
     font-family: 'Playfair Display', Georgia, serif;
   }
@@ -318,19 +323,19 @@ export default function LandingPage() {
         <div className="px-6 h-18 flex items-center justify-between">
           <div className="flex items-center gap-12">
             <a href="/" className="flex items-center gap-2 group">
-              <span className="font-playfair text-xl font-bold tracking-widest text-[#0E2A38]">
-                TRIP<span className="text-[#C9A646] font-extrabold">LOOPER</span>
+              <span className="font-playfair text-xl font-bold tracking-widest text-[#C9A646]">
+                TRIPLOOPER
               </span>
             </a>
             
-            <div className="hidden md:flex items-center gap-8 text-[11px] font-semibold tracking-widest text-[#0E2A38]/75 uppercase">
-              <a href="#marketplace" className="nav-link hover:text-[#C9A646] transition-colors">Marketplace</a>
-              <a href="#categories" className="nav-link hover:text-[#C9A646] transition-colors">Categories</a>
-              <a href="#why-switch" className="nav-link hover:text-[#C9A646] transition-colors">Owner Story</a>
-              <a href="#os-diagram" className="nav-link hover:text-[#C9A646] transition-colors">The Platform</a>
-              <a href="#india-network" className="nav-link hover:text-[#C9A646] transition-colors">Our Network</a>
-              <a href="#pricing" className="nav-link hover:text-[#C9A646] transition-colors">Pricing</a>
-              <button onClick={() => navigate('/my-stays')} className="nav-link hover:text-[#C9A646] transition-colors text-left uppercase">My Stays</button>
+            <div className="hidden md:flex items-center gap-8 text-[11px] font-bold tracking-widest text-[#0E2A38]/75 uppercase">
+              <a href="#marketplace" className="nav-link hover:text-[#C9A646] transition-colors">MARKETPLACE</a>
+              <a href="#categories" className="nav-link hover:text-[#C9A646] transition-colors">CATEGORIES</a>
+              <a href="#why-switch" className="nav-link hover:text-[#C9A646] transition-colors">OWNER STORY</a>
+              <a href="#os-diagram" className="nav-link hover:text-[#C9A646] transition-colors">THE PLATFORM</a>
+              <a href="#india-network" className="nav-link hover:text-[#C9A646] transition-colors">OUR NETWORK</a>
+              <a href="#pricing" className="nav-link hover:text-[#C9A646] transition-colors">PRICING</a>
+              <button onClick={() => navigate('/my-stays')} className="nav-link hover:text-[#C9A646] transition-colors text-left uppercase font-bold tracking-widest text-[11px]">MY STAYS</button>
             </div>
           </div>
 
@@ -339,13 +344,13 @@ export default function LandingPage() {
               onClick={() => navigate('/admin/login')}
               className="text-[11px] font-bold tracking-widest uppercase text-[#0E2A38]/75 hover:text-[#C9A646] transition-colors px-3 py-2"
             >
-              Sign In
+              SIGN IN
             </button>
             <button 
               onClick={() => navigate('/signup')}
-              className="bg-[#0E2A38] hover:bg-[#123545] text-white font-bold text-[11px] tracking-widest uppercase px-6 py-3 rounded-2xl transition-all shadow-md shadow-[#0E2A38]/10 active:scale-95 flex items-center gap-1.5 border border-[#C9A646]/10"
+              className="bg-[#0E2A38] hover:bg-[#123545] text-white font-bold text-[11px] tracking-widest uppercase px-6 py-3 rounded-xl transition-all shadow-md shadow-[#0E2A38]/10 active:scale-95 flex items-center gap-2 border border-[#C9A646]/10"
             >
-              <span>Join Triplooper</span>
+              <span>JOIN TRIPLOOPER</span>
               <ArrowRight size={12} className="text-[#C9A646]" />
             </button>
           </div>
@@ -383,13 +388,13 @@ export default function LandingPage() {
                 onClick={() => { setMobileMenuOpen(false); navigate('/admin/login'); }}
                 className="w-full text-center py-3 text-[#0E2A38] font-bold border border-[#C9A646]/20 rounded-xl"
               >
-                Sign In
+                SIGN IN
               </button>
               <button 
                 onClick={() => { setMobileMenuOpen(false); navigate('/signup'); }}
                 className="w-full text-center py-3 bg-[#0E2A38] text-white font-extrabold rounded-xl"
               >
-                Join Triplooper
+                JOIN TRIPLOOPER
               </button>
             </div>
           </motion.div>
@@ -997,6 +1002,102 @@ export default function LandingPage() {
             ))}
           </div>
 
+        </div>
+      </section>
+
+      {/* ── SECTION 4: OWNER STORY (Why Switch) ── */}
+      <section id="why-switch" className="py-24 bg-[#0E2A38] text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(201,166,70,0.1),transparent_70%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-12 gap-12 items-center relative z-10">
+          <div className="md:col-span-5 space-y-6">
+            <ScrollStoryText scrollYProgress={scrollYProgress} />
+          </div>
+          <div className="md:col-span-7 flex justify-center">
+            <ScrollStoryVisual scrollYProgress={scrollYProgress} />
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 5: THE PLATFORM (OS Diagram) ── */}
+      <section id="os-diagram" className="py-24 bg-[#FDFBF7] border-t border-[#C9A646]/15 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
+          <div className="max-w-2xl mx-auto space-y-3">
+            <span className="text-[10px] text-[#C9A646] font-medium tracking-[0.25em] uppercase font-mono">Unified Architecture</span>
+            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0E2A38]">
+              The direct hospitality <span className="italic font-light text-[#C9A646]">operating system</span>
+            </h2>
+            <p className="text-sm text-zinc-550 font-light">
+              TripLooper replaces up to 8 fragmented legacy tools with one beautifully integrated live engine.
+            </p>
+          </div>
+          <div className="h-[450px] relative">
+            <ExplodedDashboard />
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 6: OUR NETWORK / INTEGRATIVE EXPERIENCE ── */}
+      <section id="india-network" className="py-24 bg-[#FAF9F6] border-t border-[#C9A646]/15 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 space-y-16">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="text-[10px] text-[#C9A646] font-medium tracking-[0.25em] uppercase font-mono">Bespoke Guest Journeys</span>
+            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0E2A38]">
+              Seamless flow from <span className="italic font-light text-[#C9A646]">booking to bill</span>
+            </h2>
+            <p className="text-sm text-zinc-550 font-light">
+              Explore how TripLooper coordinates the booking engine, dine-in POS food orders, and WhatsApp notifications.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8 items-start">
+            {/* Booking Engine */}
+            <div className="flex flex-col items-center space-y-4">
+              <span className="text-xs font-bold text-[#0E2A38] uppercase tracking-wider font-mono">01. Direct Booking Engine</span>
+              <InteractiveBookingShowcase />
+            </div>
+            
+            {/* Guest Journey */}
+            <div className="flex flex-col items-center space-y-4">
+              <span className="text-xs font-bold text-[#0E2A38] uppercase tracking-wider font-mono">02. Automated Lifecycle logs</span>
+              <InteractiveGuestJourney />
+            </div>
+
+            {/* POS Showcase */}
+            <div className="flex flex-col items-center space-y-4">
+              <span className="text-xs font-bold text-[#0E2A38] uppercase tracking-wider font-mono">03. In-stay QR Food Orders</span>
+              <InteractivePOSShowcase />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 7: PRICING & REVENUE SIMULATOR ── */}
+      <section id="pricing" className="py-24 bg-[#FDFBF7] border-t border-[#C9A646]/15 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 space-y-16">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="text-[10px] text-[#C9A646] font-medium tracking-[0.25em] uppercase font-mono">Pricing & Yield Calculator</span>
+            <h2 className="font-playfair text-3xl sm:text-5xl font-semibold text-[#0E2A38]">
+              Recover your revenue <span className="italic font-light text-[#C9A646]">leakage</span>
+            </h2>
+            <p className="text-sm text-zinc-550 font-light">
+              See what you save by migrating from high-commission OTAs to direct-to-host reservations.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-5">
+              <PricingPlan />
+            </div>
+            <div className="lg:col-span-7">
+              <RevenueSimulator />
+            </div>
+          </div>
+          
+          {/* FAQ Accordion */}
+          <div className="max-w-3xl mx-auto pt-10 space-y-6">
+            <h3 className="font-playfair text-2xl font-bold text-[#0E2A38] text-center">Frequently Asked Questions</h3>
+            <HospitalityFAQ />
+          </div>
         </div>
       </section>
 
