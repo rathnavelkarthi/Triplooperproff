@@ -1,12 +1,39 @@
 import { useState, useMemo } from 'react';
-import { Search, Filter, Download, CheckCircle, RotateCcw } from 'lucide-react';
+import { Search, Download, CheckCircle, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 import { useCRM } from '../../context/CRMDataContext';
 import { useAuth } from '../../context/AuthContext';
 import { printInvoice } from '../../components/crm/invoiceUtils';
 import { InvoiceData } from '../../components/crm/InvoicePrintTemplate';
 
 export default function Payments() {
-  const { reservations, cmsSettings } = useCRM();
+  const { reservations, cmsSettings, updateReservation } = useCRM();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const handleMarkPaid = async (bookingId: string) => {
+    setBusyId(bookingId);
+    try {
+      await updateReservation(bookingId, { payment: 'Paid' });
+      toast.success('Payment marked as paid');
+    } catch (e: any) {
+      toast.error('Failed to update payment: ' + e.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleRefund = async (bookingId: string) => {
+    if (!window.confirm('Refund this payment? This marks the reservation as refunded.')) return;
+    setBusyId(bookingId);
+    try {
+      await updateReservation(bookingId, { payment: 'Refunded' });
+      toast.success('Payment refunded');
+    } catch (e: any) {
+      toast.error('Failed to refund: ' + e.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
   const { tenant } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -93,10 +120,6 @@ export default function Payments() {
               className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm w-full sm:w-auto justify-center">
-            <Filter size={16} />
-            Filters
-          </button>
         </div>
 
         <div className="overflow-x-auto">
@@ -124,7 +147,8 @@ export default function Payments() {
                   <td className="p-4 text-gray-600">{payment.date}</td>
                   <td className="p-4">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${payment.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                      payment.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                      payment.status === 'Refunded' ? 'bg-gray-100 text-gray-600' :
+                      (payment.status === 'Unpaid' || payment.status === 'Partial') ? 'bg-yellow-100 text-yellow-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
                       {payment.status}
@@ -132,18 +156,19 @@ export default function Payments() {
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {payment.status === 'Pending' && (
-                        <button className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Mark as Paid">
+                      {(payment.status === 'Unpaid' || payment.status === 'Partial') && (
+                        <button onClick={() => handleMarkPaid(payment.bookingId)} disabled={busyId === payment.bookingId} aria-label={`Mark ${payment.id} as paid`} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50" title="Mark as Paid">
                           <CheckCircle size={18} />
                         </button>
                       )}
                       {payment.status === 'Paid' && (
-                        <button className="p-1.5 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors" title="Refund">
+                        <button onClick={() => handleRefund(payment.bookingId)} disabled={busyId === payment.bookingId} aria-label={`Refund ${payment.id}`} className="p-1.5 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50" title="Refund">
                           <RotateCcw size={18} />
                         </button>
                       )}
                       <button
                         onClick={() => handleDownload(payment)}
+                        aria-label={`Download invoice ${payment.id}`}
                         className="p-1.5 text-gray-400 hover:text-[var(--color-ocean-600)] hover:bg-[var(--color-ocean-50)] rounded-lg transition-colors"
                         title="Download Invoice"
                       >

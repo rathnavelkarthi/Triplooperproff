@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
-import { Search, Filter, MoreVertical, Mail, Phone, MapPin, FileText, X, Download, Share2 } from 'lucide-react';
+import { Search, MoreVertical, Mail, Phone, MapPin, FileText, X, Download, Share2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useCRM, Reservation } from '../../context/CRMDataContext';
@@ -134,10 +134,6 @@ export default function Guests() {
               className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm w-full sm:w-auto justify-center">
-            <Filter size={16} />
-            Filters
-          </button>
         </div>
 
         <div className="overflow-x-auto min-h-[400px]">
@@ -190,7 +186,9 @@ export default function Guests() {
                   <td className={`p-4 text-right relative ${activeDropdown === guest.id ? 'z-50' : ''}`}>
                     <button
                       onClick={() => setActiveDropdown(activeDropdown === guest.id ? null : guest.id)}
-                      className="p-1.5 text-gray-400 hover:text-[var(--color-ocean-600)] hover:bg-[var(--color-ocean-50)] rounded-lg transition-colors focus:outline-none"
+                      aria-label={`Actions for ${guest.name}`}
+                      aria-expanded={activeDropdown === guest.id}
+                      className="p-1.5 text-gray-400 hover:text-[var(--color-ocean-600)] hover:bg-[var(--color-ocean-50)] rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-[var(--color-ocean-300)] outline-none"
                     >
                       <MoreVertical size={18} />
                     </button>
@@ -220,16 +218,9 @@ export default function Guests() {
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between bg-gray-50 text-sm text-gray-500 rounded-b-2xl gap-4">
-        <span>Showing 1 to 5 of 120 entries</span>
-        <div className="flex gap-1">
-          <button className="px-3 py-1 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50">Prev</button>
-          <button className="px-3 py-1 border border-[var(--color-ocean-500)] bg-[var(--color-ocean-50)] text-[var(--color-ocean-700)] rounded-lg font-medium">1</button>
-          <button className="px-3 py-1 border border-gray-200 rounded-lg bg-white hover:bg-gray-50">2</button>
-          <button className="px-3 py-1 border border-gray-200 rounded-lg bg-white hover:bg-gray-50">3</button>
-          <button className="px-3 py-1 border border-gray-200 rounded-lg bg-white hover:bg-gray-50">Next</button>
-        </div>
+      {/* Count */}
+      <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50 text-sm text-gray-500 rounded-b-2xl">
+        <span>{guestRecords.length} {guestRecords.length === 1 ? 'guest' : 'guests'}</span>
       </div>
 
       {/* Invoice Modal Overlay */}
@@ -274,7 +265,7 @@ export default function Guests() {
                     </div>
                     <div className="text-right">
                       <h2 className="text-2xl font-bold text-[#1f2937] tracking-wider mb-2">INVOICE</h2>
-                      <p className="text-[#4b5563] text-sm font-medium">Inv. No: <span className="font-normal">#INV-{Math.floor(Math.random() * 90000) + 10000}</span></p>
+                      <p className="text-[#4b5563] text-sm font-medium">Inv. No: <span className="font-normal">#INV-{selectedGuest.latestReservationId.replace(/[^a-zA-Z0-9]/g, '').slice(-8).toUpperCase()}</span></p>
                       <p className="text-[#4b5563] text-sm font-medium">Date: <span className="font-normal">{new Date().toLocaleDateString('en-GB')}</span></p>
                     </div>
                   </div>
@@ -310,24 +301,6 @@ export default function Guests() {
                         </td>
                         <td className="py-4 text-right font-medium text-[#1f2937]">₹{selectedGuest.spent.toLocaleString('en-IN')}</td>
                       </tr>
-                      <tr className="border-b border-[#f3f4f6]">
-                        <td className="py-4 text-[#1f2937]">
-                          <p className="font-semibold">Room Service & Dining</p>
-                          <p className="text-xs text-[#6b7280] mt-1">In-room dining and minibar consumption.</p>
-                        </td>
-                        <td className="py-4 text-center text-[#4b5563]">1</td>
-                        <td className="py-4 text-right text-[#4b5563]">₹4,500</td>
-                        <td className="py-4 text-right font-medium text-[#1f2937]">₹4,500</td>
-                      </tr>
-                      <tr className="border-b border-[#f3f4f6]">
-                        <td className="py-4 text-[#1f2937]">
-                          <p className="font-semibold">Spa & Wellness Center</p>
-                          <p className="text-xs text-[#6b7280] mt-1">Aromatherapy massage session.</p>
-                        </td>
-                        <td className="py-4 text-center text-[#4b5563]">1</td>
-                        <td className="py-4 text-right text-[#4b5563]">₹3,200</td>
-                        <td className="py-4 text-right font-medium text-[#1f2937]">₹3,200</td>
-                      </tr>
                     </tbody>
                   </table>
 
@@ -336,21 +309,15 @@ export default function Guests() {
                     <div className="w-1/2 max-w-[250px]">
                       <div className="flex justify-between py-2 text-sm text-[#4b5563]">
                         <span>Subtotal</span>
-                        <span>
-                          ₹{(selectedGuest.spent + 4500 + 3200).toLocaleString('en-IN')}
-                        </span>
+                        <span>₹{selectedGuest.spent.toLocaleString('en-IN')}</span>
                       </div>
                       <div className="flex justify-between py-2 text-sm text-[#4b5563] border-b border-[#e5e7eb]">
                         <span>GST (18%)</span>
-                        <span>
-                          ₹{((selectedGuest.spent + 4500 + 3200) * 0.18).toLocaleString('en-IN')}
-                        </span>
+                        <span>₹{Math.round(selectedGuest.spent * 0.18).toLocaleString('en-IN')}</span>
                       </div>
                       <div className="flex justify-between py-3 text-lg font-bold text-[#111827] border-b-2 border-[#1f2937]">
                         <span>Total</span>
-                        <span>
-                          ₹{((selectedGuest.spent + 4500 + 3200) * 1.18).toLocaleString('en-IN')}
-                        </span>
+                        <span>₹{Math.round(selectedGuest.spent * 1.18).toLocaleString('en-IN')}</span>
                       </div>
                     </div>
                   </div>

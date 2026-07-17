@@ -789,7 +789,26 @@ export default function PricingRules() {
                         <div className="space-y-4">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-lg font-bold text-gray-900">Promotions & Discount Codes</h3>
-                                <button className="bg-white text-[#0E2A38] border border-gray-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
+                                <button
+                                    onClick={async () => {
+                                        if (!tenant?.id) return;
+                                        const code = window.prompt('Promo code (e.g. SUMMER20):')?.trim().toUpperCase();
+                                        if (!code) return;
+                                        const typeInput = window.prompt('Discount type — enter "percent" or "flat":', 'percent')?.trim().toLowerCase();
+                                        const discount_type = typeInput === 'flat' ? 'flat' : 'percent';
+                                        const valueRaw = window.prompt(discount_type === 'percent' ? 'Discount percentage (e.g. 20):' : 'Discount amount in ₹ (e.g. 500):');
+                                        const discount_value = parseFloat(valueRaw || '');
+                                        if (!discount_value || discount_value <= 0) { toast.error('Invalid discount value'); return; }
+                                        const maxRaw = window.prompt('Max uses (leave blank for unlimited):');
+                                        const max_uses = maxRaw && parseInt(maxRaw) > 0 ? parseInt(maxRaw) : null;
+                                        const { error } = await supabase.from('coupons').insert({
+                                            tenant_id: tenant.id, code, discount_type, discount_value, max_uses, is_active: true, used_count: 0,
+                                        });
+                                        if (error) { toast.error('Failed to create coupon: ' + error.message); return; }
+                                        toast.success('Promo code created');
+                                        fetchData();
+                                    }}
+                                    className="bg-white text-[#0E2A38] border border-gray-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-all flex items-center gap-2">
                                     <Plus size={16} /> New Promo Code
                                 </button>
                             </div>
@@ -826,7 +845,16 @@ export default function PricingRules() {
                                                     {coupon.max_uses ? <span>MAX: {coupon.max_uses}</span> : <span>UNLIMITED</span>}
                                                 </p>
                                             </div>
-                                            <button className="absolute bottom-4 right-4 p-1.5 text-gray-400 hover:text-red-600 transition-colors">
+                                            <button
+                                                onClick={async () => {
+                                                    if (!window.confirm(`Delete promo code "${coupon.code}"? This cannot be undone.`)) return;
+                                                    const { error } = await supabase.from('coupons').delete().eq('id', coupon.id);
+                                                    if (error) { toast.error('Failed to delete coupon: ' + error.message); return; }
+                                                    toast.success('Coupon deleted');
+                                                    fetchData();
+                                                }}
+                                                aria-label={`Delete promo code ${coupon.code}`}
+                                                className="absolute bottom-4 right-4 p-1.5 text-gray-400 hover:text-red-600 transition-colors">
                                                 <Trash2 size={16} />
                                             </button>
                                         </div>

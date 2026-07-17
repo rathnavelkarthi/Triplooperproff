@@ -193,16 +193,16 @@ export default function FoodInventory() {
                                         </td>
                                         <td className="px-5 py-3">
                                             <div className="flex items-center gap-1 justify-end">
-                                                <button onClick={() => handleRestock(item, 10)} title="Quick restock +10"
-                                                    className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => handleRestock(item, 10)} title="Quick restock +10" aria-label={`Restock ${item.item_name} by 10`}
+                                                    className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity">
                                                     <ArrowDownToLine size={14} />
                                                 </button>
-                                                <button onClick={() => startEdit(item)}
-                                                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => startEdit(item)} aria-label={`Edit ${item.item_name}`}
+                                                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity">
                                                     <Pencil size={14} />
                                                 </button>
-                                                <button onClick={() => deleteInventoryItem(item.id)}
-                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => { if (window.confirm(`Delete "${item.item_name}" from inventory? This cannot be undone.`)) deleteInventoryItem(item.id); }} aria-label={`Delete ${item.item_name}`}
+                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity">
                                                     <Trash2 size={14} />
                                                 </button>
                                             </div>

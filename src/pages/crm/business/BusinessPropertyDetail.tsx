@@ -75,13 +75,13 @@ export default function BusinessPropertyDetail() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (user?.role !== 'BUSINESS_ADMIN') {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-
   useEffect(() => {
     loadProperty();
   }, [propertyId]);
+
+  if (user?.role !== 'BUSINESS_ADMIN') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   const loadProperty = async () => {
     setLoading(true);
@@ -259,6 +259,9 @@ export default function BusinessPropertyDetail() {
                       <button
                         key={f.key}
                         onClick={() => toggleFeature(f.key)}
+                        role="switch"
+                        aria-checked={isOn}
+                        aria-label={`${f.label} — ${isOn ? 'enabled' : 'disabled'}`}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                           isOn ? 'bg-emerald-50/60' : 'bg-gray-50/60 opacity-60'
                         }`}

@@ -137,6 +137,9 @@ export default function BookingSettings() {
                                 <span className="text-sm font-medium">Instant Confirmation</span>
                             </div>
                             <button
+                                role="switch"
+                                aria-checked={settings.instant_confirmation === 'true'}
+                                aria-label="Instant Confirmation"
                                 onClick={() => setSettings({ ...settings, instant_confirmation: settings.instant_confirmation === 'true' ? 'false' : 'true' })}
                                 className={`w-10 h-6 rounded-full transition-colors relative ${settings.instant_confirmation === 'true' ? 'bg-[#0E2A38]' : 'bg-gray-300'}`}
                             >
@@ -162,6 +165,9 @@ export default function BookingSettings() {
                                 <span className="text-sm font-medium">WhatsApp Updates</span>
                             </div>
                             <button
+                                role="switch"
+                                aria-checked={settings.whatsapp_enabled === 'true'}
+                                aria-label="WhatsApp Updates"
                                 onClick={() => setSettings({ ...settings, whatsapp_enabled: settings.whatsapp_enabled === 'true' ? 'false' : 'true' })}
                                 className={`w-10 h-6 rounded-full transition-colors relative ${settings.whatsapp_enabled === 'true' ? 'bg-[#25D366]' : 'bg-gray-300'}`}
                             >
@@ -191,6 +197,9 @@ export default function BookingSettings() {
                                 <span className="text-sm font-medium">Email Confirmation</span>
                             </div>
                             <button
+                                role="switch"
+                                aria-checked={settings.email_confirmation_enabled === 'true'}
+                                aria-label="Email Confirmation"
                                 onClick={() => setSettings({ ...settings, email_confirmation_enabled: settings.email_confirmation_enabled === 'true' ? 'false' : 'true' })}
                                 className={`w-10 h-6 rounded-full transition-colors relative ${settings.email_confirmation_enabled === 'true' ? 'bg-[#0E2A38]' : 'bg-gray-300'}`}
                             >

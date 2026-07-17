@@ -170,15 +170,15 @@ export default function Tables() {
                             <div key={t.id} className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 hover:shadow-md transition-shadow group relative">
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-bold text-gray-900 text-lg">T{t.table_number}</h3>
-                                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => setQrTable(t)} className="p-1 text-gray-400 hover:text-[#0E2A38] hover:bg-blue-50 rounded" title="QR Code">
-                                            <QrCode size={12} />
+                                    <div className="flex gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                        <button onClick={() => setQrTable(t)} aria-label={`QR code for table ${t.table_number}`} className="p-1.5 text-gray-400 hover:text-[#0E2A38] hover:bg-blue-50 rounded" title="QR Code">
+                                            <QrCode size={14} />
                                         </button>
-                                        <button onClick={() => startEdit(t)} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded">
-                                            <Pencil size={12} />
+                                        <button onClick={() => startEdit(t)} aria-label={`Edit table ${t.table_number}`} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded">
+                                            <Pencil size={14} />
                                         </button>
-                                        <button onClick={() => deleteRestaurantTable(t.id)} className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded">
-                                            <Trash2 size={12} />
+                                        <button onClick={() => { if (window.confirm(`Delete table T${t.table_number}? This cannot be undone.`)) deleteRestaurantTable(t.id); }} aria-label={`Delete table ${t.table_number}`} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded">
+                                            <Trash2 size={14} />
                                         </button>
                                     </div>
                                 </div>

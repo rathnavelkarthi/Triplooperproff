@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, Filter, Download, FileText, Eye, X, CheckCircle, Printer } from 'lucide-react';
+import { Search, Download, FileText, Eye, X, CheckCircle, Printer } from 'lucide-react';
 import { useCRM } from '../../context/CRMDataContext';
 import { useAuth } from '../../context/AuthContext';
 import { InvoiceData } from '../../components/crm/InvoicePrintTemplate';
@@ -103,10 +103,6 @@ export default function Invoices() {
               className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm w-full sm:w-auto justify-center">
-            <Filter size={16} />
-            Filters
-          </button>
         </div>
 
         <div className="overflow-x-auto">
