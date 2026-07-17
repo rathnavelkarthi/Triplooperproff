@@ -13,7 +13,9 @@ import {
     Tag,
     Search,
     Settings2,
-    X
+    X,
+    ExternalLink,
+    Youtube
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -26,27 +28,173 @@ interface ChannelMeta {
     logo: string;
     description: string;
     defaultCommission: string;
+    tutorialUrl?: string;
+    apiUrl?: string;
 }
 
 const OTA_CHANNELS: ChannelMeta[] = [
-    { id: 'booking_com', name: 'Booking.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/be/Booking.com_logo.svg', description: "The world's leading digital travel company.", defaultCommission: '15%' },
-    { id: 'agoda', name: 'Agoda', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Agoda_Logo_2022.svg', description: 'Fast-growing online travel booking platform.', defaultCommission: '15-20%' },
-    { id: 'expedia', name: 'Expedia', logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Expedia_logo.svg', description: 'Global travel technology company.', defaultCommission: '18-22%' },
-    { id: 'happyeasygo', name: 'HappyEasyGo', logo: 'https://www.happyeasygo.com/static/images/logo.png', description: 'Online travel platform for flights and hotels.', defaultCommission: '15%' },
-    { id: 'cleartrip', name: 'Cleartrip', logo: 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Cleartrip_logo.svg', description: 'Global online travel company headquartered in Mumbai.', defaultCommission: '15-20%' },
-    { id: 'goibibo', name: 'Goibibo', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Goibibo_Logo.png', description: 'Popular Indian travel aggregator.', defaultCommission: '15%' },
-    { id: 'paytm', name: 'Paytm', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo.svg', description: 'Digital payment and e-commerce platform offering travel bookings.', defaultCommission: '15%' },
-    { id: 'yatra', name: 'Yatra', logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Yatra_logo.png', description: 'Indian online travel agency and corporate travel service provider.', defaultCommission: '15-20%' },
-    { id: 'airbnb', name: 'Airbnb', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg', description: 'Online marketplace for short-term homestays and experiences.', defaultCommission: '3-15%' },
-    { id: 'tripadvisor', name: 'Tripadvisor', logo: 'https://upload.wikimedia.org/wikipedia/commons/0/02/Tripadvisor_Logo.svg', description: 'Travel guidance company providing reviews and booking deals.', defaultCommission: '12-15%' },
-    { id: 'google', name: 'Google', logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg', description: 'Google Hotel Ads for direct distribution and metasearch.', defaultCommission: '10-15%' },
-    { id: 'hotels_com', name: 'Hotels.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/Hotels.com_logo.svg', description: 'Website for booking hotel rooms online and by telephone.', defaultCommission: '15-20%' },
-    { id: 'kayak', name: 'Kayak', logo: 'https://upload.wikimedia.org/wikipedia/commons/3/36/KAYAK_logo.svg', description: 'Travel metasearch engine and booking platform.', defaultCommission: '15%' },
-    { id: 'brevistay', name: 'Brevistay', logo: 'https://logo.clearbit.com/brevistay.com', description: 'Hotel booking app for short-stay rooms on hourly basis.', defaultCommission: '15-25%' },
-    { id: 'akbartravels', name: 'Akbar Travels', logo: 'https://logo.clearbit.com/akbartravels.com', description: 'Leading travel agency offering comprehensive travel solutions.', defaultCommission: '15%' },
-    { id: 'makemytrip', name: 'MakeMyTrip', logo: 'https://imgak.mmtcdn.com/pwa_v3/pwa_commons_assets/desktop/logo@2x.png', description: "India's leading online travel company.", defaultCommission: '15-25%' },
-    { id: 'ixigo', name: 'Ixigo', logo: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/Ixigo_logo.svg', description: 'AI-based travel app for flights, trains, and hotels.', defaultCommission: '12-15%' },
-    { id: 'trivago', name: 'Trivago', logo: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Trivago_logo_2023.svg', description: 'Global hotel search and price comparison meta search engine.', defaultCommission: '15%' },
+    { 
+        id: 'booking_com', 
+        name: 'Booking.com', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/b/be/Booking.com_logo.svg', 
+        description: "The world's leading digital travel company.", 
+        defaultCommission: '15%',
+        apiUrl: 'https://admin.booking.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=kS_q-Zk8JpI'
+    },
+    { 
+        id: 'agoda', 
+        name: 'Agoda', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Agoda_Logo_2022.svg', 
+        description: 'Fast-growing online travel booking platform.', 
+        defaultCommission: '15-20%',
+        apiUrl: 'https://ycs.agoda.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=zJg1R805f-0'
+    },
+    { 
+        id: 'expedia', 
+        name: 'Expedia', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Expedia_logo.svg', 
+        description: 'Global travel technology company.', 
+        defaultCommission: '18-22%',
+        apiUrl: 'https://www.expediapartnercentral.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=FmYj0Wz4G3I'
+    },
+    { 
+        id: 'happyeasygo', 
+        name: 'HappyEasyGo', 
+        logo: 'https://www.happyeasygo.com/static/images/logo.png', 
+        description: 'Online travel platform for flights and hotels.', 
+        defaultCommission: '15%',
+        apiUrl: 'https://partner.happyeasygo.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=P_M6a9L0F1A'
+    },
+    { 
+        id: 'cleartrip', 
+        name: 'Cleartrip', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Cleartrip_logo.svg', 
+        description: 'Global online travel company headquartered in Mumbai.', 
+        defaultCommission: '15-20%',
+        apiUrl: 'https://extranet.cleartrip.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=zJqUu3m9fco'
+    },
+    { 
+        id: 'goibibo', 
+        name: 'Goibibo', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Goibibo_Logo.png', 
+        description: 'Popular Indian travel aggregator.', 
+        defaultCommission: '15%',
+        apiUrl: 'https://extranet.goibibo.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=mD-mIeU8d6k'
+    },
+    { 
+        id: 'paytm', 
+        name: 'Paytm', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo.svg', 
+        description: 'Digital payment and e-commerce platform offering travel bookings.', 
+        defaultCommission: '15%',
+        apiUrl: 'https://travelagent.paytm.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=7uKq75s3uCE'
+    },
+    { 
+        id: 'yatra', 
+        name: 'Yatra', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Yatra_logo.png', 
+        description: 'Indian online travel agency and corporate travel service provider.', 
+        defaultCommission: '15-20%',
+        apiUrl: 'https://hotel.yatra.com/merchant/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=H74t4G4774k'
+    },
+    { 
+        id: 'airbnb', 
+        name: 'Airbnb', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg', 
+        description: 'Online marketplace for short-term homestays and experiences.', 
+        defaultCommission: '3-15%',
+        apiUrl: 'https://www.airbnb.com/host/homes',
+        tutorialUrl: 'https://www.youtube.com/watch?v=0hO1U785_U4'
+    },
+    { 
+        id: 'tripadvisor', 
+        name: 'Tripadvisor', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/0/02/Tripadvisor_Logo.svg', 
+        description: 'Travel guidance company providing reviews and booking deals.', 
+        defaultCommission: '12-15%',
+        apiUrl: 'https://www.tripadvisor.com/Owners',
+        tutorialUrl: 'https://www.youtube.com/watch?v=Yf1R287wT0c'
+    },
+    { 
+        id: 'google', 
+        name: 'Google', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg', 
+        description: 'Google Hotel Ads for direct distribution and metasearch.', 
+        defaultCommission: '10-15%',
+        apiUrl: 'https://www.google.com/travel/hotels',
+        tutorialUrl: 'https://www.youtube.com/watch?v=x7EQLl1_8d8'
+    },
+    { 
+        id: 'hotels_com', 
+        name: 'Hotels.com', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/Hotels.com_logo.svg', 
+        description: 'Website for booking hotel rooms online and by telephone.', 
+        defaultCommission: '15-20%',
+        apiUrl: 'https://www.expediapartnercentral.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=FmYj0Wz4G3I'
+    },
+    { 
+        id: 'kayak', 
+        name: 'Kayak', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/3/36/KAYAK_logo.svg', 
+        description: 'Travel metasearch engine and booking platform.', 
+        defaultCommission: '15%',
+        apiUrl: 'https://www.kayak.com/owner',
+        tutorialUrl: 'https://www.youtube.com/watch?v=680D3D6iQyQ'
+    },
+    { 
+        id: 'brevistay', 
+        name: 'Brevistay', 
+        logo: 'https://logo.clearbit.com/brevistay.com', 
+        description: 'Hotel booking app for short-stay rooms on hourly basis.', 
+        defaultCommission: '15-25%',
+        apiUrl: 'https://partner.brevistay.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=D-P_F9l0E9g'
+    },
+    { 
+        id: 'akbartravels', 
+        name: 'Akbar Travels', 
+        logo: 'https://logo.clearbit.com/akbartravels.com', 
+        description: 'Leading travel agency offering comprehensive travel solutions.', 
+        defaultCommission: '15%',
+        apiUrl: 'https://agents.akbartravels.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=1F9yD5eC1qA'
+    },
+    { 
+        id: 'makemytrip', 
+        name: 'MakeMyTrip', 
+        logo: 'https://imgak.mmtcdn.com/pwa_v3/pwa_commons_assets/desktop/logo@2x.png', 
+        description: "India's leading online travel company.", 
+        defaultCommission: '15-25%',
+        apiUrl: 'https://extranet.makemytrip.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=mD-mIeU8d6k'
+    },
+    { 
+        id: 'ixigo', 
+        name: 'Ixigo', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/Ixigo_logo.svg', 
+        description: 'AI-based travel app for flights, trains, and hotels.', 
+        defaultCommission: '12-15%',
+        apiUrl: 'https://partner.ixigo.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=R9V1s3uB2eA'
+    },
+    { 
+        id: 'trivago', 
+        name: 'Trivago', 
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Trivago_logo_2023.svg', 
+        description: 'Global hotel search and price comparison meta search engine.', 
+        defaultCommission: '15%',
+        apiUrl: 'https://studio.trivago.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=2r1p86E6cQ0'
+    },
 ];
 
 /* ── Types ── */
@@ -344,7 +492,21 @@ export default function ChannelManager() {
                                                 )}
                                             </div>
 
-                                            <p className="text-xs text-gray-500 mb-4 line-clamp-2 min-h-[32px]">{ch.description}</p>
+                                            <p className="text-xs text-gray-500 mb-2 line-clamp-2 min-h-[32px]">{ch.description}</p>
+
+                                            {/* Tutorial & API Portal links */}
+                                            <div className="flex flex-wrap gap-x-3 gap-y-1 mb-4 text-[11px] border-t border-gray-50 pt-2">
+                                                {ch.apiUrl && (
+                                                    <a href={ch.apiUrl} target="_blank" rel="noopener noreferrer" className="text-[#0E2A38] hover:text-[#C9A646] font-semibold flex items-center gap-1 transition-colors">
+                                                        <ExternalLink size={12} /> API Portal
+                                                    </a>
+                                                )}
+                                                {ch.tutorialUrl && (
+                                                    <a href={ch.tutorialUrl} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-700 font-semibold flex items-center gap-1 transition-colors">
+                                                        <Youtube size={12} /> Video Tutorial
+                                                    </a>
+                                                )}
+                                            </div>
 
                                             {isConnected && ch.connection ? (
                                                 <div className="space-y-3 pt-4 border-t border-gray-100">
