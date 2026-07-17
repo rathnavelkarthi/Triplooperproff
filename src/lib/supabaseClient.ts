@@ -69,7 +69,25 @@ export const supabase = createClient(
         accessToken: async () => {
             try {
                 if (!clerkTokenGetter) return null;
-                return (await clerkTokenGetter()) ?? null;
+                const token = await clerkTokenGetter();
+                if (!token) return null;
+                
+                // Decode token and verify expiry to prevent sending expired tokens
+                try {
+                    const parts = token.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                        const now = Math.floor(Date.now() / 1000);
+                        if (payload.exp && now >= payload.exp) {
+                            console.warn('Supabase token is expired, bypassing to anon key');
+                            return null;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error parsing token expiry', e);
+                }
+                
+                return token;
             } catch {
                 return null;
             }

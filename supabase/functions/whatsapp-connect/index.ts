@@ -91,10 +91,11 @@ serve(async (req) => {
       throw new Error("Evolution API is not configured");
     }
 
-    // Stable per-tenant instance name derived from subdomain + id fragment.
+    // Stable per-tenant instance name derived from subdomain + id fragment (lowercased for Evolution API compatibility).
     const instanceName =
-      tenant.evolution_instance_name ||
-      `${(tenant.subdomain || "tenant").replace(/[^a-z0-9]/gi, "")}-${String(tenant.id).slice(0, 8)}`;
+      (tenant.evolution_instance_name ||
+      `${(tenant.subdomain || "tenant").replace(/[^a-z0-9]/gi, "")}-${String(tenant.id).slice(0, 8)}`)
+      .toLowerCase();
 
     switch (action) {
       case "create": {
@@ -131,6 +132,18 @@ serve(async (req) => {
           throw new Error(`Evolution create failed: ${JSON.stringify(created.data)}`);
         }
 
+        let qrBase64 = null;
+        if (alreadyExists) {
+          // If instance already exists but is not connected (since open check was false), fetch QR code
+          const conn = await evolution(apiUrl, apiKey, `/instance/connect/${instanceName}`, "GET");
+          if (conn.ok) {
+            const d = conn.data as any;
+            qrBase64 = d?.base64 || d?.qrcode?.base64 || null;
+          }
+        } else {
+          qrBase64 = (created.data as any)?.qrcode?.base64 || (created.data as any)?.base64 || null;
+        }
+
         await supabaseAdmin
           .from("tenants")
           .update({
@@ -140,8 +153,6 @@ serve(async (req) => {
           })
           .eq("id", tenant_id);
 
-        const qrBase64 =
-          (created.data as any)?.qrcode?.base64 || (created.data as any)?.base64 || null;
         return json({ status: "created", instanceName, base64: qrBase64 });
       }
 

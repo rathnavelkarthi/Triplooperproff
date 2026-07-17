@@ -775,7 +775,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
         if (orderData) {
             const orderId = orderData[0].id;
-            const orderItems = items.map(i => ({ ...i, order_id: orderId }));
+            const orderItems = items.map(i => ({ ...i, order_id: orderId, tenant_id: tid() }));
             const { data: itemsData, error: itemsErr } = await supabase.from('food_order_items').insert(orderItems).select();
 
             if (itemsErr) throw itemsErr;
@@ -797,7 +797,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
         if (orderErr) throw orderErr;
 
-        const orderItems = items.map(i => ({ ...i, order_id: orderId }));
+        const orderItems = items.map(i => ({ ...i, order_id: orderId, tenant_id: tid() }));
         const { data: itemsData, error: itemsErr } = await supabase.from('food_order_items').insert(orderItems).select();
 
         if (itemsErr) throw itemsErr;

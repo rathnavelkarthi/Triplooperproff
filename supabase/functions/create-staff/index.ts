@@ -98,10 +98,17 @@ serve(async (req) => {
       .maybeSingle();
     const { data: ownedTenant } = await supabaseAdmin
       .from('tenants').select('id').eq('id', tenant_id).eq('owner_id', callerId).maybeSingle();
+    const { data: callerStaff } = await supabaseAdmin
+      .from('staff')
+      .select('role')
+      .eq('id', callerId)
+      .eq('tenant_id', tenant_id)
+      .maybeSingle();
 
     const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'BUSINESS_ADMIN', 'MANAGER']);
     const isAuthorized = isPlatformAdmin || !!ownedTenant || callerLink?.is_owner ||
-      (callerLink?.role && ADMIN_ROLES.has(String(callerLink.role).toUpperCase()));
+      (callerLink?.role && ADMIN_ROLES.has(String(callerLink.role).toUpperCase())) ||
+      (callerStaff?.role && ADMIN_ROLES.has(String(callerStaff.role).toUpperCase()));
     if (!isAuthorized) {
       return new Response(JSON.stringify({ error: 'Forbidden: not an admin of this tenant' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403,

@@ -53,23 +53,44 @@ export function parseGoogleMapsUrl(input: string): string {
     if (!trimmed) return '';
 
     // 1. If it's a full iframe HTML snippet, extract the src attribute
-    if (trimmed.startsWith('<iframe')) {
-        const match = trimmed.match(/src="([^"]+)"/);
+    if (trimmed.startsWith('<iframe') || trimmed.includes('<iframe')) {
+        const match = trimmed.match(/src=["']([^"']+)["']/);
         if (match && match[1]) {
             return match[1];
         }
     }
 
-    // 2. If it's a direct embed URL, return it directly
-    if (trimmed.includes('google.com/maps/embed') || trimmed.includes('google.com/maps/embed/v1')) {
+    // 2. If it's already an embed URL, return it
+    if (trimmed.includes('google.com/maps/embed') || trimmed.includes('google.com/maps/embed/v1') || trimmed.includes('output=embed')) {
         return trimmed;
     }
 
-    // 3. If it's a maps.google.com/?q= or similar query URL, extract the query
+    // 3. Reject short links because they cannot be embedded and will be blocked
+    if (trimmed.includes('maps.app.goo.gl') || trimmed.includes('goo.gl/maps')) {
+        return '';
+    }
+
+    // 4. Extract place name from standard Google Maps URLs if present
+    const placeMatch = trimmed.match(/\/place\/([^/@?]+)/);
+    if (placeMatch && placeMatch[1]) {
+        const query = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+        return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed&z=15`;
+    }
+
+    const searchMatch = trimmed.match(/\/search\/([^/@?]+)/);
+    if (searchMatch && searchMatch[1]) {
+        const query = decodeURIComponent(searchMatch[1].replace(/\+/g, ' '));
+        return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed&z=15`;
+    }
+
+    // 5. Extract coordinates from standard Google Maps URLs if present
+    const coordMatch = trimmed.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (coordMatch && coordMatch[1] && coordMatch[2]) {
+        return `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&output=embed&z=15`;
+    }
+
+    // 6. If it's a query URL, extract 'q' parameter if possible
     if (trimmed.startsWith('http')) {
-        if (trimmed.includes('output=embed')) {
-            return trimmed;
-        }
         try {
             const urlObj = new URL(trimmed);
             const q = urlObj.searchParams.get('q');
@@ -79,10 +100,10 @@ export function parseGoogleMapsUrl(input: string): string {
         } catch {
             // ignore
         }
-        return `https://maps.google.com/maps?q=${encodeURIComponent(trimmed)}&output=embed&z=15`;
+        return '';
     }
 
-    // 4. Otherwise, treat it as a plain text address / plus code query
+    // 7. Otherwise, treat it as a plain text address / search term
     return `https://maps.google.com/maps?q=${encodeURIComponent(trimmed)}&output=embed&z=15`;
 }
 
@@ -1520,7 +1541,7 @@ export default function TenantSite() {
 
                     {/* Map embed */}
                     <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm h-[300px] md:h-[400px]">
-                        {settings.googleMapsUrl ? (
+                        {parseGoogleMapsUrl(settings.googleMapsUrl) ? (
                             <iframe
                                 title="Location"
                                 className="w-full h-full border-0"
