@@ -14,6 +14,7 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
   const [formData, setFormData] = useState({
     guest: '',
     room: 'Executive Double AC',
+    room_id: null as number | null,
     checkIn: '',
     checkOut: '',
     source: 'Direct',
@@ -28,6 +29,7 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
         setFormData({
           guest: res.guest,
           room: res.room,
+          room_id: res.room_id || null,
           checkIn: res.checkIn,
           checkOut: res.checkOut,
           source: res.source,
@@ -37,9 +39,11 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
       }
     } else if (!reservationId && isOpen) {
         // Reset form for new booking
+        const firstRoom = rooms[0];
         setFormData({
             guest: '',
-            room: rooms.length > 0 ? (rooms[0].room_number ? `Room ${rooms[0].room_number} - ${rooms[0].name}` : rooms[0].name) : 'Executive Double AC',
+            room: firstRoom ? (firstRoom.room_number ? `Room ${firstRoom.room_number} - ${firstRoom.name}` : firstRoom.name) : 'Executive Double AC',
+            room_id: firstRoom ? firstRoom.id : null,
             checkIn: '',
             checkOut: '',
             source: 'Direct',
@@ -48,6 +52,23 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
         });
     }
   }, [reservationId, isOpen, reservations, rooms]);
+
+  const handleRoomChange = (roomIdStr: string) => {
+    const roomId = roomIdStr ? parseInt(roomIdStr, 10) : null;
+    const roomObj = rooms.find(r => r.id === roomId);
+    if (roomObj) {
+      setFormData(prev => ({
+        ...prev,
+        room: roomObj.room_number ? `Room ${roomObj.room_number} - ${roomObj.name}` : roomObj.name,
+        room_id: roomObj.id
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        room_id: null
+      }));
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,12 +118,12 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Room</label>
               <select
-                value={formData.room}
-                onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                value={formData.room_id || ''}
+                onChange={(e) => handleRoomChange(e.target.value)}
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all"
               >
                 {rooms.map(r => (
-                  <option key={r.id} value={r.room_number ? `Room ${r.room_number} - ${r.name}` : r.name}>
+                  <option key={r.id} value={r.id}>
                     {r.room_number ? `Room ${r.room_number} - ${r.name}` : r.name}
                   </option>
                 ))}

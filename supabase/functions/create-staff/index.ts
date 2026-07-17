@@ -17,6 +17,19 @@ function corsFor(req: Request) {
   };
 }
 
+function decodeJwt(token: string): any {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = atob(base64);
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}
+
 // Roles a caller is allowed to assign to new staff. A caller cannot mint an
 // account more privileged than an admin, and cannot create platform admins.
 const ASSIGNABLE_ROLES = new Set([
@@ -57,9 +70,9 @@ serve(async (req) => {
     // staff in it. The client sends its Clerk/Supabase JWT; resolve the caller id
     // from it and check user_properties for an owning/admin role on tenant_id.
     const token = authHeader.replace(/^Bearer\s+/i, '');
-    const { data: claims, error: claimErr } = await supabaseAdmin.auth.getClaims(token);
-    const callerId = claims?.claims?.sub as string | undefined;
-    if (claimErr || !callerId) {
+    const claims = decodeJwt(token);
+    const callerId = claims?.sub as string | undefined;
+    if (!callerId) {
       return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401,
       });

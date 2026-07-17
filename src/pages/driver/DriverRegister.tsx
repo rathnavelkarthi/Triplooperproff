@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { 
   Car, Shield, FileText, User, Mail, Phone, Lock, 
-  ArrowRight, KeyRound, AlertCircle, CheckCircle2 
+  ArrowRight, KeyRound, AlertCircle, CheckCircle2, Loader2
 } from 'lucide-react';
 
 export default function DriverRegister() {
@@ -20,6 +20,35 @@ export default function DriverRegister() {
   
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const toastId = toast.loading('Uploading car photo...');
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `drivers/car-${Date.now()}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from('site-assets')
+        .upload(filePath, file, { upsert: true });
+
+      if (error) throw error;
+
+      const { data } = supabase.storage.from('site-assets').getPublicUrl(filePath);
+      setCarPhoto(data.publicUrl);
+      toast.success('Car photo uploaded successfully!', { id: toastId });
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Upload failed: ' + err.message, { id: toastId });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,14 +233,35 @@ export default function DriverRegister() {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Car Photo Link (Optional)</label>
-                    <input
-                      type="url"
-                      value={carPhoto}
-                      onChange={e => setCarPhoto(e.target.value)}
-                      placeholder="https://example.com/car-photo.jpg"
-                      className="block w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0E2A38]/15 focus:border-[#0E2A38]/30"
-                    />
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Car Photo (Optional)</label>
+                    <div className="flex items-center gap-4">
+                      {carPhoto && (
+                        <img 
+                          src={carPhoto} 
+                          alt="Car Preview" 
+                          className="w-16 h-16 object-cover rounded-xl border border-gray-150"
+                        />
+                      )}
+                      <div className="relative flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                          className="block w-full text-sm text-gray-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-xl file:border-0
+                            file:text-xs file:font-semibold
+                            file:bg-gray-100 file:text-gray-700
+                            hover:file:bg-gray-200 file:cursor-pointer disabled:opacity-50"
+                        />
+                        {uploadingImage && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <Loader2 size={16} className="animate-spin text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

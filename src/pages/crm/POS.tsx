@@ -51,6 +51,19 @@ export default function POS() {
     const [showCheckout, setShowCheckout] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'upi'>('cash');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [printData, setPrintData] = useState<{
+        hotelName: string;
+        address: string;
+        phone: string;
+        orderType: string;
+        tableNumber: string;
+        customerName: string;
+        items: CartItem[];
+        subtotal: number;
+        tax: number;
+        total: number;
+        paymentMethod: string;
+    } | null>(null);
 
     // Derived Data
     const availableItems = useMemo(() => {
@@ -156,9 +169,24 @@ export default function POS() {
 
             // Trigger printing the receipt if new order OR explicitly requested
             if (!activeOrderForTable) {
+                const tableNumber = selectedTable ? (restaurantTables.find(t => t.id === selectedTable)?.table_number || '') : '';
+                setPrintData({
+                    hotelName: cmsSettings.hotelName || cmsSettings.heroTitle || 'Triplooper',
+                    address: cmsSettings.contactAddress || '',
+                    phone: cmsSettings.contactPhone || '',
+                    orderType,
+                    tableNumber,
+                    customerName,
+                    items: [...cart],
+                    subtotal: cartTotals.subtotal,
+                    tax: cartTotals.tax,
+                    total: cartTotals.total,
+                    paymentMethod,
+                });
+
                 setTimeout(() => {
                     window.print();
-                }, 100);
+                }, 150);
             }
 
             // Wait a moment before clearing to allow print dialog to capture the DOM
@@ -457,63 +485,65 @@ export default function POS() {
             </div>
 
             {/* Print View (Hidden on screen) */}
-            <div className="hidden print:block p-8 font-mono text-sm">
-                <div className="text-center mb-6">
-                    <h1 className="text-lg font-bold uppercase">{cmsSettings.hotelName}</h1>
-                    <p>{cmsSettings.address}</p>
-                    <p>PH: {cmsSettings.phone}</p>
-                    <div className="border-t border-dashed border-black my-4" />
-                    <p className="font-bold">TAX INVOICE</p>
-                </div>
-
-                <div className="flex justify-between mb-2">
-                    <span>DATE: {new Date().toLocaleDateString()}</span>
-                    <span>TIME: {new Date().toLocaleTimeString()}</span>
-                </div>
-                <div className="mb-4">
-                    <p>ORDER TYPE: {orderType.replace('_', ' ').toUpperCase()}</p>
-                    {selectedTable && (
-                        <p>TABLE NO: {restaurantTables.find(t => t.id === selectedTable)?.table_number}</p>
-                    )}
-                    {customerName && <p>CUSTOMER: {customerName}</p>}
-                </div>
-
-                <div className="border-t border-dashed border-black pt-4">
-                    <div className="flex justify-between font-bold mb-2">
-                        <span className="flex-[2]">ITEM</span>
-                        <span className="flex-1 text-center">QTY</span>
-                        <span className="flex-1 text-right">PRICE</span>
+            {printData && (
+                <div className="hidden print:block p-8 font-mono text-sm">
+                    <div className="text-center mb-6">
+                        <h1 className="text-lg font-bold uppercase">{printData.hotelName}</h1>
+                        <p>{printData.address}</p>
+                        <p>PH: {printData.phone}</p>
+                        <div className="border-t border-dashed border-black my-4" />
+                        <p className="font-bold">TAX INVOICE</p>
                     </div>
-                    {cart.map(item => (
-                        <div key={item.menuItem.id} className="flex justify-between mb-1">
-                            <span className="flex-[2] uppercase">{item.menuItem.name}</span>
-                            <span className="flex-1 text-center">{item.quantity}</span>
-                            <span className="flex-1 text-right">{item.menuItem.price * item.quantity}</span>
+
+                    <div className="flex justify-between mb-2">
+                        <span>DATE: {new Date().toLocaleDateString()}</span>
+                        <span>TIME: {new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div className="mb-4">
+                        <p>ORDER TYPE: {printData.orderType.replace('_', ' ').toUpperCase()}</p>
+                        {printData.tableNumber && (
+                            <p>TABLE NO: {printData.tableNumber}</p>
+                        )}
+                        {printData.customerName && <p>CUSTOMER: {printData.customerName}</p>}
+                    </div>
+
+                    <div className="border-t border-dashed border-black pt-4">
+                        <div className="flex justify-between font-bold mb-2">
+                            <span className="flex-[2]">ITEM</span>
+                            <span className="flex-1 text-center">QTY</span>
+                            <span className="flex-1 text-right">PRICE</span>
                         </div>
-                    ))}
-                </div>
+                        {printData.items.map(item => (
+                            <div key={item.menuItem.id} className="flex justify-between mb-1">
+                                <span className="flex-[2] uppercase">{item.menuItem.name}</span>
+                                <span className="flex-1 text-center">{item.quantity}</span>
+                                <span className="flex-1 text-right">{item.menuItem.price * item.quantity}</span>
+                            </div>
+                        ))}
+                    </div>
 
-                <div className="border-t border-dashed border-black mt-4 pt-4 space-y-1">
-                    <div className="flex justify-between">
-                        <span>SUBTOTAL</span>
-                        <span>₹{cartTotals.subtotal.toFixed(2)}</span>
+                    <div className="border-t border-dashed border-black mt-4 pt-4 space-y-1">
+                        <div className="flex justify-between">
+                            <span>SUBTOTAL</span>
+                            <span>₹{printData.subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>GST ({cmsSettings.gstRate || '5'}%)</span>
+                            <span>₹{printData.tax.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-lg pt-2 border-t border-dashed border-black mt-2">
+                            <span>TOTAL</span>
+                            <span>₹{printData.total.toFixed(2)}</span>
+                        </div>
                     </div>
-                    <div className="flex justify-between">
-                        <span>GST (5%)</span>
-                        <span>₹{cartTotals.tax.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg pt-2 border-t border-dashed border-black mt-2">
-                        <span>TOTAL</span>
-                        <span>₹{cartTotals.total.toFixed(2)}</span>
-                    </div>
-                </div>
 
-                <div className="mt-8 text-center text-xs">
-                    <p>PAYMENT METHOD: {paymentMethod.toUpperCase()}</p>
-                    <p className="mt-4">THANK YOU FOR VISITING!</p>
-                    <p>HAVE A GREAT DAY</p>
+                    <div className="mt-8 text-center text-xs">
+                        <p>PAYMENT METHOD: {printData.paymentMethod.toUpperCase()}</p>
+                        <p className="mt-4">THANK YOU FOR VISITING!</p>
+                        <p>HAVE A GREAT DAY</p>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <UpgradeModal
                 open={showUpgrade}
