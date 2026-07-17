@@ -47,9 +47,10 @@ const amenityIcons: Record<string, React.ElementType> = {
 };
 
 // --- Google Maps URL parser ---
-function parseGoogleMapsUrl(input: string): string {
+export function parseGoogleMapsUrl(input: string): string {
     if (!input) return '';
     const trimmed = input.trim();
+    if (!trimmed) return '';
 
     // 1. If it's a full iframe HTML snippet, extract the src attribute
     if (trimmed.startsWith('<iframe')) {
