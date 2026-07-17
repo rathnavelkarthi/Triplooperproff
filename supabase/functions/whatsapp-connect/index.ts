@@ -1,18 +1,34 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ||
+  "https://triplooper.com,https://www.triplooper.com")
+  .split(",").map((s) => s.trim());
+
+function corsFor(req: Request) {
+  const origin = req.headers.get("Origin") || "";
+  const isAllowed = 
+    origin === "https://triplooper.com" ||
+    origin === "https://www.triplooper.com" ||
+    origin.endsWith(".triplooper.com") ||
+    origin.startsWith("http://localhost:");
+  const allow = isAllowed ? origin : "https://triplooper.com";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 // Shared Evolution server credentials live server-side only (never shipped in the frontend bundle).
 const DEFAULT_EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "";
 const DEFAULT_EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") || "";
 
+let activeCors: Record<string, string> = {};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...activeCors, "Content-Type": "application/json" },
     status,
   });
 }
@@ -43,6 +59,8 @@ async function evolution(
 }
 
 serve(async (req) => {
+  const corsHeaders = corsFor(req);
+  activeCors = corsHeaders;
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }

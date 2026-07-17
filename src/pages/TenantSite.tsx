@@ -46,6 +46,45 @@ const amenityIcons: Record<string, React.ElementType> = {
     wifi: Wifi, parking: Car, coffee: Coffee, pool: Waves, 'free wifi': Wifi, 'car park': Car
 };
 
+// --- Google Maps URL parser ---
+function parseGoogleMapsUrl(input: string): string {
+    if (!input) return '';
+    const trimmed = input.trim();
+
+    // 1. If it's a full iframe HTML snippet, extract the src attribute
+    if (trimmed.startsWith('<iframe')) {
+        const match = trimmed.match(/src="([^"]+)"/);
+        if (match && match[1]) {
+            return match[1];
+        }
+    }
+
+    // 2. If it's a direct embed URL, return it directly
+    if (trimmed.includes('google.com/maps/embed') || trimmed.includes('google.com/maps/embed/v1')) {
+        return trimmed;
+    }
+
+    // 3. If it's a maps.google.com/?q= or similar query URL, extract the query
+    if (trimmed.startsWith('http')) {
+        if (trimmed.includes('output=embed')) {
+            return trimmed;
+        }
+        try {
+            const urlObj = new URL(trimmed);
+            const q = urlObj.searchParams.get('q');
+            if (q) {
+                return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&output=embed&z=15`;
+            }
+        } catch {
+            // ignore
+        }
+        return `https://maps.google.com/maps?q=${encodeURIComponent(trimmed)}&output=embed&z=15`;
+    }
+
+    // 4. Otherwise, treat it as a plain text address / plus code query
+    return `https://maps.google.com/maps?q=${encodeURIComponent(trimmed)}&output=embed&z=15`;
+}
+
 // --- Star rating ---
 function Stars({ count }: { count: number }) {
     return (
@@ -1487,7 +1526,7 @@ export default function TenantSite() {
                                 loading="lazy"
                                 allowFullScreen
                                 referrerPolicy="no-referrer-when-downgrade"
-                                src={`https://maps.google.com/maps?q=${encodeURIComponent(settings.googleMapsUrl.startsWith('http') ? settings.googleMapsUrl.replace('https://maps.google.com/maps?q=', '').replace('https://www.google.com/maps?q=', '') : settings.googleMapsUrl)}&output=embed&z=15`}
+                                src={parseGoogleMapsUrl(settings.googleMapsUrl)}
                             />
                         ) : tenant.google_place_id ? (
                             <iframe

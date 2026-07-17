@@ -9,7 +9,12 @@ const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ||
 
 function corsFor(req: Request) {
   const origin = req.headers.get('Origin') || '';
-  const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const isAllowed = 
+    origin === 'https://triplooper.com' ||
+    origin === 'https://www.triplooper.com' ||
+    origin.endsWith('.triplooper.com') ||
+    origin.startsWith('http://localhost:');
+  const allow = isAllowed ? origin : 'https://triplooper.com';
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -62,6 +67,13 @@ serve(async (req) => {
       });
     }
 
+    const PLATFORM_ADMIN_EMAILS = [
+      'rathnavelkarthi1@gmail.com',
+      'admin@triplooper.com'
+    ];
+    const callerEmail = claims?.email as string | undefined;
+    const isPlatformAdmin = callerEmail && PLATFORM_ADMIN_EMAILS.some(e => e.toLowerCase() === callerEmail.toLowerCase());
+
     const { data: callerLink } = await supabaseAdmin
       .from('user_properties')
       .select('role, is_owner')
@@ -72,7 +84,7 @@ serve(async (req) => {
       .from('tenants').select('id').eq('id', tenant_id).eq('owner_id', callerId).maybeSingle();
 
     const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'BUSINESS_ADMIN', 'MANAGER']);
-    const isAuthorized = !!ownedTenant || callerLink?.is_owner ||
+    const isAuthorized = isPlatformAdmin || !!ownedTenant || callerLink?.is_owner ||
       (callerLink?.role && ADMIN_ROLES.has(String(callerLink.role).toUpperCase()));
     if (!isAuthorized) {
       return new Response(JSON.stringify({ error: 'Forbidden: not an admin of this tenant' }), {

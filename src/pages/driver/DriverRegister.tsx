@@ -5,7 +5,8 @@ import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { 
   Car, Shield, FileText, User, Mail, Phone, Lock, 
-  ArrowRight, KeyRound, AlertCircle, CheckCircle2, Loader2
+  ArrowRight, KeyRound, AlertCircle, CheckCircle2, Loader2,
+  Eye, EyeOff
 } from 'lucide-react';
 
 export default function DriverRegister() {
@@ -20,6 +21,7 @@ export default function DriverRegister() {
   
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -182,13 +184,20 @@ export default function DriverRegister() {
                         <Lock size={16} />
                       </div>
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         required
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="block w-full pl-10 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0E2A38]/15 focus:border-[#0E2A38]/30"
+                        className="block w-full pl-10 pr-10 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0E2A38]/15 focus:border-[#0E2A38]/30"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
                     </div>
                   </div>
                 </div>

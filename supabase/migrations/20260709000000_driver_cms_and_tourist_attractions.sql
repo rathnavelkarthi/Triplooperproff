@@ -28,17 +28,18 @@ begin
   select * into v_tenant from tenants
   where subdomain = lower(p_subdomain) and is_active = true limit 1;
   if v_tenant.id is null then return null; end if;
-
+ 
   select * into v_room from rooms
   where id = p_room_id and tenant_id = v_tenant.id limit 1;
   if v_room.id is null then return null; end if;
-
+ 
   select jsonb_build_object(
     'room', jsonb_build_object(
       'id', v_room.id, 'name', v_room.name, 'type', v_room.type,
       'description', v_room.description, 'price_per_night', v_room.price_per_night,
       'max_occupancy', v_room.max_occupancy, 'amenities', v_room.amenities, 'images', v_room.images,
-      'tourist_attractions', v_room.tourist_attractions
+      'tourist_attractions', v_room.tourist_attractions,
+      'is_available', (v_room.is_available and v_room.status <> 'Maintenance')
     ),
     'tenant', jsonb_build_object(
       'id', v_tenant.id, 'business_name', v_tenant.business_name,
@@ -49,17 +50,18 @@ begin
       select jsonb_agg(jsonb_build_object(
         'id', r.id, 'name', r.name, 'type', r.type,
         'price_per_night', r.price_per_night, 'images', r.images,
-        'tourist_attractions', r.tourist_attractions
+        'tourist_attractions', r.tourist_attractions,
+        'is_available', (r.is_available and r.status <> 'Maintenance')
       ) order by r.id)
       from rooms r
       where r.tenant_id = v_tenant.id and r.id <> p_room_id and r.show_on_website = true
     ), '[]'::jsonb)
   ) into v_result;
-
+ 
   return v_result;
 end;
 $$;
-
+ 
 -- 4. Redefine get_tenant_site function to include tourist_attractions
 drop function if exists public.get_tenant_site(text);
 create or replace function public.get_tenant_site(p_subdomain text)
@@ -75,11 +77,11 @@ begin
   select * into v_tenant from tenants
   where subdomain = lower(p_subdomain) and is_active = true
   limit 1;
-
+ 
   if v_tenant.id is null then
     return null;
   end if;
-
+ 
   select jsonb_build_object(
     'tenant', jsonb_build_object(
       'id', v_tenant.id,
@@ -98,7 +100,8 @@ begin
       select jsonb_agg(jsonb_build_object(
         'id', r.id, 'name', r.name, 'type', r.type, 'description', r.description,
         'price_per_night', r.price_per_night, 'max_occupancy', r.max_occupancy,
-        'amenities', r.amenities, 'images', r.images, 'tourist_attractions', r.tourist_attractions
+        'amenities', r.amenities, 'images', r.images, 'tourist_attractions', r.tourist_attractions,
+        'is_available', (r.is_available and r.status <> 'Maintenance')
       ) order by r.id)
       from rooms r where r.tenant_id = v_tenant.id and r.show_on_website = true
     ), '[]'::jsonb),
@@ -127,7 +130,7 @@ begin
       from gallery_images g where g.tenant_id = v_tenant.id
     ), '[]'::jsonb)
   ) into v_result;
-
+ 
   return v_result;
 end;
 $$;

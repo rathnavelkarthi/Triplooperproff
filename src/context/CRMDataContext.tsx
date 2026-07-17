@@ -520,14 +520,16 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
     const deleteReservation = async (id: string) => {
         const { error } = await supabase.from('reservations').delete().eq('id', id);
-        if (!error) setReservations(reservations.filter(r => r.id !== id));
+        if (error) throw error;
+        setReservations(reservations.filter(r => r.id !== id));
     };
 
     const updateStaff = async (id: string, updatedData: Partial<StaffMember>) => {
         const updatePayload: any = { ...updatedData };
         if (updatedData.status) updatePayload.status = updatedData.status.toUpperCase();
         const { error } = await supabase.from('staff').update(updatePayload).eq('id', id);
-        if (!error) setStaff(prev => prev.map(s => s.id === id ? { ...s, ...updatedData } : s));
+        if (error) throw error;
+        setStaff(prev => prev.map(s => s.id === id ? { ...s, ...updatedData } : s));
     };
 
     const updateReservation = async (id: string, updatedData: Partial<Reservation>) => {
@@ -550,36 +552,35 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         if (updatedData.source) updatePayload.source = updatedData.source;
         const oldReservation = reservations.find(r => r.id === id);
         const { error } = await supabase.from('reservations').update(updatePayload).eq('id', id);
-        if (!error) {
-            setReservations(prev => prev.map(r => r.id === id ? { ...r, ...updatedData } : r));
-            // Send email on status change
-            if (oldReservation && updatedData.status && oldReservation.status !== updatedData.status) {
-                const merged = { ...oldReservation, ...updatedData };
-                if (merged.guest_email) {
-                    if (updatedData.status === 'Cancelled') {
-                        sendBookingCancelled({
-                            guestName: merged.guest,
-                            guestEmail: merged.guest_email,
-                            roomType: merged.room,
-                            checkIn: merged.checkIn,
-                            checkOut: merged.checkOut,
-                            amount: merged.amount || 0,
-                            gstAmount: merged.gst_amount || 0,
-                            reservationId: id,
-                            businessName: tenant?.business_name || 'Our Hotel',
-                        });
-                    } else {
-                        sendBookingStatusChange({
-                            guestName: merged.guest,
-                            guestEmail: merged.guest_email,
-                            roomType: merged.room,
-                            checkIn: merged.checkIn,
-                            checkOut: merged.checkOut,
-                            newStatus: updatedData.status,
-                            reservationId: id,
-                            businessName: tenant?.business_name || 'Our Hotel',
-                        });
-                    }
+        if (error) throw error;
+        setReservations(prev => prev.map(r => r.id === id ? { ...r, ...updatedData } : r));
+        // Send email on status change
+        if (oldReservation && updatedData.status && oldReservation.status !== updatedData.status) {
+            const merged = { ...oldReservation, ...updatedData };
+            if (merged.guest_email) {
+                if (updatedData.status === 'Cancelled') {
+                    sendBookingCancelled({
+                        guestName: merged.guest,
+                        guestEmail: merged.guest_email,
+                        roomType: merged.room,
+                        checkIn: merged.checkIn,
+                        checkOut: merged.checkOut,
+                        amount: merged.amount || 0,
+                        gstAmount: merged.gst_amount || 0,
+                        reservationId: id,
+                        businessName: tenant?.business_name || 'Our Hotel',
+                    });
+                } else {
+                    sendBookingStatusChange({
+                        guestName: merged.guest,
+                        guestEmail: merged.guest_email,
+                        roomType: merged.room,
+                        checkIn: merged.checkIn,
+                        checkOut: merged.checkOut,
+                        newStatus: updatedData.status,
+                        reservationId: id,
+                        businessName: tenant?.business_name || 'Our Hotel',
+                    });
                 }
             }
         }
@@ -590,7 +591,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
             setting_key: key, setting_value: value,
             updated_at: new Date().toISOString(), tenant_id: tid(),
         });
-        if (!error) setCmsSettings(prev => ({ ...prev, [key]: value }));
+        if (error) throw error;
+        setCmsSettings(prev => ({ ...prev, [key]: value }));
     };
 
     const addRoom = async (roomData: Omit<Room, 'id'>) => {
@@ -603,7 +605,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
     const updateRoom = async (id: number, updatedData: Partial<Room>) => {
         const { error } = await supabase.from('rooms').update(updatedData).eq('id', id);
-        if (!error) setRooms(prev => prev.map(r => r.id === id ? { ...r, ...updatedData } : r));
+        if (error) throw error;
+        setRooms(prev => prev.map(r => r.id === id ? { ...r, ...updatedData } : r));
     };
 
     const deleteRoom = async (id: number) => {
@@ -616,15 +619,14 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.from('page_content').upsert({
             section, block_key: blockKey, ...content, tenant_id: tid(),
         });
-        if (!error) {
-            setPageContent(prev => {
-                const exists = prev.find(p => p.section === section && p.block_key === blockKey);
-                if (exists) {
-                    return prev.map(p => (p.section === section && p.block_key === blockKey) ? { ...p, ...content } : p);
-                }
-                return [...prev, { section, block_key: blockKey, ...content } as PageContent];
-            });
-        }
+        if (error) throw error;
+        setPageContent(prev => {
+            const exists = prev.find(p => p.section === section && p.block_key === blockKey);
+            if (exists) {
+                return prev.map(p => (p.section === section && p.block_key === blockKey) ? { ...p, ...content } : p);
+            }
+            return [...prev, { section, block_key: blockKey, ...content } as PageContent];
+        });
     };
 
     const checkInGuest = async (reservationId: string, roomId?: number) => {
@@ -699,17 +701,20 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
     const addMenuCategory = async (cat: Omit<MenuCategory, 'id'>) => {
         const { data, error } = await supabase.from('menu_categories').insert([{ ...cat, tenant_id: tid() }]).select();
-        if (!error && data) setMenuCategories(prev => [...prev, data[0] as any]);
+        if (error) throw error;
+        if (data) setMenuCategories(prev => [...prev, data[0] as any]);
     };
 
     const updateMenuCategory = async (id: number, data: Partial<MenuCategory>) => {
         const { error } = await supabase.from('menu_categories').update(data).eq('id', id);
-        if (!error) setMenuCategories(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+        if (error) throw error;
+        setMenuCategories(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
     };
 
     const deleteMenuCategory = async (id: number) => {
         const { error } = await supabase.from('menu_categories').delete().eq('id', id);
-        if (!error) setMenuCategories(prev => prev.filter(c => c.id !== id));
+        if (error) throw error;
+        setMenuCategories(prev => prev.filter(c => c.id !== id));
     };
 
     const addMenuItem = async (item: Omit<MenuItem, 'id'>) => {
@@ -732,17 +737,20 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
     const addRestaurantTable = async (table: Omit<RestaurantTable, 'id'>) => {
         const { data, error } = await supabase.from('restaurant_tables').insert([{ ...table, tenant_id: tid() }]).select();
-        if (!error && data) setRestaurantTables(prev => [...prev, data[0] as any]);
+        if (error) throw error;
+        if (data) setRestaurantTables(prev => [...prev, data[0] as any]);
     };
 
     const updateRestaurantTable = async (id: number, data: Partial<RestaurantTable>) => {
         const { error } = await supabase.from('restaurant_tables').update(data).eq('id', id);
-        if (!error) setRestaurantTables(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
+        if (error) throw error;
+        setRestaurantTables(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
     };
 
     const deleteRestaurantTable = async (id: number) => {
         const { error } = await supabase.from('restaurant_tables').delete().eq('id', id);
-        if (!error) setRestaurantTables(prev => prev.filter(t => t.id !== id));
+        if (error) throw error;
+        setRestaurantTables(prev => prev.filter(t => t.id !== id));
     };
 
     const addFoodOrder = async (
@@ -763,10 +771,14 @@ export function CRMProvider({ children }: { children: ReactNode }) {
             notes: order.notes,
         }]).select();
 
-        if (!orderErr && orderData) {
+        if (orderErr) throw orderErr;
+
+        if (orderData) {
             const orderId = orderData[0].id;
             const orderItems = items.map(i => ({ ...i, order_id: orderId }));
-            const { data: itemsData } = await supabase.from('food_order_items').insert(orderItems).select();
+            const { data: itemsData, error: itemsErr } = await supabase.from('food_order_items').insert(orderItems).select();
+
+            if (itemsErr) throw itemsErr;
 
             const newOrder: FoodOrder = {
                 ...orderData[0] as any,
@@ -809,7 +821,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
             ...updateData,
             updated_at: new Date().toISOString(),
         }).eq('id', id);
-        if (!error) setFoodOrders(prev => prev.map(o => o.id === id ? { ...o, ...data } : o));
+        if (error) throw error;
+        setFoodOrders(prev => prev.map(o => o.id === id ? { ...o, ...data } : o));
     };
 
     const refreshFoodOrders = async () => {
@@ -841,19 +854,22 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
     const addInventoryItem = async (item: Omit<InventoryItem, 'id'>) => {
         const { data, error } = await supabase.from('food_inventory').insert([{ ...item, tenant_id: tid() }]).select();
-        if (!error && data) setInventoryItems(prev => [...prev, data[0] as any]);
+        if (error) throw error;
+        if (data) setInventoryItems(prev => [...prev, data[0] as any]);
     };
 
     const updateInventoryItem = async (id: number, data: Partial<InventoryItem>) => {
         const { error } = await supabase.from('food_inventory').update({
             ...data, updated_at: new Date().toISOString(),
         }).eq('id', id);
-        if (!error) setInventoryItems(prev => prev.map(i => i.id === id ? { ...i, ...data } : i));
+        if (error) throw error;
+        setInventoryItems(prev => prev.map(i => i.id === id ? { ...i, ...data } : i));
     };
 
     const deleteInventoryItem = async (id: number) => {
         const { error } = await supabase.from('food_inventory').delete().eq('id', id);
-        if (!error) setInventoryItems(prev => prev.filter(i => i.id !== id));
+        if (error) throw error;
+        setInventoryItems(prev => prev.filter(i => i.id !== id));
     };
 
     return (

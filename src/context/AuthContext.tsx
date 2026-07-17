@@ -535,8 +535,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
               const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
               const payload = JSON.parse(atob(base64));
               const now = Math.floor(Date.now() / 1000);
-              // If token expires in less than 15 seconds, bypass cache and fetch a new one
-              if (now >= (payload.exp - 15)) {
+              // If token expires in less than 60 seconds, bypass cache and fetch a new one
+              if (now >= (payload.exp - 60)) {
                 t = await clerkSession.getToken({ skipCache: true });
               }
             } catch {
@@ -547,7 +547,27 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           }
         } catch { /* fall through to supabase session */ }
       }
-      return supabaseSession?.access_token ?? null;
+      if (supabaseSession) {
+        try {
+          const base64Url = supabaseSession.access_token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const payload = JSON.parse(atob(base64));
+          const now = Math.floor(Date.now() / 1000);
+          if (now >= (payload.exp - 15)) {
+            // Token is expired or about to expire. Let's refresh it!
+            const { data: { session: freshSession } } = await supabaseAuth.auth.getSession();
+            if (freshSession) {
+              setSupabaseSession(freshSession);
+              return freshSession.access_token;
+            }
+            return null; // session could not be refreshed (e.g. refresh token expired)
+          }
+          return supabaseSession.access_token;
+        } catch {
+          return null;
+        }
+      }
+      return null;
     });
     return () => setSupabaseTokenGetter(null);
   }, [clerkSession, supabaseSession]);

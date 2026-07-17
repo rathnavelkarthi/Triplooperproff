@@ -31,7 +31,7 @@ const emptyForm: NewOrderForm = {
 export default function FoodOrders() {
     const {
         foodOrders, menuItems, menuCategories, restaurantTables,
-        addFoodOrder, updateFoodOrderStatus, refreshFoodOrders,
+        addFoodOrder, updateFoodOrder, refreshFoodOrders,
     } = useCRM();
     const { canAdd, limitFor, currentCount, plan } = usePlanLimits();
     const [showUpgrade, setShowUpgrade] = useState(false);
@@ -49,7 +49,7 @@ export default function FoodOrders() {
         filteredOrders.filter(o => o.status === status);
 
     const moveOrder = async (orderId: number, newStatus: FoodOrder['status']) => {
-        await updateFoodOrderStatus(orderId, newStatus);
+        await updateFoodOrder(orderId, { status: newStatus });
     };
 
     const addItemToOrder = (menuItemId: number) => {

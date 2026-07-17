@@ -138,6 +138,13 @@ function buildInvoiceHTML(data: InvoiceData): string {
         <div class="footer-text">If you have any questions concerning this invoice, please contact reception.</div>
         <div class="footer-small">This is a computer-generated invoice and does not require a signature.</div>
       </div>
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 300);
+        };
+      </script>
     </body>
     </html>
   `;
@@ -156,11 +163,5 @@ export function printInvoice(data: InvoiceData): void {
     }
     printWindow.document.write(html);
     printWindow.document.close();
-
-    // Trigger print after a short delay for the content to render
-    printWindow.onload = () => {
-        setTimeout(() => {
-            printWindow.print();
-        }, 300);
-    };
+    printWindow.focus();
 }

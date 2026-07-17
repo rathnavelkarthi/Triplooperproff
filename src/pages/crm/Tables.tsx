@@ -41,9 +41,8 @@ export default function Tables() {
         if (!content) return;
         const w = window.open('', '_blank');
         if (!w) return;
-        w.document.write(`<html><head><title>QR Code</title><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;}</style></head><body>${content.innerHTML}</body></html>`);
+        w.document.write(`<html><head><title>QR Code</title><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;}</style></head><body>${content.innerHTML}<script>setTimeout(function(){window.print();window.close();},500);</script></body></html>`);
         w.document.close();
-        w.onload = () => { w.print(); w.close(); };
     };
 
     // Form state
@@ -65,18 +64,29 @@ export default function Tables() {
     const handleSave = async () => {
         if (!tableNumber.trim()) return;
         const data = { table_number: tableNumber, capacity: parseInt(capacity) || 4, section, status: 'available' as const };
-        if (editing) {
-            await updateRestaurantTable(editing.id, data);
-        } else {
-            await addRestaurantTable(data);
+        try {
+            if (editing) {
+                await updateRestaurantTable(editing.id, data);
+                toast.success('Table updated successfully');
+            } else {
+                await addRestaurantTable(data);
+                toast.success('Table added successfully');
+            }
+            resetForm();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save table');
         }
-        resetForm();
     };
 
     const cycleStatus = async (t: RestaurantTable) => {
         const cycle: RestaurantTable['status'][] = ['available', 'occupied', 'reserved'];
         const next = cycle[(cycle.indexOf(t.status) + 1) % cycle.length];
-        await updateRestaurantTable(t.id, { status: next });
+        try {
+            await updateRestaurantTable(t.id, { status: next });
+            toast.success(`Table ${t.table_number} status updated to ${next}`);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to update table status');
+        }
     };
 
     const filtered = filterSection === 'all' ? restaurantTables : restaurantTables.filter(t => t.section === filterSection);

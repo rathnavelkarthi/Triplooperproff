@@ -8,7 +8,12 @@ const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ||
 
 function corsFor(req: Request): Record<string, string> {
   const origin = req.headers.get("Origin") || "";
-  const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const isAllowed = 
+    origin === "https://triplooper.com" ||
+    origin === "https://www.triplooper.com" ||
+    origin.endsWith(".triplooper.com") ||
+    origin.startsWith("http://localhost:");
+  const allow = isAllowed ? origin : "https://triplooper.com";
   return {
     "Access-Control-Allow-Origin": allow,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
