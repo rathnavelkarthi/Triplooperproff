@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import TripPlannerWizard from '../components/tripPlanner/TripPlannerWizard';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'motion/react';
 import { 
@@ -316,6 +317,58 @@ export default function LandingPage() {
       ref={containerRef}
       className="font-inter bg-[#FDFBF7] text-[#0A1612] min-h-screen antialiased selection:bg-[#C9A646] selection:text-white overflow-x-hidden"
     >
+      <Helmet>
+        <title>Triplooper — All-in-One Hotel & Restaurant Management Platform</title>
+        <meta name="description" content="Manage your hotel or restaurant from one system. Direct booking engine, POS, room inventory, billing, guest WhatsApp portal, and analytics — all connected in real time." />
+        <link rel="canonical" href="https://triplooper.com/" />
+        
+        {/* OpenGraph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Triplooper" />
+        <meta property="og:title" content="Triplooper — All-in-One Hotel & Restaurant Management Platform" />
+        <meta property="og:description" content="Manage your hotel or restaurant from one system. Direct booking engine, POS, room inventory, billing, guest WhatsApp portal, and analytics." />
+        <meta property="og:url" content="https://triplooper.com/" />
+        <meta property="og:image" content="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Triplooper — All-in-One Hotel & Restaurant Management Platform" />
+        <meta name="twitter:description" content="Manage your hotel or restaurant from one system. Direct booking engine, POS, room inventory, billing, guest WhatsApp portal, and analytics." />
+        <meta name="twitter:image" content="https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&q=80" />
+
+        {/* Geographic / Local SEO Metadata */}
+        <meta name="geo.region" content="IN-TN" />
+        <meta name="geo.placename" content="Chennai, Tamil Nadu, India" />
+        <meta name="geo.position" content="13.0827;80.2707" />
+        <meta name="ICBM" content="13.0827, 80.2707" />
+
+        {/* JSON-LD Structured Data for Search & Generative Engine Optimization (GEO) */}
+        <script type="application/ld+json">{JSON.stringify([
+          {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Triplooper",
+            "operatingSystem": "Web, iOS, Android",
+            "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "Hospitality Management System",
+            "url": "https://triplooper.com",
+            "description": "All-in-One Hotel & Restaurant Management Platform featuring direct booking engine, POS, room inventory, billing, guest WhatsApp portal, and analytics.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "INR"
+            }
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Triplooper",
+            "url": "https://triplooper.com",
+            "logo": "https://triplooper.com/logo.png"
+          }
+        ])}</script>
+      </Helmet>
+
       <div className="noise-grain" />
 
       {/* ── NAVBAR ────────────────────────────────────────── */}
