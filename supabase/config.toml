@@ -12,13 +12,13 @@ entrypoint = "./functions/create-staff/index.ts"
 
 [functions.whatsapp-connect]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/whatsapp-connect/deno.json"
 entrypoint = "./functions/whatsapp-connect/index.ts"
 
 [functions.send-whatsapp]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/send-whatsapp/deno.json"
 entrypoint = "./functions/send-whatsapp/index.ts"
 
