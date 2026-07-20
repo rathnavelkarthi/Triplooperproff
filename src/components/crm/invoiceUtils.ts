@@ -63,7 +63,7 @@ function buildInvoiceHTML(data: InvoiceData): string {
     <body>
       <div class="header">
         <div>
-          <div class="hotel-name">${data.hotelName || 'Hotel Dashboard'}</div>
+          <div class="hotel-name">${data.hotelName || 'Triplooper Resort'}</div>
           <div class="hotel-detail" style="white-space: pre-wrap;">${data.hotelAddress || 'Hotel Address'}</div>
           <div class="hotel-detail">${data.hotelEmail || 'contact@hotel.com'}</div>
           <div class="hotel-detail">${data.hotelPhone || '+91 0000 0000'}</div>

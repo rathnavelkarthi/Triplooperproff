@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /site/*/room/
 
-Sitemap: https://easystay.com/sitemap.xml
+Sitemap: https://triplooper.com/sitemap.xml

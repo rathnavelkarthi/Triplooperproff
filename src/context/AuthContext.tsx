@@ -440,27 +440,42 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
       // 3. Fallback for Staff (Supabase users)
       if (type === 'SUPABASE') {
-        const { data: staffData, error: sError } = await supabaseAuth
-          .from('staff')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        
-        if (sError) {
-          console.error('[AuthContext] Staff lookup error:', sError);
-          throw sError;
+        let staffData: any = null;
+        try {
+          const { data: sData } = await supabaseAuth
+            .from('staff')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+          staffData = sData;
+        } catch (e) {
+          console.warn('[AuthContext] Staff ID lookup warning:', e);
         }
 
-        if (staffData) {
-          const { data: tenantData, error: stError } = await supabaseAuth
-            .from('tenants')
-            .select('*')
-            .eq('id', staffData.tenant_id)
-            .single();
+        if (!staffData && email) {
+          try {
+            const { data: sEmailData } = await supabaseAuth
+              .from('staff')
+              .select('*')
+              .eq('email', email.toLowerCase().trim())
+              .maybeSingle();
+            staffData = sEmailData;
+          } catch (e) {
+            console.warn('[AuthContext] Staff Email lookup warning:', e);
+          }
+        }
 
-          if (stError) {
-             console.error('[AuthContext] Staff tenant lookup error:', stError);
-             throw stError;
+        if (staffData && staffData.tenant_id) {
+          let tenantData: any = null;
+          try {
+            const { data: tData } = await supabaseAuth
+              .from('tenants')
+              .select('*')
+              .eq('id', staffData.tenant_id)
+              .maybeSingle();
+            tenantData = tData;
+          } catch (e) {
+            console.warn('[AuthContext] Staff Tenant lookup warning:', e);
           }
 
           if (tenantData) {
@@ -517,12 +532,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   // 1b. Register the Clerk session token with the Supabase client so RLS can
   // scope by the Clerk user id (auth.jwt() ->> 'sub'). See supabaseClient.ts.
-  //
-  // ⚠️ Staff accounts authenticate via Supabase Auth (signInWithPassword). The
-  // supabase-js `accessToken` option takes precedence over the built-in session,
-  // so we fall back to the Supabase session token when there is no Clerk session,
-  // keeping staff login working until staff are migrated to Clerk or moved to a
-  // dedicated client. See docs/CLERK-SUPABASE-SETUP.md.
   useEffect(() => {
     setSupabaseTokenGetter(async () => {
       if (clerkSession) {
@@ -535,12 +544,10 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
               const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
               const payload = JSON.parse(atob(base64));
               const now = Math.floor(Date.now() / 1000);
-              // If token expires in less than 60 seconds, bypass cache and fetch a new one
               if (now >= (payload.exp - 60)) {
                 t = await clerkSession.getToken({ skipCache: true });
               }
             } catch {
-              // If parsing failed (e.g. invalid format), refresh to be safe
               t = await clerkSession.getToken({ skipCache: true });
             }
             return t;
@@ -554,13 +561,12 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
           const payload = JSON.parse(atob(base64));
           const now = Math.floor(Date.now() / 1000);
           if (now >= (payload.exp - 15)) {
-            // Token is expired or about to expire. Let's refresh it!
             const { data: { session: freshSession } } = await supabaseAuth.auth.getSession();
             if (freshSession) {
               setSupabaseSession(freshSession);
               return freshSession.access_token;
             }
-            return null; // session could not be refreshed (e.g. refresh token expired)
+            return null;
           }
           return supabaseSession.access_token;
         } catch {
@@ -629,49 +635,28 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<{ error: string | null }> => {
     try {
-      // Only set loading if not already loading to avoid flicker loops
       if (!loadingRef.current) setLoading(true);
-      // Try Clerk first (for owners/managers) — Clerk v6 Signals API
+      // Try Clerk first (for owners/managers)
       const signInReady = await waitForSignIn();
       if (signInReady && signInRef.current) {
         try {
           console.log('[AuthContext] Attempting Clerk login for:', email);
-          // Step 1: seed the sign-in with the identifier
           const createRes = await signInRef.current.create({ identifier: email });
           if (createRes.error) throw createRes.error;
-          // Step 2: submit the password
           const pwRes = await signInRef.current.password({ password });
           if (pwRes.error) throw pwRes.error;
-          // Step 3: check status on the resource itself (Signals API)
           if (signInRef.current.status === 'complete') {
             console.log('[AuthContext] Clerk login successful');
-            // finalize() converts the completed sign-in into an active session.
-            // useUser will then re-fire → useEffect → loadProperties.
             const fin = await signInRef.current.finalize();
             if (fin.error) throw fin.error;
             return { error: null };
           }
-          console.log('[AuthContext] Clerk login status:', signInRef.current.status);
         } catch (clerkErr: any) {
-          console.error('[AuthContext] Clerk login error detail:', {
-            status: clerkErr?.status,
-            errors: clerkErr?.errors,
-            message: clerkErr?.message,
-          });
-          const firstError = clerkErr?.errors?.[0];
-          if (firstError) {
-            const code = firstError.code;
-            // If it is a direct password error or account lock or missing password (OAuth user), do not fall back.
-            if (code === 'form_password_incorrect' || code === 'form_password_nil' || code === 'user_locked') {
-              setLoading(false);
-              return { error: firstError.longMessage || firstError.message || 'Incorrect password.' };
-            }
-          }
-          console.log('[AuthContext] Clerk login failed, trying Supabase fallback...');
+          console.log('[AuthContext] Clerk login unhandled/failed for email, attempting Supabase fallback...');
         }
       }
 
-      // Fallback to Supabase (for staff)
+      // Fallback to Supabase (for staff members)
       const { data, error: sError } = await supabaseAuth.auth.signInWithPassword({ email, password });
       if (sError) {
         setLoading(false);
@@ -680,7 +665,6 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       
       if (data.session) {
         setSupabaseSession(data.session);
-        // Do not setLoading(false) here, let loadProperties handle it after session sync
         return { error: null };
       }
 

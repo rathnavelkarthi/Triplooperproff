@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Plus, Pencil, Trash2, X, Users, Armchair, QrCode, Download, Printer } from 'lucide-react';
 import { usePlanLimits } from '../../lib/planLimits';
 import UpgradeModal from '../../components/crm/UpgradeModal';
+import { toast } from 'sonner';
 
 const SECTIONS = ['main', 'outdoor', 'private', 'bar', 'rooftop'];
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {

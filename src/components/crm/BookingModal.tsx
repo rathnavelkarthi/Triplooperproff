@@ -10,6 +10,7 @@ interface BookingModalProps {
 
 export default function BookingModal({ isOpen, onClose, reservationId }: BookingModalProps) {
   const { rooms, reservations, addReservation, updateReservation } = useCRM();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     guest: '',
@@ -40,12 +41,14 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
     } else if (!reservationId && isOpen) {
         // Reset form for new booking
         const firstRoom = rooms[0];
+        const today = new Date().toISOString().split('T')[0];
+        const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
         setFormData({
             guest: '',
             room: firstRoom ? (firstRoom.room_number ? `Room ${firstRoom.room_number} - ${firstRoom.name}` : firstRoom.name) : 'Executive Double AC',
             room_id: firstRoom ? firstRoom.id : null,
-            checkIn: '',
-            checkOut: '',
+            checkIn: today,
+            checkOut: tomorrow,
             source: 'Direct',
             status: 'Pending',
             payment: 'Unpaid',
@@ -70,19 +73,42 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.guest || !formData.checkIn || !formData.checkOut) {
       alert("Please fill in all required fields (Guest Name, Check-in, Check-out).");
       return;
     }
 
-    if (reservationId) {
-      updateReservation(reservationId, formData);
-    } else {
-      addReservation(formData);
+    setIsSubmitting(true);
+    try {
+      // Compute duration and estimated amounts
+      const checkInDate = new Date(formData.checkIn);
+      const checkOutDate = new Date(formData.checkOut);
+      const nights = Math.max(1, Math.floor((checkOutDate.getTime() - checkInDate.getTime()) / 86400000));
+      const roomObj = rooms.find(r => r.id === formData.room_id);
+      const pricePerNight = roomObj?.price_per_night || 2500;
+      const amount = pricePerNight * nights;
+      const gst_amount = Math.round(amount * 0.12);
+
+      const payload = {
+        ...formData,
+        amount,
+        gst_amount,
+      };
+
+      if (reservationId) {
+        await updateReservation(reservationId, payload);
+      } else {
+        await addReservation(payload);
+      }
+      onClose();
+    } catch (err: any) {
+      console.error('Failed to save booking:', err);
+      alert(err.message || 'Failed to save booking. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -275,9 +301,10 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 text-sm font-semibold text-white bg-[var(--color-ocean-600)] hover:bg-[var(--color-ocean-800)] rounded-xl transition-colors shadow-sm"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 text-sm font-semibold text-white bg-[var(--color-ocean-600)] hover:bg-[var(--color-ocean-800)] rounded-xl transition-colors shadow-sm disabled:opacity-50"
             >
-              {reservationId ? 'Update Booking' : 'Confirm Booking'}
+              {isSubmitting ? 'Saving...' : (reservationId ? 'Update Booking' : 'Confirm Booking')}
             </button>
           </div>
         </form>

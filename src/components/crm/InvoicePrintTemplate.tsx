@@ -39,7 +39,7 @@ const InvoicePrintTemplate = forwardRef<HTMLDivElement, Props>(({ data }, ref) =
             <div className="flex justify-between items-start border-b border-gray-200 pb-8 mb-8">
                 <div>
                     <h1 className="font-serif text-3xl font-bold text-[#0c4a6e] leading-tight mb-2">
-                        {data.hotelName || 'Hotel Dashboard'}
+                        {data.hotelName || 'Triplooper Resort'}
                     </h1>
                     <p className="text-gray-500 text-sm whitespace-pre-wrap">{data.hotelAddress || 'Hotel Address'}</p>
                     <p className="text-gray-500 text-sm">{data.hotelEmail || 'contact@hotel.com'}</p>
