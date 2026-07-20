@@ -78,15 +78,12 @@ serve(async (req) => {
 
     const { data: tenant, error: tenantError } = await supabaseAdmin
       .from("tenants")
-      .select("evolution_api_url, evolution_instance_name, evolution_api_key, whatsapp_enabled")
+      .select("id, subdomain, evolution_api_url, evolution_instance_name, evolution_api_key, whatsapp_enabled")
       .eq("id", tenant_id)
       .single();
 
     if (tenantError || !tenant) {
       return json({ success: false, error: "Tenant not found" }, 400);
-    }
-    if (!tenant.evolution_instance_name) {
-      return json({ success: false, reason: "WhatsApp not connected for this tenant" }, 400);
     }
 
     const apiUrl = (tenant.evolution_api_url || DEFAULT_EVOLUTION_API_URL).replace(/\/$/, "");
@@ -95,8 +92,34 @@ serve(async (req) => {
       return json({ success: false, error: "Evolution API is not configured" }, 400);
     }
 
+    // Instance name: prefer DB value; otherwise derive the same way whatsapp-connect does.
+    // Derived fallback lets us self-heal when a tenant finished the QR scan on the
+    // Evolution server but the DB row never got written (poll skipped / page closed).
+    let instanceName = tenant.evolution_instance_name ||
+      `${(tenant.subdomain || "tenant").replace(/[^a-z0-9]/gi, "")}-${String(tenant.id).slice(0, 8)}`
+        .toLowerCase();
+
+    // Verify the instance is actually connected on the server before sending.
+    // If server says "open" but our DB was stale, heal the row so future calls are fast.
+    const stateRes = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
+      headers: { apikey: apiKey },
+    });
+    const stateData = stateRes.ok ? await stateRes.json().catch(() => null) : null;
+    const connState = (stateData as any)?.instance?.state || (stateData as any)?.state;
+
+    if (connState !== "open") {
+      return json({ success: false, reason: "WhatsApp not connected for this tenant" }, 400);
+    }
+
+    if (!tenant.evolution_instance_name || !tenant.whatsapp_enabled) {
+      await supabaseAdmin
+        .from("tenants")
+        .update({ evolution_instance_name: instanceName, whatsapp_enabled: true })
+        .eq("id", tenant.id);
+    }
+
     const normalized = normalizePhone(phone);
-    const res = await fetch(`${apiUrl}/message/sendText/${tenant.evolution_instance_name}`, {
+    const res = await fetch(`${apiUrl}/message/sendText/${instanceName}`, {
       method: "POST",
       headers: { apikey: apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({ number: normalized, text: message }),
