@@ -1,14 +1,21 @@
 
 [functions.create-staff]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/create-staff/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 entrypoint = "./functions/create-staff/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/create-staff/*.html" ]
+
+[functions.delete-staff]
+enabled = true
+verify_jwt = false
+import_map = "./functions/delete-staff/deno.json"
+entrypoint = "./functions/delete-staff/index.ts"
+
+[functions.delete-user]
+enabled = true
+verify_jwt = false
+import_map = "./functions/delete-user/deno.json"
+entrypoint = "./functions/delete-user/index.ts"
 
 [functions.whatsapp-connect]
 enabled = true
@@ -21,12 +28,6 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/send-whatsapp/deno.json"
 entrypoint = "./functions/send-whatsapp/index.ts"
-
-[functions.delete-user]
-enabled = true
-verify_jwt = true
-import_map = "./functions/delete-user/deno.json"
-entrypoint = "./functions/delete-user/index.ts"
 
 # Aiosell channel manager: authenticated CRM push (rates/inventory/restrictions).
 [functions.aiosell-push]

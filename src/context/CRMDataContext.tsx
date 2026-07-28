@@ -404,7 +404,17 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
         // Edge function returns { error } in the body for handled failures.
         if (error || (data && data.error)) {
-            const msg = data?.error || error?.message || "Failed to create staff member.";
+            let msg = data?.error;
+            if (!msg && error) {
+                if ('context' in error && (error as any).context) {
+                    try {
+                        const errBody = await (error as any).context.json();
+                        if (errBody?.error) msg = errBody.error;
+                    } catch (_) {}
+                }
+                if (!msg) msg = error.message;
+            }
+            if (!msg) msg = "Failed to create staff member.";
             console.error("Error creating staff:", msg);
             throw new Error(msg);
         }
@@ -432,7 +442,17 @@ export function CRMProvider({ children }: { children: ReactNode }) {
             body: { staff_id: id, tenant_id: tid() },
         });
         if (error || (data && data.error)) {
-            const msg = data?.error || error?.message || "Failed to remove staff member.";
+            let msg = data?.error;
+            if (!msg && error) {
+                if ('context' in error && (error as any).context) {
+                    try {
+                        const errBody = await (error as any).context.json();
+                        if (errBody?.error) msg = errBody.error;
+                    } catch (_) {}
+                }
+                if (!msg) msg = error.message;
+            }
+            if (!msg) msg = "Failed to remove staff member.";
             console.error("Error deleting staff:", msg);
             throw new Error(msg);
         }
