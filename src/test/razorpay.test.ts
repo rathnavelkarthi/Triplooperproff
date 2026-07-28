@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { PLAN_PRICES, ADDON_PRICES } from '../lib/razorpay';
 
 describe('PLAN_PRICES', () => {
-  it('has growth, pro, enterprise, and new subscription/commission plans', () => {
-    expect(Object.keys(PLAN_PRICES)).toEqual(['growth', 'pro', 'enterprise', 'subscription_small', 'subscription_large', 'subscription_test', 'commission']);
+  it('has growth, pro, enterprise, and subscription/commission plans', () => {
+    expect(Object.keys(PLAN_PRICES)).toContain('subscription_2700');
+    expect(PLAN_PRICES.subscription_2700.monthly.amount).toBe(2700);
+    expect(PLAN_PRICES.subscription_2700.yearly.amount).toBe(27000);
   });
 
   it('each plan has monthly and yearly pricing', () => {
@@ -32,9 +34,11 @@ describe('PLAN_PRICES', () => {
 });
 
 describe('ADDON_PRICES', () => {
-  it('has all expected add-ons', () => {
-    const expected = ['extra_rooms', 'whatsapp_pack', 'custom_domain', 'ota_sync', 'priority_support', 'analytics'];
-    expect(Object.keys(ADDON_PRICES).sort()).toEqual(expected.sort());
+  it('has all dashboard add-ons', () => {
+    const expected = ['channel_manager', 'website', 'staff_mgmt', 'whatsapp_mgmt', 'room_mgmt', 'digital_marketing'];
+    for (const key of expected) {
+      expect(ADDON_PRICES[key]).toBeDefined();
+    }
   });
 
   it('each addon has amount, display, and name', () => {

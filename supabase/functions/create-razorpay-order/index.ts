@@ -26,7 +26,7 @@ serve(async (req) => {
       throw new Error("Missing Authorization header");
     }
 
-    const { plan, billing_cycle, tenant_id, discount } = await req.json();
+    const { plan, billing_cycle, tenant_id, discount, custom_amount } = await req.json();
 
     if (!plan || !billing_cycle || !tenant_id) {
       throw new Error("Missing required fields");
@@ -34,20 +34,38 @@ serve(async (req) => {
 
     // Determine price in paise (1 INR = 100 paise)
     let amount = 0;
-    if (plan === 'growth') {
+    if (custom_amount && typeof custom_amount === 'number' && custom_amount > 0) {
+      amount = Math.round(custom_amount * 100);
+    } else if (plan === 'subscription_2700') {
+      amount = billing_cycle === 'yearly' ? 2700000 : 270000; // ₹27,000 yearly (10 mos paid) or ₹2,700 monthly
+    } else if (plan === 'addon_channel_manager') {
+      amount = billing_cycle === 'yearly' ? 1500000 : 150000;
+    } else if (plan === 'addon_website') {
+      amount = billing_cycle === 'yearly' ? 400000 : 40000;
+    } else if (plan === 'addon_staff_mgmt') {
+      amount = billing_cycle === 'yearly' ? 400000 : 40000;
+    } else if (plan === 'addon_whatsapp_mgmt') {
+      amount = billing_cycle === 'yearly' ? 400000 : 40000;
+    } else if (plan === 'addon_room_mgmt') {
+      amount = billing_cycle === 'yearly' ? 400000 : 40000;
+    } else if (plan === 'addon_digital_marketing') {
+      amount = billing_cycle === 'yearly' ? 1000000 : 100000;
+    } else if (plan === 'growth') {
       amount = billing_cycle === 'yearly' ? 2399900 : 249900;
     } else if (plan === 'pro') {
       amount = billing_cycle === 'yearly' ? 4799900 : 499900;
     } else if (plan === 'enterprise') {
       amount = billing_cycle === 'yearly' ? 9599900 : 999900;
     } else if (plan === 'subscription_small') {
-      amount = 1500000; // ₹15,000 yearly
+      amount = billing_cycle === 'yearly' ? 1500000 : 150000;
     } else if (plan === 'subscription_large') {
-      amount = 2100000; // ₹21,000 yearly
+      amount = billing_cycle === 'yearly' ? 2100000 : 210000;
     } else if (plan === 'subscription_test') {
       amount = 100; // ₹1 for testing
     } else if (plan === 'commission') {
       amount = 100; // ₹1 authorization charge for mandate setup
+    } else if (plan.startsWith('addon_')) {
+      amount = billing_cycle === 'yearly' ? 99900 : 10000;
     } else {
       throw new Error(`Invalid plan: ${plan}`);
     }

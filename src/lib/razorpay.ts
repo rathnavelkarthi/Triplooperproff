@@ -7,19 +7,27 @@ export const PLAN_PRICES: Record<string, Record<string, { amount: number; displa
     growth: { monthly: { amount: 2499, display: '₹2,499' }, yearly: { amount: 23999, display: '₹23,999' } },
     pro: { monthly: { amount: 4999, display: '₹4,999' }, yearly: { amount: 47999, display: '₹47,999' } },
     enterprise: { monthly: { amount: 9999, display: '₹9,999' }, yearly: { amount: 95999, display: '₹95,999' } },
+    subscription_2700: { monthly: { amount: 2700, display: '₹2,700' }, yearly: { amount: 27000, display: '₹27,000' } },
     subscription_small: { monthly: { amount: 1500, display: '₹1,500' }, yearly: { amount: 15000, display: '₹15,000' } },
     subscription_large: { monthly: { amount: 2100, display: '₹2,100' }, yearly: { amount: 21000, display: '₹21,000' } },
     subscription_test: { monthly: { amount: 1, display: '₹1' }, yearly: { amount: 1, display: '₹1' } },
     commission: { monthly: { amount: 0, display: '₹0' }, yearly: { amount: 0, display: '₹0' } }
 };
 
-export const ADDON_PRICES: Record<string, { amount: number; display: string; name: string }> = {
-    extra_rooms: { amount: 499, display: '₹499', name: 'Extra 10 Rooms' },
-    whatsapp_pack: { amount: 799, display: '₹799', name: 'WhatsApp Pack' },
-    custom_domain: { amount: 299, display: '₹299', name: 'Custom Domain' },
-    ota_sync: { amount: 1499, display: '₹1,499', name: 'OTA Channel Sync' },
-    priority_support: { amount: 999, display: '₹999', name: 'Priority Support' },
-    analytics: { amount: 699, display: '₹699', name: 'Advanced Analytics' },
+export const ADDON_PRICES: Record<string, { amount: number; yearlyAmount: number; display: string; name: string }> = {
+    channel_manager: { amount: 1500, yearlyAmount: 15000, display: '₹1,500/mo', name: 'Channel Manager' },
+    website: { amount: 400, yearlyAmount: 4000, display: '₹400/mo', name: 'Web Site' },
+    staff_mgmt: { amount: 400, yearlyAmount: 4000, display: '₹400/mo', name: 'Staff Management' },
+    whatsapp_mgmt: { amount: 400, yearlyAmount: 4000, display: '₹400/mo', name: 'WhatsApp Management' },
+    room_mgmt: { amount: 400, yearlyAmount: 4000, display: '₹400/mo', name: 'Room Management' },
+    digital_marketing: { amount: 1000, yearlyAmount: 10000, display: '₹1,000/mo', name: 'Digital Marketing' },
+    // Legacy keys kept for compatibility
+    extra_rooms: { amount: 499, yearlyAmount: 4990, display: '₹499/mo', name: 'Extra 10 Rooms' },
+    whatsapp_pack: { amount: 799, yearlyAmount: 7990, display: '₹799/mo', name: 'WhatsApp Pack' },
+    custom_domain: { amount: 299, yearlyAmount: 2990, display: '₹299/mo', name: 'Custom Domain' },
+    ota_sync: { amount: 1499, yearlyAmount: 14990, display: '₹1,499/mo', name: 'OTA Channel Sync' },
+    priority_support: { amount: 999, yearlyAmount: 9990, display: '₹999/mo', name: 'Priority Support' },
+    analytics: { amount: 699, yearlyAmount: 6990, display: '₹699/mo', name: 'Advanced Analytics' },
 };
 
 export function loadRazorpayScript(): Promise<boolean> {
@@ -144,7 +152,8 @@ export async function initiateAddonPayment(
     addonId: string,
     tenantId: string,
     userEmail: string,
-    businessName: string
+    businessName: string,
+    billingCycle: 'monthly' | 'yearly' = 'monthly'
 ): Promise<PaymentResult> {
     const addon = ADDON_PRICES[addonId];
     if (!addon) return { success: false, error: 'Unknown add-on' };
@@ -165,7 +174,7 @@ export async function initiateAddonPayment(
     const orderRes = await fetch(`${SUPABASE_URL}/functions/v1/create-razorpay-order`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ plan: `addon_${addonId}`, billing_cycle: 'monthly', tenant_id: tenantId }),
+        body: JSON.stringify({ plan: `addon_${addonId}`, billing_cycle: billingCycle, tenant_id: tenantId }),
     });
 
     if (!orderRes.ok) {
@@ -181,10 +190,10 @@ export async function initiateAddonPayment(
             amount,
             currency,
             name: 'Triplooper',
-            description: `Add-on: ${addon.name}`,
+            description: `Add-on: ${addon.name} (${billingCycle})`,
             order_id,
             prefill: { email: userEmail },
-            notes: { business_name: businessName, addon: addonId },
+            notes: { business_name: businessName, addon: addonId, billing_cycle: billingCycle },
             theme: { color: '#0E2A38' },
             handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
                 const verifyHeaders: Record<string, string> = {
@@ -216,3 +225,85 @@ export async function initiateAddonPayment(
         rzp.open();
     });
 }
+
+export async function initiateCustomBundlePayment(
+    amountInRupees: number,
+    descriptionText: string,
+    tenantId: string,
+    userEmail: string,
+    businessName: string,
+    billingCycle: 'monthly' | 'yearly',
+    planName: string = 'subscription_2700'
+): Promise<PaymentResult> {
+    const loaded = await loadRazorpayScript();
+    if (!loaded) return { success: false, error: 'Failed to load Razorpay SDK' };
+
+    const token = await getSupabaseToken();
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const orderRes = await fetch(`${SUPABASE_URL}/functions/v1/create-razorpay-order`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+            plan: planName,
+            billing_cycle: billingCycle,
+            tenant_id: tenantId,
+            custom_amount: amountInRupees
+        }),
+    });
+
+    if (!orderRes.ok) {
+        const err = await orderRes.json().catch(() => ({ error: `HTTP ${orderRes.status}` }));
+        return { success: false, error: err.error || 'Order creation failed' };
+    }
+
+    const { order_id, amount, currency, key_id } = await orderRes.json();
+
+    return new Promise((resolve) => {
+        const options = {
+            key: key_id,
+            amount,
+            currency,
+            name: 'Triplooper',
+            description: descriptionText,
+            order_id,
+            prefill: { email: userEmail },
+            notes: { business_name: businessName, plan: planName, billing_cycle: billingCycle },
+            theme: { color: '#0E2A38' },
+            handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
+                const verifyHeaders: Record<string, string> = {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                };
+                if (token) {
+                    verifyHeaders['Authorization'] = `Bearer ${token}`;
+                }
+
+                const verifyRes = await fetch(`${SUPABASE_URL}/functions/v1/verify-razorpay-payment`, {
+                    method: 'POST',
+                    headers: verifyHeaders,
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                    }),
+                });
+                if (verifyRes.ok) {
+                    resolve({ success: true, plan: planName });
+                } else {
+                    resolve({ success: false, error: 'Payment verification failed' });
+                }
+            },
+            modal: { ondismiss: () => resolve({ success: false, error: 'Payment cancelled' }) },
+        };
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+    });
+}
+

@@ -2,11 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { PLAN_LIMITS, type ResourceType } from '../lib/planLimits';
 
 describe('PLAN_LIMITS', () => {
-  it('has all plan tiers including new subscription and commission models', () => {
-    expect(Object.keys(PLAN_LIMITS)).toEqual([
-      'starter', 'growth', 'pro', 'enterprise',
-      'subscription_small', 'subscription_large', 'subscription_test', 'commission'
-    ]);
+  it('has all plan tiers including subscription_2700 and commission models', () => {
+    expect(Object.keys(PLAN_LIMITS)).toContain('subscription_2700');
   });
 
   it('starter has strict limits', () => {

@@ -280,57 +280,7 @@ export default function PricingPage() {
                     {/* PRICING PLANS GRID */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
                         
-                        {/* 1. Subscription (Max 10 Rooms) */}
-                        <div className="relative bg-white border border-neutral-200 rounded-3xl p-8 shadow-lg flex flex-col justify-between space-y-6 overflow-hidden">
-                            <div className="space-y-4 text-left font-sans">
-                                <div>
-                                    <span className="text-xs font-bold uppercase tracking-widest text-[#ef4d23] bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">Subscription Method</span>
-                                    <h3 className="text-xl font-bold text-[#0E2A38] tracking-tight mt-3">Max 10 Rooms</h3>
-                                    <p className="text-xs text-neutral-500 mt-1 font-light leading-relaxed">
-                                        For small hotels or guesthouses. Fully unlocks all system features with a lower yearly rate.
-                                    </p>
-                                </div>
-
-                                <div className="pt-2">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-4xl font-extrabold text-[#0E2A38] tracking-tight">₹15,000</span>
-                                        <span className="text-sm text-neutral-500 font-medium">/ year</span>
-                                    </div>
-                                    <p className="text-[11px] text-[#ef4d23] font-semibold mt-1">+ 12% commission per booking</p>
-                                </div>
-                                
-                                <div className="h-px bg-neutral-100 my-4" />
-
-                                <h4 className="text-xs font-bold text-[#0E2A38] uppercase tracking-wide">Included Features:</h4>
-                                <ul className="space-y-2.5 text-xs text-neutral-600 font-light">
-                                    {[
-                                        "Custom Website & Booking Engine",
-                                        "OTA Channel Manager Sync",
-                                        "Guest Portal with Aadhaar Check-In",
-                                        "Restaurant POS & Digital Menus",
-                                        "WhatsApp Booking Automations",
-                                        "GST Billing & Invoice Folios",
-                                        "Up to 10 Active Rooms",
-                                    ].map((f, i) => (
-                                        <li key={i} className="flex gap-2 items-center">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-[#0e2a38]" />
-                                            <span>{f}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            <div className="pt-4">
-                                <a
-                                    href="/signup"
-                                    className="w-full bg-[#0E2A38] hover:bg-[#ef4d23] text-white font-bold py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md text-center text-sm"
-                                >
-                                    <span>Get Started</span>
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* 2. Subscription (11+ Rooms) */}
+                        {/* 1. Subscription Plan */}
                         <div className="relative bg-white border-2 border-[#0E2A38] rounded-3xl p-8 shadow-xl flex flex-col justify-between space-y-6 overflow-hidden transform lg:-translate-y-2">
                             <div className="absolute top-0 right-6 -translate-y-1/2 bg-[#ef4d23] text-white font-extrabold text-[9px] uppercase tracking-widest px-4 py-1 rounded-full shadow-md">
                                 Popular
@@ -338,33 +288,32 @@ export default function PricingPage() {
                             
                             <div className="space-y-4 text-left font-sans">
                                 <div>
-                                    <span className="text-xs font-bold uppercase tracking-widest text-[#ef4d23] bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">Subscription Method</span>
-                                    <h3 className="text-xl font-bold text-[#0E2A38] tracking-tight mt-3">Unlimited Rooms</h3>
+                                    <span className="text-xs font-bold uppercase tracking-widest text-[#ef4d23] bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">Complete PMS Suite</span>
+                                    <h3 className="text-xl font-bold text-[#0E2A38] tracking-tight mt-3">Full Subscription Plan</h3>
                                     <p className="text-xs text-neutral-500 mt-1 font-light leading-relaxed">
-                                        For mid-sized and large hotels. Unrestricted scale with every feature at your disposal.
+                                        All-in-one software for hotel operations, booking engine, guest check-in, and billing.
                                     </p>
                                 </div>
 
                                 <div className="pt-2">
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-4xl font-extrabold text-[#0E2A38] tracking-tight">₹21,000</span>
+                                        <span className="text-4xl font-extrabold text-[#0E2A38] tracking-tight">₹27,000</span>
                                         <span className="text-sm text-neutral-500 font-medium">/ year</span>
                                     </div>
-                                    <p className="text-[11px] text-[#ef4d23] font-semibold mt-1">+ 12% commission per booking</p>
+                                    <p className="text-[11px] text-emerald-600 font-bold mt-1">2 Months FREE on annual payment (₹2,700 / mo)</p>
+                                    <p className="text-[11px] text-[#ef4d23] font-semibold mt-0.5">+ 12% commission per booking</p>
                                 </div>
                                 
                                 <div className="h-px bg-neutral-100 my-4" />
 
-                                <h4 className="text-xs font-bold text-[#0E2A38] uppercase tracking-wide">Included Features:</h4>
+                                <h4 className="text-xs font-bold text-[#0E2A38] uppercase tracking-wide">Included Core Features:</h4>
                                 <ul className="space-y-2.5 text-xs text-neutral-600 font-light">
                                     {[
-                                        "Custom Website & Booking Engine",
-                                        "OTA Channel Manager Sync",
-                                        "Guest Portal with Aadhaar Check-In",
-                                        "Restaurant POS & Digital Menus",
-                                        "WhatsApp Booking Automations",
-                                        "GST Billing & Invoice Folios",
-                                        "Unlimited Rooms & Staff",
+                                        "Custom Website & Direct Booking Engine",
+                                        "Guest Check-In Portal & Aadhaar Verification",
+                                        "GST Invoicing & Billing Folios",
+                                        "Unlimited Rooms & Staff Members",
+                                        "Modular Add-ons available in Dashboard",
                                     ].map((f, i) => (
                                         <li key={i} className="flex gap-2 items-center">
                                             <div className="w-1.5 h-1.5 rounded-full bg-[#ef4d23]" />

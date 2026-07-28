@@ -31,37 +31,9 @@ export default function UpgradeModal({ open, onClose, resource, plan, currentCou
 
     if (!open) return null;
 
-    const handleUpgrade = async () => {
-        if (!tenant || !user) {
-            toast.error('Authentication required');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const result = await initiatePayment(
-                nextPlan,
-                'monthly', // Default billing cycle for quick upgrades from the modal
-                tenant.id,
-                user.email || '',
-                tenant.business_name,
-                20 // Pass 20 for the 20% discount!
-            );
-
-            if (result.success) {
-                toast.success(`Successfully upgraded to ${nextPlan.charAt(0).toUpperCase() + nextPlan.slice(1)} plan!`);
-                onClose();
-                window.location.reload(); // Refresh to apply new limits
-            } else {
-                if (result.error !== 'Payment cancelled by user') {
-                    toast.error(result.error || 'Payment failed');
-                }
-            }
-        } catch (error) {
-            toast.error('An unexpected error occurred');
-        } finally {
-            setLoading(false);
-        }
+    const handleUpgrade = () => {
+        onClose();
+        navigate('/admin/billing');
     };
 
     return createPortal(
