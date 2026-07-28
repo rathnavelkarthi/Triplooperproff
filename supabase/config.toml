@@ -27,3 +27,34 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/delete-user/deno.json"
 entrypoint = "./functions/delete-user/index.ts"
+
+# Aiosell channel manager: authenticated CRM push (rates/inventory/restrictions).
+[functions.aiosell-push]
+enabled = true
+verify_jwt = true
+import_map = "./functions/aiosell-push/deno.json"
+entrypoint = "./functions/aiosell-push/index.ts"
+
+# Aiosell channel manager: authenticated CRM fetch/sync + mapping.
+[functions.aiosell-sync]
+enabled = true
+verify_jwt = true
+import_map = "./functions/aiosell-sync/deno.json"
+entrypoint = "./functions/aiosell-sync/index.ts"
+
+# Aiosell reservation webhook. Called by Aiosell (not a Supabase user), so
+# verify_jwt is off; the function validates inbound HTTP Basic Auth itself.
+[functions.aiosell-webhook]
+enabled = true
+verify_jwt = false
+import_map = "./functions/aiosell-webhook/deno.json"
+entrypoint = "./functions/aiosell-webhook/index.ts"
+
+# Aiosell inbound data push (inventory/rates/restrictions). Aiosell pushes data
+# to our PMS; Basic Auth is validated inside the function.
+# URL subpaths: /inventory, /inventory+restrictions, /rates, /rates+restrictions
+[functions.aiosell-inbound]
+enabled = true
+verify_jwt = false
+import_map = "./functions/aiosell-inbound/deno.json"
+entrypoint = "./functions/aiosell-inbound/index.ts"

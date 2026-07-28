@@ -1,6 +1,26 @@
 {
     "rewrites": [
         {
+            "source": "/api/webhooks/aiosell/reservation",
+            "destination": "https://fxcdipysjnudeuejwuyt.supabase.co/functions/v1/aiosell-webhook"
+        },
+        {
+            "source": "/api/webhooks/aiosell/inventory",
+            "destination": "https://fxcdipysjnudeuejwuyt.supabase.co/functions/v1/aiosell-inbound/inventory"
+        },
+        {
+            "source": "/api/webhooks/aiosell/inventory-restrictions",
+            "destination": "https://fxcdipysjnudeuejwuyt.supabase.co/functions/v1/aiosell-inbound/inventory+restrictions"
+        },
+        {
+            "source": "/api/webhooks/aiosell/rates",
+            "destination": "https://fxcdipysjnudeuejwuyt.supabase.co/functions/v1/aiosell-inbound/rates"
+        },
+        {
+            "source": "/api/webhooks/aiosell/rates-restrictions",
+            "destination": "https://fxcdipysjnudeuejwuyt.supabase.co/functions/v1/aiosell-inbound/rates+restrictions"
+        },
+        {
             "source": "/api/(.*)",
             "destination": "/api/$1"
         },
