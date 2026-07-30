@@ -3,6 +3,7 @@ import { useAuth, isPlatformAdminEmail } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendBusinessInvite, sendVerificationApproved, sendVerificationRejected, sendCustomEmail } from '../../lib/email';
+import { getPropertySubscriptionDetails, PLAN_NAMES } from '../../lib/subscriptionUtils';
 import { toast } from 'sonner';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -34,6 +35,10 @@ interface PlatformUser {
     subdomain: string | null;
     created_at: string;
     verification_status?: string;
+    subscription_expires_at?: string | null;
+    grace_period_days?: number;
+    manual_override?: boolean | null;
+    subscription_status?: string;
     dailyRevenue?: number;
     monthlyRevenue?: number;
     dailyCommission?: number;
@@ -220,7 +225,7 @@ export default function PlatformAdmin() {
       // Load all tenants
       const { data: tenants } = await supabase
         .from('tenants')
-        .select('id, business_name, business_type, subdomain, plan, is_active, owner_id, custom_email, created_at, verification_status, verification_reason, verified_at')
+        .select('id, business_name, business_type, subdomain, plan, is_active, owner_id, custom_email, created_at, verification_status, verification_reason, verified_at, subscription_plan, subscription_expires_at, grace_period_days, manual_override')
         .order('created_at', { ascending: false });
 
       // Load all property documents
@@ -248,11 +253,10 @@ export default function PlatformAdmin() {
         .from('staff')
         .select('id, email, name');
 
-      // Load active subscriptions
+      // Load subscriptions
       const { data: subs } = await supabase
         .from('subscriptions')
         .select('*')
-        .eq('status', 'paid')
         .order('created_at', { ascending: false });
 
       const staffEmailMap = new Map<string, string>();
@@ -331,30 +335,35 @@ export default function PlatformAdmin() {
             
           const name = staffNameMap.get(link.user_id);
 
+           const tenantSub = subs ? subs.find(s => s.tenant_id === tenant.id) : null;
+           const propPlan = tenantSub?.plan || tenant.subscription_plan || tenant.plan || 'starter';
+           const propExpires = tenantSub?.expires_at || tenant.subscription_expires_at || null;
+           const propGrace = tenantSub?.grace_period_days || tenant.grace_period_days || 3;
+           const propOverride = tenantSub?.manual_override !== undefined && tenantSub?.manual_override !== null ? tenantSub.manual_override : tenant.manual_override;
+
            ensureUser(link.user_id, email, name, tenant.created_at);
            const stats = getTenantStats(tenant.id);
            userMap.get(link.user_id)!.properties.push({
              id: tenant.id,
              business_name: tenant.business_name,
              business_type: tenant.business_type,
-             plan: tenant.plan || 'starter',
+             plan: propPlan,
              is_active: tenant.is_active,
              subdomain: tenant.subdomain,
              created_at: tenant.created_at,
              verification_status: tenant.verification_status,
+             subscription_expires_at: propExpires,
+             grace_period_days: propGrace,
+             manual_override: propOverride,
              ...stats
            });
            
-           // Attach subscription if found for any of user's tenants
-           if (subs) {
-             const tenantSub = subs.find(s => s.tenant_id === tenant.id);
-             if (tenantSub) {
-               userMap.get(link.user_id)!.subscription = {
-                 plan: tenantSub.plan,
-                 status: tenantSub.status,
-                 expires_at: tenantSub.expires_at
-               };
-             }
+           if (tenantSub) {
+             userMap.get(link.user_id)!.subscription = {
+               plan: tenantSub.plan,
+               status: tenantSub.status,
+               expires_at: tenantSub.expires_at
+             };
            }
          }
        }
@@ -375,29 +384,36 @@ export default function PlatformAdmin() {
                }
              }
              const name = staffNameMap.get(t.owner_id);
+
+             const tenantSub = subs ? subs.find(s => s.tenant_id === t.id) : null;
+             const propPlan = tenantSub?.plan || t.subscription_plan || t.plan || 'starter';
+             const propExpires = tenantSub?.expires_at || t.subscription_expires_at || null;
+             const propGrace = tenantSub?.grace_period_days || t.grace_period_days || 3;
+             const propOverride = tenantSub?.manual_override !== undefined && tenantSub?.manual_override !== null ? tenantSub.manual_override : t.manual_override;
+
              ensureUser(t.owner_id, email, name, t.created_at);
              const stats = getTenantStats(t.id);
              userMap.get(t.owner_id)!.properties.push({
                id: t.id,
                business_name: t.business_name,
                business_type: t.business_type,
-               plan: t.plan || 'starter',
+               plan: propPlan,
                is_active: t.is_active,
                subdomain: t.subdomain,
                created_at: t.created_at,
                verification_status: t.verification_status,
+               subscription_expires_at: propExpires,
+               grace_period_days: propGrace,
+               manual_override: propOverride,
                ...stats
              });
              
-             if (subs) {
-               const tenantSub = subs.find(s => s.tenant_id === t.id);
-               if (tenantSub) {
-                 userMap.get(t.owner_id)!.subscription = {
-                   plan: tenantSub.plan,
-                   status: tenantSub.status,
-                   expires_at: tenantSub.expires_at
-                 };
-               }
+             if (tenantSub) {
+               userMap.get(t.owner_id)!.subscription = {
+                 plan: tenantSub.plan,
+                 status: tenantSub.status,
+                 expires_at: tenantSub.expires_at
+               };
              }
            }
          }
@@ -497,6 +513,80 @@ export default function PlatformAdmin() {
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to update property verification status.');
+    }
+  };
+
+  const updatePropertySubscription = async (
+    tenantId: string,
+    updates: {
+      plan?: string;
+      subscription_expires_at?: string | null;
+      manual_override?: boolean | null;
+      grace_period_days?: number;
+    }
+  ) => {
+    try {
+      // Find property from current state
+      const targetProperty = users.flatMap(u => u.properties).find(p => p.id === tenantId);
+      const currentPlan = updates.plan || targetProperty?.plan || 'starter';
+      const currentExpires = updates.subscription_expires_at !== undefined ? updates.subscription_expires_at : targetProperty?.subscription_expires_at;
+      const currentOverride = updates.manual_override !== undefined ? updates.manual_override : targetProperty?.manual_override;
+      const currentGrace = updates.grace_period_days !== undefined ? updates.grace_period_days : (targetProperty?.grace_period_days || 3);
+
+      const subInfo = getPropertySubscriptionDetails(currentPlan, currentExpires, currentOverride, currentGrace);
+
+      const tenantPayload: Record<string, any> = {
+        is_active: subInfo.isAccessAllowed,
+      };
+
+      if (updates.plan !== undefined) {
+        tenantPayload.plan = updates.plan;
+        tenantPayload.subscription_plan = updates.plan;
+      }
+      if (updates.subscription_expires_at !== undefined) {
+        tenantPayload.subscription_expires_at = updates.subscription_expires_at;
+      }
+      if (updates.manual_override !== undefined) {
+        tenantPayload.manual_override = updates.manual_override;
+      }
+      if (updates.grace_period_days !== undefined) {
+        tenantPayload.grace_period_days = updates.grace_period_days;
+      }
+
+      const { error: tenantErr } = await supabase
+        .from('tenants')
+        .update(tenantPayload)
+        .eq('id', tenantId);
+
+      if (tenantErr) throw tenantErr;
+
+      // Sync with subscriptions table
+      const subPayload = {
+        tenant_id: tenantId,
+        plan: currentPlan,
+        status: subInfo.status === 'manual_on' ? 'manual_on' : (subInfo.status === 'manual_off' ? 'manual_off' : subInfo.status),
+        expires_at: currentExpires,
+        manual_override: currentOverride,
+        grace_period_days: currentGrace,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data: existingSub } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+
+      if (existingSub) {
+        await supabase.from('subscriptions').update(subPayload).eq('id', existingSub.id);
+      } else {
+        await supabase.from('subscriptions').insert(subPayload);
+      }
+
+      toast.success('Property subscription details updated!');
+      await loadData();
+    } catch (err: any) {
+      toast.error('Failed to update subscription: ' + (err.message || err));
     }
   };
 
@@ -937,6 +1027,128 @@ export default function PlatformAdmin() {
                                   </button>
                                 </div>
                               </div>
+
+                              {/* Subscription & Grace Period Control Panel */}
+                              {(() => {
+                                const subInfo = getPropertySubscriptionDetails(
+                                  p.plan,
+                                  p.subscription_expires_at,
+                                  p.manual_override,
+                                  p.grace_period_days || 3,
+                                  p.is_active
+                                );
+
+                                return (
+                                  <div className="bg-white p-3.5 rounded-lg border border-gray-100/80 text-xs space-y-3">
+                                    <div className="flex items-center justify-between border-b border-gray-50 pb-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-bold text-[#0E2A38] uppercase tracking-wider text-[10px]">
+                                          Subscription &amp; Grace Period Control
+                                        </span>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-wider ${subInfo.badgeBg}`}>
+                                          {subInfo.badgeText}
+                                        </span>
+                                      </div>
+                                      <span className="text-[10px] font-semibold text-gray-500">
+                                        {subInfo.statusLabel}
+                                      </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                                      {/* 1. Subscription Plan Selection */}
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
+                                          Subscription Type / Plan
+                                        </label>
+                                        <select
+                                          value={p.plan || 'starter'}
+                                          onChange={(e) => updatePropertySubscription(p.id, { plan: e.target.value })}
+                                          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#0E2A38]"
+                                        >
+                                          <option value="starter">Starter Plan</option>
+                                          <option value="growth">Growth Plan</option>
+                                          <option value="pro">Pro Plan</option>
+                                          <option value="enterprise">Enterprise Plan</option>
+                                          <option value="subscription_2700">Subscription (₹2,700/mo)</option>
+                                          <option value="subscription_small">Subscription (Max 10 Rooms)</option>
+                                          <option value="subscription_large">Subscription (Unlimited Rooms)</option>
+                                          <option value="subscription_test">Subscription (Test Plan - ₹1)</option>
+                                          <option value="commission">12% Commission Only</option>
+                                        </select>
+                                      </div>
+
+                                      {/* 2. Expiration Date (3-Day Grace Auto Applies) */}
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
+                                          Expiration Date (3-Day Grace Auto Applies)
+                                        </label>
+                                        <div className="flex items-center gap-1.5">
+                                          <input
+                                            type="date"
+                                            value={p.subscription_expires_at ? p.subscription_expires_at.split('T')[0] : ''}
+                                            onChange={(e) => {
+                                              const dateVal = e.target.value ? new Date(e.target.value).toISOString() : null;
+                                              updatePropertySubscription(p.id, { subscription_expires_at: dateVal });
+                                            }}
+                                            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#0E2A38]"
+                                          />
+                                          <button
+                                            onClick={() => {
+                                              const current = p.subscription_expires_at ? new Date(p.subscription_expires_at) : new Date();
+                                              const next30 = new Date(current.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+                                              updatePropertySubscription(p.id, { subscription_expires_at: next30 });
+                                            }}
+                                            className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-bold rounded cursor-pointer"
+                                            title="Add 30 Days"
+                                          >
+                                            +30d
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      {/* 3. Manual Subscription Override Toggle */}
+                                      <div>
+                                        <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
+                                          Manual Override Toggle
+                                        </label>
+                                        <div className="flex items-center gap-1">
+                                          <button
+                                            onClick={() => updatePropertySubscription(p.id, { manual_override: true })}
+                                            className={`flex-1 py-1 px-2 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                                              p.manual_override === true
+                                                ? 'bg-emerald-600 text-white shadow-sm'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
+                                            }`}
+                                          >
+                                            Turn ON
+                                          </button>
+                                          <button
+                                            onClick={() => updatePropertySubscription(p.id, { manual_override: false })}
+                                            className={`flex-1 py-1 px-2 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                                              p.manual_override === false
+                                                ? 'bg-red-600 text-white shadow-sm'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-700'
+                                            }`}
+                                          >
+                                            Turn OFF
+                                          </button>
+                                          <button
+                                            onClick={() => updatePropertySubscription(p.id, { manual_override: null })}
+                                            className={`py-1 px-2 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                                              p.manual_override === null || p.manual_override === undefined
+                                                ? 'bg-[#0E2A38] text-white shadow-sm'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                            title="Auto Expiration + 3-Day Grace Period"
+                                          >
+                                            Auto
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
 
                               {/* Daily / Monthly Revenue Breakdown */}
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-3 rounded-lg border border-gray-100/80 text-xs">
