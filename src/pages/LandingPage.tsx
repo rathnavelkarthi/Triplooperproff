@@ -95,6 +95,7 @@ const masterStyles = `
   .nav-link {
     position: relative;
     transition: color 0.3s ease;
+    white-space: nowrap;
   }
   .nav-link::after {
     content: '';
@@ -372,45 +373,44 @@ export default function LandingPage() {
       <div className="noise-grain" />
 
       {/* ── NAVBAR ────────────────────────────────────────── */}
-      <nav className="fixed top-4 left-4 right-4 md:left-6 md:right-6 bg-[#FDFBF7]/80 backdrop-blur-xl border border-[#C9A646]/20 z-50 transition-all duration-500 rounded-3xl shadow-[0_15px_40px_rgba(11,59,43,0.06)] max-w-7xl mx-auto">
-        <div className="px-6 h-18 flex items-center justify-between">
-          <div className="flex items-center gap-12">
-            <a href="/" className="flex items-center gap-2 group">
-              <span className="font-playfair text-xl font-bold tracking-widest text-[#C9A646]">
-                TRIPLOOPER
-              </span>
-            </a>
-            
-            <div className="hidden md:flex items-center gap-8 text-[11px] font-bold tracking-widest text-[#0E2A38]/75 uppercase">
-              <a href="#marketplace" className="nav-link hover:text-[#C9A646] transition-colors">MARKETPLACE</a>
-              <a href="#categories" className="nav-link hover:text-[#C9A646] transition-colors">CATEGORIES</a>
-              <a href="#why-switch" className="nav-link hover:text-[#C9A646] transition-colors">OWNER STORY</a>
-              <a href="#os-diagram" className="nav-link hover:text-[#C9A646] transition-colors">THE PLATFORM</a>
-              <a href="#india-network" className="nav-link hover:text-[#C9A646] transition-colors">OUR NETWORK</a>
-              <a href="#pricing" className="nav-link hover:text-[#C9A646] transition-colors">PRICING</a>
-              <button onClick={() => navigate('/my-stays')} className="nav-link hover:text-[#C9A646] transition-colors text-left uppercase font-bold tracking-widest text-[11px]">MY STAYS</button>
-            </div>
+      <nav className="fixed top-4 left-4 right-4 md:left-6 md:right-6 bg-[#FDFBF7]/90 backdrop-blur-2xl border border-[#C9A646]/25 z-50 transition-all duration-300 rounded-full shadow-[0_10px_35px_rgba(14,42,56,0.08)] max-w-7xl mx-auto py-2.5 px-4 md:px-6">
+        <div className="h-12 md:h-14 flex items-center justify-between gap-4">
+          <a href="/" className="flex items-center gap-2 group shrink-0">
+            <span className="font-playfair text-lg md:text-xl font-black tracking-widest text-[#0E2A38] group-hover:text-[#C9A646] transition-colors whitespace-nowrap">
+              TRIP<span className="text-[#C9A646]">LOOPER</span>
+            </span>
+          </a>
+          
+          <div className="hidden xl:flex items-center gap-5 xl:gap-7 text-[11px] font-bold tracking-widest text-[#0E2A38]/80 uppercase whitespace-nowrap">
+            <a href="#marketplace" className="nav-link whitespace-nowrap hover:text-[#C9A646] transition-colors">MARKETPLACE</a>
+            <a href="#categories" className="nav-link whitespace-nowrap hover:text-[#C9A646] transition-colors">CATEGORIES</a>
+            <a href="#why-switch" className="nav-link whitespace-nowrap hover:text-[#C9A646] transition-colors">OWNER STORY</a>
+            <a href="#os-diagram" className="nav-link whitespace-nowrap hover:text-[#C9A646] transition-colors">THE PLATFORM</a>
+            <a href="#india-network" className="nav-link whitespace-nowrap hover:text-[#C9A646] transition-colors">OUR NETWORK</a>
+            <a href="#pricing" className="nav-link whitespace-nowrap hover:text-[#C9A646] transition-colors">PRICING</a>
+            <button onClick={() => navigate('/my-stays')} className="nav-link whitespace-nowrap hover:text-[#C9A646] transition-colors text-left uppercase font-bold tracking-widest text-[11px] cursor-pointer">MY STAYS</button>
           </div>
 
-          <div className="hidden md:flex items-center gap-5">
+          <div className="hidden md:flex items-center gap-3 shrink-0">
             <button 
               onClick={() => navigate('/admin/login')}
-              className="text-[11px] font-bold tracking-widest uppercase text-[#0E2A38]/75 hover:text-[#C9A646] transition-colors px-3 py-2"
+              className="text-[11px] font-bold tracking-widest uppercase text-[#0E2A38]/80 hover:text-[#C9A646] transition-colors px-3 py-2 whitespace-nowrap cursor-pointer"
             >
               SIGN IN
             </button>
             <button 
               onClick={() => navigate('/signup')}
-              className="bg-[#0E2A38] hover:bg-[#123545] text-white font-bold text-[11px] tracking-widest uppercase px-6 py-3 rounded-xl transition-all shadow-md shadow-[#0E2A38]/10 active:scale-95 flex items-center gap-2 border border-[#C9A646]/10"
+              className="bg-[#0E2A38] hover:bg-[#163d50] text-white font-bold text-[11px] tracking-widest uppercase px-5 py-2.5 rounded-full transition-all shadow-md shadow-[#0E2A38]/15 active:scale-95 flex items-center gap-2 border border-[#C9A646]/20 whitespace-nowrap cursor-pointer group"
             >
               <span>JOIN TRIPLOOPER</span>
-              <ArrowRight size={12} className="text-[#C9A646]" />
+              <ArrowRight size={13} className="text-[#C9A646] group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
 
           <button 
-            className="md:hidden text-[#0E2A38]"
+            className="xl:hidden text-[#0E2A38] p-1.5 hover:bg-[#C9A646]/10 rounded-full transition-colors cursor-pointer"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -424,28 +424,28 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="md:hidden fixed inset-x-4 top-24 bg-[#FDFBF7]/95 backdrop-blur-xl border border-[#C9A646]/20 z-40 p-6 flex flex-col gap-6 rounded-3xl shadow-xl"
+            className="xl:hidden fixed inset-x-4 top-22 bg-[#FDFBF7]/95 backdrop-blur-2xl border border-[#C9A646]/25 z-40 p-6 flex flex-col gap-5 rounded-3xl shadow-2xl"
           >
-            <a href="#marketplace" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Marketplace</a>
-            <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Categories</a>
-            <a href="#why-switch" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Owner Story</a>
-            <a href="#os-diagram" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">The Platform</a>
-            <a href="#india-network" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Our Network</a>
-            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-lg">Pricing</a>
-            <button onClick={() => { setMobileMenuOpen(false); navigate('/my-stays'); }} className="text-[#0E2A38] font-bold text-lg text-left">My Stays</button>
+            <a href="#marketplace" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-base hover:text-[#C9A646] transition-colors">Marketplace</a>
+            <a href="#categories" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-base hover:text-[#C9A646] transition-colors">Categories</a>
+            <a href="#why-switch" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-base hover:text-[#C9A646] transition-colors">Owner Story</a>
+            <a href="#os-diagram" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-base hover:text-[#C9A646] transition-colors">The Platform</a>
+            <a href="#india-network" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-base hover:text-[#C9A646] transition-colors">Our Network</a>
+            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-[#0E2A38] font-bold text-base hover:text-[#C9A646] transition-colors">Pricing</a>
+            <button onClick={() => { setMobileMenuOpen(false); navigate('/my-stays'); }} className="text-[#0E2A38] font-bold text-base text-left hover:text-[#C9A646] transition-colors cursor-pointer">My Stays</button>
             
-            <div className="h-px bg-[#C9A646]/10 my-1" />
+            <div className="h-px bg-[#C9A646]/15 my-1" />
             
             <div className="flex flex-col gap-3">
               <button 
                 onClick={() => { setMobileMenuOpen(false); navigate('/admin/login'); }}
-                className="w-full text-center py-3 text-[#0E2A38] font-bold border border-[#C9A646]/20 rounded-xl"
+                className="w-full text-center py-3 text-[#0E2A38] font-bold border border-[#C9A646]/25 rounded-xl hover:bg-[#C9A646]/10 transition-colors"
               >
                 SIGN IN
               </button>
               <button 
                 onClick={() => { setMobileMenuOpen(false); navigate('/signup'); }}
-                className="w-full text-center py-3 bg-[#0E2A38] text-white font-extrabold rounded-xl"
+                className="w-full text-center py-3 bg-[#0E2A38] text-white font-extrabold rounded-xl hover:bg-[#163d50] transition-colors shadow-md"
               >
                 JOIN TRIPLOOPER
               </button>
