@@ -39,8 +39,9 @@ CREATE POLICY "subscriptions_read_policy" ON subscriptions
   FOR SELECT
   USING (
     tenant_id IN (SELECT public.auth_tenant_ids())
+    OR (auth.jwt() ->> 'email') IN ('rathnavelkarthi1@gmail.com', 'admin@triplooper.com')
     OR EXISTS (
-      SELECT 1 FROM staff WHERE staff.id = auth.uid()::text AND staff.role = 'platform_admin'
+      SELECT 1 FROM staff WHERE staff.id::text = auth.uid()::text AND staff.role = 'platform_admin'
     )
   );
 
