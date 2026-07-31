@@ -197,12 +197,13 @@ export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Track scroll parameters for parallax sequence
+  const [selectedPlanTab, setSelectedPlanTab] = useState<'hotel' | 'restaurant' | 'resort'>('hotel');
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
   });
 
-  // Inject Styles on mounting
   useEffect(() => {
     const sheet = document.createElement('style');
     sheet.innerHTML = masterStyles;
@@ -212,7 +213,7 @@ export default function LandingPage() {
     };
   }, []);
 
-  const [propertiesList, setPropertiesList] = useState<any[]>(REGISTERED_SHOWCASE_PROPERTIES);
+  const [propertiesList, setPropertiesList] = useState<any[]>([]);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState("All Stays");
   const [activeDestinationFilter, setActiveDestinationFilter] = useState("All Destinations");
   const [searchDestination, setSearchDestination] = useState("");
@@ -221,76 +222,90 @@ export default function LandingPage() {
   useEffect(() => {
     async function loadRealProperties() {
       try {
-        let liveProps: any[] = [];
-        const { data: tenantsData, error: tenantsError } = await supabase
-          .from('tenants')
-          .select('id, business_name, subdomain, business_type, hero_image_url, city');
-
-        if (!tenantsError && tenantsData && tenantsData.length > 0) {
-          const { data: testimonialsData } = await supabase
-            .from('testimonials')
-            .select('tenant_id, rating');
-
-          const { data: roomsData } = await supabase
-            .from('rooms')
-            .select('tenant_id, price_per_night, type')
-            .eq('is_available', true);
-
-          const tenantRooms: Record<string, typeof roomsData> = {};
-          roomsData?.forEach(r => {
-            if (!tenantRooms[r.tenant_id]) tenantRooms[r.tenant_id] = [];
-            tenantRooms[r.tenant_id].push(r);
-          });
-
-          const tenantRatings: Record<string, number[]> = {};
-          testimonialsData?.forEach(t => {
-            if (!tenantRatings[t.tenant_id]) tenantRatings[t.tenant_id] = [];
-            tenantRatings[t.tenant_id].push(t.rating);
-          });
-
-          liveProps = tenantsData
-            .filter(t => t.business_name && !t.business_name.toLowerCase().includes('ganesh'))
-            .map((t, index) => {
-              const ratings = tenantRatings[t.id] || [];
-              const avgRating = ratings.length > 0
-                ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
-                : "4.85";
-
-              const rooms = tenantRooms[t.id] || [];
-              const minPrice = rooms.length > 0
-                ? Math.min(...rooms.map(r => Number(r.price_per_night)))
-                : 3500;
-
-              const roomTypes = rooms.map(r => r.type).filter(Boolean);
-              const typeLabel = roomTypes[0] || (t.business_type === 'restaurant' ? 'Boutique Bistro' : 'Premium Stay');
-              
-              const tags = ['Beachfront', 'Mountain View', 'Forest Edge', 'City Center', 'Eco Stays'];
-              const tag = tags[index % tags.length];
-
-              return {
-                id: t.id,
-                name: t.business_name,
-                loc: t.city || 'India',
-                type: typeLabel,
-                price: minPrice,
-                rating: avgRating,
-                image: t.hero_image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
-                tag: tag,
-                subdomain: t.subdomain
-              };
-            });
+        let tenantsData: any[] = [];
+        
+        try {
+          const res = await fetch('/api/public-tenants');
+          if (res.ok) {
+            const json = await res.json();
+            if (json.tenants && Array.isArray(json.tenants)) {
+              tenantsData = json.tenants;
+            }
+          }
+        } catch (e) {
+          console.warn('API fetch failed, falling back to direct Supabase query', e);
         }
 
-        const liveSubdomains = new Set(liveProps.map(p => (p.subdomain || p.name).toLowerCase()));
-        const uniqueShowcase = REGISTERED_SHOWCASE_PROPERTIES.filter(c => !liveSubdomains.has((c.subdomain || c.name).toLowerCase()));
+        if (tenantsData.length === 0) {
+          const { data } = await supabase
+            .from('tenants')
+            .select('id, business_name, subdomain, business_type, hero_image_url, city');
+          if (data) tenantsData = data;
+        }
 
-        const combined = [...liveProps, ...uniqueShowcase].filter(p => !p.name.toLowerCase().includes('ganesh'));
-        combined.sort((a, b) => Number(b.rating) - Number(a.rating));
+        tenantsData = tenantsData.filter(t => t.business_name && !t.business_name.toLowerCase().includes('ganesh'));
 
-        setPropertiesList(combined);
+        if (!tenantsData || tenantsData.length === 0) {
+          setPropertiesList([]);
+          return;
+        }
+
+        const { data: testimonialsData } = await supabase
+          .from('testimonials')
+          .select('tenant_id, rating');
+
+        const { data: roomsData } = await supabase
+          .from('rooms')
+          .select('tenant_id, price_per_night, type')
+          .eq('is_available', true);
+
+        const tenantRooms: Record<string, typeof roomsData> = {};
+        roomsData?.forEach(r => {
+          if (!tenantRooms[r.tenant_id]) tenantRooms[r.tenant_id] = [];
+          tenantRooms[r.tenant_id].push(r);
+        });
+
+        const tenantRatings: Record<string, number[]> = {};
+        testimonialsData?.forEach(t => {
+          if (!tenantRatings[t.tenant_id]) tenantRatings[t.tenant_id] = [];
+          tenantRatings[t.tenant_id].push(t.rating);
+        });
+
+        const realProps = tenantsData.map((t, index) => {
+          const ratings = tenantRatings[t.id] || [];
+          const avgRating = ratings.length > 0
+            ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
+            : "4.95";
+
+          const rooms = tenantRooms[t.id] || [];
+          const minPrice = rooms.length > 0
+            ? Math.min(...rooms.map(r => Number(r.price_per_night)))
+            : 6500;
+
+          const roomTypes = rooms.map(r => r.type).filter(Boolean);
+          const typeLabel = roomTypes[0] || (t.business_type === 'restaurant' ? 'Boutique Bistro' : 'Luxury Beach Villa');
+          
+          const tags = ['Beachfront', 'Mountain View', 'Forest Edge', 'City Center', 'Eco Stays'];
+          const tag = tags[index % tags.length];
+
+          return {
+            id: t.id,
+            name: t.business_name,
+            loc: t.city || 'Pondicherry',
+            type: typeLabel,
+            price: minPrice,
+            rating: avgRating,
+            image: t.hero_image_url || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80',
+            tag: tag,
+            subdomain: t.subdomain
+          };
+        });
+
+        realProps.sort((a, b) => Number(b.rating) - Number(a.rating));
+        setPropertiesList(realProps);
       } catch (err) {
         console.error('Failed to load real properties:', err);
-        setPropertiesList(REGISTERED_SHOWCASE_PROPERTIES.filter(p => !p.name.toLowerCase().includes('ganesh')));
+        setPropertiesList([]);
       }
     }
     loadRealProperties();

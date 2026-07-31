@@ -28,17 +28,31 @@ export default function HotelDirectory() {
 
     const staysSectionRef = useRef<HTMLDivElement>(null);
 
-    // Fetch hotels from Supabase
+    // Fetch hotels from Supabase / API
     useEffect(() => {
         async function fetchHotels() {
             try {
-                // 1. Fetch tenants
-                const { data: tenantsData, error: tErr } = await supabase
-                    .from('tenants')
-                    .select('id, business_name, business_type, subdomain, hero_image_url, template')
-                    .eq('is_active', true);
-                
-                if (tErr) throw tErr;
+                let tenantsData: any[] = [];
+                try {
+                    const res = await fetch('/api/public-tenants');
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json.tenants && Array.isArray(json.tenants)) {
+                            tenantsData = json.tenants;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('API fetch failed, trying direct Supabase query', e);
+                }
+
+                if (tenantsData.length === 0) {
+                    const { data } = await supabase
+                        .from('tenants')
+                        .select('id, business_name, business_type, subdomain, hero_image_url, template');
+                    if (data) tenantsData = data;
+                }
+
+                tenantsData = tenantsData.filter(t => t.business_name && !t.business_name.toLowerCase().includes('ganesh'));
 
                 if (!tenantsData || tenantsData.length === 0) {
                     setHotels([]);
@@ -46,12 +60,12 @@ export default function HotelDirectory() {
                 }
 
                 // 2. Fetch rooms to calculate min price
-                const { data: roomsData, error: rErr } = await supabase
+                const { data: roomsData } = await supabase
                     .from('rooms')
                     .select('tenant_id, price_per_night');
 
                 // 3. Fetch settings for about text and primary color
-                const { data: settingsData, error: sErr } = await supabase
+                const { data: settingsData } = await supabase
                     .from('settings')
                     .select('tenant_id, setting_key, setting_value')
                     .in('setting_key', ['aboutText', 'primary_color']);
