@@ -143,60 +143,63 @@ export default function GuestBill() {
           </div>
         </div>
 
-        {/* Bill Line Items */}
-        <div className="space-y-4 pt-4 border-t border-zinc-800/40 print:border-zinc-350">
-          <h3 className="text-xs uppercase tracking-wider font-semibold text-zinc-400 print:text-zinc-600">Stay Summary</h3>
+        {/* Customer Tax Bill Breakdown */}
+        {(() => {
+          const roomCharges = Number(session.amount || 0);
+          const discount = (session as any).discount || 0;
+          const taxableValue = Math.max(0, roomCharges - discount);
+          const gstAmount = Math.round(taxableValue * 0.12);
+          const grandTotal = taxableValue + gstAmount + foodTotal;
 
-          <div className="space-y-3">
-            {/* Room Reservation Charges */}
-            <div className="flex justify-between items-start text-sm">
-              <div className="space-y-0.5">
-                <p className="font-bold text-white print:text-black flex items-center gap-2">
-                  <Calendar size={14} className="text-emerald-400" />
-                  Room Accommodation
-                </p>
-                <p className="text-2xs text-zinc-500">{nights} night{nights > 1 ? 's' : ''} at ₹{(Number(session.amount || 0) / nights).toFixed(2)}/night</p>
+          return (
+            <div className="space-y-4 pt-4 border-t border-zinc-800/40 print:border-zinc-350">
+              <h3 className="text-xs uppercase tracking-wider font-semibold text-zinc-400 print:text-zinc-600">1. Customer Tax Bill</h3>
+
+              <div className="bg-zinc-950/50 border border-zinc-800/80 rounded-2xl p-4 space-y-3">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-zinc-800 text-zinc-500 font-semibold uppercase text-[10px]">
+                      <th className="text-left pb-2">Particulars</th>
+                      <th className="text-right pb-2">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-900 text-zinc-300">
+                    <tr>
+                      <td className="py-2">Room Charges</td>
+                      <td className="py-2 text-right font-medium">₹{roomCharges.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                    {discount > 0 && (
+                      <tr>
+                        <td className="py-2">Discount</td>
+                        <td className="py-2 text-right font-medium text-red-400">-₹{discount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    )}
+                    <tr className="font-semibold text-white">
+                      <td className="py-2">Taxable Value</td>
+                      <td className="py-2 text-right">₹{taxableValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2">GST @12%</td>
+                      <td className="py-2 text-right font-medium">₹{gstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                    {foodTotal > 0 && (
+                      <tr>
+                        <td className="py-2">F&B / In-Room Dining</td>
+                        <td className="py-2 text-right font-medium">₹{foodTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    )}
+                    <tr className="font-extrabold text-sm text-emerald-400 bg-zinc-900/60">
+                      <td className="py-2.5 px-2 rounded-l-lg text-white">Grand Total</td>
+                      <td className="py-2.5 px-2 text-right rounded-r-lg text-emerald-400">
+                        ₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <span className="font-bold text-white print:text-black">₹{session.amount}</span>
             </div>
-
-            {/* Food Order Charges */}
-            {foodOrders.filter(o => o.status !== 'cancelled').map(order => (
-              <div key={order.id} className="flex justify-between items-start text-sm pt-2 border-t border-zinc-900/60 print:border-zinc-150">
-                <div className="space-y-0.5">
-                  <p className="font-bold text-white print:text-black flex items-center gap-2">
-                    <ShoppingBag size={14} className="text-amber-400" />
-                    In-Room Dining (Order #{order.id})
-                  </p>
-                  <p className="text-2xs text-zinc-500">
-                    {order.food_order_items.map(i => `${i.item_name} x${i.quantity}`).join(', ')}
-                  </p>
-                </div>
-                <span className="font-bold text-white print:text-black">₹{order.total_amount}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Bill Totaling */}
-        <div className="space-y-2 pt-6 border-t border-zinc-800/80 bg-zinc-900/20 -mx-6 px-6 pb-6 rounded-b-3xl print:bg-transparent print:border-zinc-300">
-          <div className="flex justify-between text-xs text-zinc-400">
-            <span>Accommodation Charge</span>
-            <span className="font-medium text-white print:text-black">₹{session.amount}</span>
-          </div>
-
-          {foodTotal > 0 && (
-            <div className="flex justify-between text-xs text-zinc-400">
-              <span>F&B / In-Room Dining</span>
-              <span className="font-medium text-white print:text-black">₹{foodTotal}</span>
-            </div>
-          )}
-
-          <div className="flex justify-between font-extrabold text-base pt-3 border-t border-zinc-800/60 print:border-zinc-300">
-            <span className="text-white print:text-black">Total Outstanding</span>
-            <span className="text-emerald-400 print:text-black">₹{totalBill}</span>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Footer info */}
         <div className="flex gap-2.5 items-start p-4 bg-zinc-950/60 border border-zinc-800 rounded-2xl text-[10px] text-zinc-500 leading-relaxed print:hidden">

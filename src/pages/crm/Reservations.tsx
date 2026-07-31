@@ -68,10 +68,14 @@ export default function Reservations() {
     const checkIn = new Date(res.checkIn);
     const checkOut = new Date(res.checkOut);
     const nights = Math.max(1, Math.floor((checkOut.getTime() - checkIn.getTime()) / 86400000));
-    const subtotal = res.amount || 0;
-    const gst = res.gst_amount || Math.round(subtotal * 0.12);
-    const total = subtotal + gst;
-    const ratePerNight = nights > 0 ? Math.round(subtotal / nights) : subtotal;
+    const roomPrice = res.amount || 5000;
+    const discount = (res as any).discount || 500;
+    const taxableValue = Math.max(0, roomPrice - discount);
+    const gst = res.gst_amount || Math.round(taxableValue * 0.12);
+    const total = taxableValue + gst;
+    const ratePerNight = nights > 0 ? Math.round(roomPrice / nights) : roomPrice;
+    const commissionAmount = Math.round(taxableValue * 0.12);
+    const amountPayableToProperty = total - commissionAmount;
 
     return {
       invoiceNumber: `INV-${res.id.replace('RES-', '')}`,
@@ -86,9 +90,14 @@ export default function Reservations() {
       checkOut: res.checkOut,
       nights,
       ratePerNight,
-      subtotal,
+      subtotal: taxableValue,
+      roomPrice,
+      discount,
+      taxableValue,
       gstAmount: gst,
       totalAmount: total,
+      commissionAmount,
+      amountPayableToProperty,
       paymentMethod: res.payment_method || 'UPI',
       paymentStatus: res.payment,
       hotelName: cmsSettings?.hotelName || tenant?.business_name || 'Our Resort',

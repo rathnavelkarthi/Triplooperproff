@@ -40,10 +40,14 @@ export default function Invoices() {
     const checkIn = new Date(invoice.checkIn);
     const checkOut = new Date(invoice.checkOut);
     const nights = Math.max(1, Math.floor((checkOut.getTime() - checkIn.getTime()) / 86400000));
-    const subtotal = invoice.amount;
-    const gst = invoice.gst || Math.round(subtotal * 0.12);
-    const total = subtotal + gst;
-    const ratePerNight = nights > 0 ? Math.round(subtotal / nights) : subtotal;
+    const roomPrice = invoice.roomPrice || invoice.amount || 5000;
+    const discount = invoice.discount || 500;
+    const taxableValue = Math.max(0, roomPrice - discount);
+    const gst = invoice.gst || Math.round(taxableValue * 0.12);
+    const total = taxableValue + gst;
+    const ratePerNight = nights > 0 ? Math.round(roomPrice / nights) : roomPrice;
+    const commissionAmount = Math.round(taxableValue * 0.12);
+    const amountPayableToProperty = total - commissionAmount;
 
     return {
       invoiceNumber: invoice.id,
@@ -58,9 +62,14 @@ export default function Invoices() {
       checkOut: invoice.checkOut,
       nights,
       ratePerNight,
-      subtotal,
+      subtotal: taxableValue,
+      roomPrice,
+      discount,
+      taxableValue,
       gstAmount: gst,
       totalAmount: total,
+      commissionAmount,
+      amountPayableToProperty,
       paymentMethod: invoice.paymentMethod,
       paymentStatus: invoice.paymentStatus,
       hotelName: cmsSettings.hotelName || tenant?.business_name || 'Your Hotel',

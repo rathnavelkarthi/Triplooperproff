@@ -6,6 +6,16 @@ import { formatINR } from '../../lib/booking';
  * Used to open in a new window for printing/saving as PDF.
  */
 function buildInvoiceHTML(data: InvoiceData): string {
+    const roomPrice = data.roomPrice ?? data.subtotal;
+    const discount = data.discount ?? 0;
+    const taxableValue = data.taxableValue ?? Math.max(0, roomPrice - discount);
+    const gstAmount = data.gstAmount;
+    const totalBookingAmount = data.totalAmount ?? (taxableValue + gstAmount);
+    const commissionAmount = data.commissionAmount ?? Math.round(taxableValue * 0.12);
+    const amountPayableToProperty = data.amountPayableToProperty ?? (totalBookingAmount - commissionAmount);
+
+    const fmt = (num: number) => `₹${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
     return `
     <!DOCTYPE html>
     <html>
@@ -15,48 +25,62 @@ function buildInvoiceHTML(data: InvoiceData): string {
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-          font-family: Georgia, 'Times New Roman', serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
           color: #1f2937;
           background: #fff;
           padding: 40px 50px;
           max-width: 800px;
           margin: 0 auto;
         }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e5e7eb; padding-bottom: 30px; margin-bottom: 30px; }
-        .hotel-name { font-size: 26px; font-weight: 700; color: #0c4a6e; margin-bottom: 6px; }
-        .hotel-detail { font-size: 13px; color: #6b7280; line-height: 1.6; }
-        .inv-title { font-size: 22px; font-weight: 700; letter-spacing: 2px; margin-bottom: 8px; text-align: right; }
-        .inv-meta { font-size: 13px; color: #4b5563; text-align: right; line-height: 1.6; }
-        .inv-meta span { font-weight: 400; }
-        .section-label { font-size: 10px; color: #9ca3af; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
-        .guest-name { font-size: 18px; font-weight: 700; color: #1f2937; }
-        .guest-detail { font-size: 13px; color: #4b5563; margin-top: 3px; }
-        .bill-to { margin-bottom: 35px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 35px; }
-        thead tr { border-bottom: 2px solid #1f2937; }
-        th { padding: 10px 0; font-size: 13px; font-weight: 700; text-align: left; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e5e7eb; padding-bottom: 24px; margin-bottom: 24px; }
+        .hotel-name { font-size: 24px; font-weight: 800; color: #0c4a6e; margin-bottom: 4px; }
+        .hotel-detail { font-size: 12px; color: #6b7280; line-height: 1.5; }
+        .inv-title { font-size: 20px; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; text-align: right; color: #111827; }
+        .inv-meta { font-size: 12px; color: #4b5563; text-align: right; line-height: 1.5; }
+        .inv-meta span { font-weight: 600; color: #111827; }
+        .section-label { font-size: 10px; color: #9ca3af; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+        .guest-name { font-size: 16px; font-weight: 700; color: #1f2937; }
+        .guest-detail { font-size: 12px; color: #4b5563; margin-top: 2px; }
+        .bill-to { margin-bottom: 28px; }
+        
+        .bill-box {
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 20px;
+          background: #f9fafb;
+          margin-bottom: 24px;
+        }
+        .bill-box-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 10px;
+          margin-bottom: 14px;
+        }
+        .bill-box-title { font-size: 15px; font-weight: 700; color: #111827; }
+        .bill-box-badge { font-size: 11px; font-family: monospace; color: #6b7280; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 12px; font-weight: 600; color: #4b5563; text-align: left; padding: 8px 0; border-bottom: 1px solid #d1d5db; }
         th.right { text-align: right; }
-        th.center { text-align: center; }
-        td { padding: 14px 0; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
-        td.right { text-align: right; }
-        td.center { text-align: center; }
-        .item-desc { font-weight: 600; }
-        .item-sub { font-size: 11px; color: #6b7280; margin-top: 3px; }
-        .totals { display: flex; justify-content: flex-end; margin-bottom: 50px; }
-        .totals-box { width: 250px; }
-        .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: #4b5563; }
-        .total-row.border { border-bottom: 1px solid #e5e7eb; }
-        .total-row.grand { padding: 12px 0; font-size: 17px; font-weight: 700; color: #111827; border-bottom: 2px solid #1f2937; }
-        .total-row.small { font-size: 11px; color: #9ca3af; padding: 4px 0; }
-        .status-paid { color: #15803d; font-weight: 600; }
-        .status-unpaid { color: #a16207; font-weight: 600; }
-        .footer { text-align: center; padding-top: 30px; border-top: 1px solid #e5e7eb; }
-        .footer-title { font-size: 17px; font-weight: 700; color: #0c4a6e; margin-bottom: 5px; }
+        td { font-size: 13px; color: #374151; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+        td.right { text-align: right; font-variant-numeric: tabular-nums; }
+        .bold { font-weight: 700; color: #111827; }
+        .highlight-row { background: #f3f4f6; font-weight: 700; }
+        .highlight-row td { padding: 12px 8px; font-size: 14px; color: #0c4a6e; }
+        .payable-row { background: #ecfdf5; font-weight: 800; }
+        .payable-row td { padding: 12px 8px; font-size: 14px; color: #065f46; }
+        .discount-text { color: #dc2626; }
+        .commission-text { color: #b45309; }
+
+        .footer { text-align: center; padding-top: 24px; border-top: 1px solid #e5e7eb; margin-top: 36px; }
+        .footer-title { font-size: 15px; font-weight: 700; color: #0c4a6e; margin-bottom: 4px; }
         .footer-text { font-size: 11px; color: #6b7280; }
-        .footer-small { font-size: 10px; color: #9ca3af; margin-top: 15px; }
+        .footer-small { font-size: 10px; color: #9ca3af; margin-top: 12px; }
         @media print {
-          body { padding: 20px 30px; }
-          @page { margin: 15mm; }
+          body { padding: 15px 25px; }
+          @page { margin: 12mm; }
         }
       </style>
     </head>
@@ -69,10 +93,10 @@ function buildInvoiceHTML(data: InvoiceData): string {
           <div class="hotel-detail">${data.hotelPhone || '+91 0000 0000'}</div>
         </div>
         <div>
-          <div class="inv-title">INVOICE</div>
+          <div class="inv-title">INVOICE STATEMENT</div>
           <div class="inv-meta">Inv. No: <span>${data.invoiceNumber}</span></div>
           <div class="inv-meta">Date: <span>${data.date}</span></div>
-          <div class="inv-meta">Booking: <span>${data.bookingId}</span></div>
+          <div class="inv-meta">Booking Ref: <span>${data.bookingId}</span></div>
         </div>
       </div>
 
@@ -84,59 +108,96 @@ function buildInvoiceHTML(data: InvoiceData): string {
         ${data.guestEmail ? `<div class="guest-detail">${data.guestEmail}</div>` : ''}
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th style="width:50%">Description</th>
-            <th class="center">Nights</th>
-            <th class="right">Rate/Night</th>
-            <th class="right" style="width:25%">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <div class="item-desc">${data.room}</div>
-              <div class="item-sub">${data.checkIn} to ${data.checkOut}</div>
-            </td>
-            <td class="center">${data.nights}</td>
-            <td class="right">${formatINR(data.ratePerNight)}</td>
-            <td class="right" style="font-weight:500">${formatINR(data.subtotal)}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="totals">
-        <div class="totals-box">
-          <div class="total-row">
-            <span>Subtotal</span>
-            <span>${formatINR(data.subtotal)}</span>
-          </div>
-          <div class="total-row border">
-            <span>GST (12%)</span>
-            <span>${formatINR(data.gstAmount)}</span>
-          </div>
-          <div class="total-row grand">
-            <span>Total</span>
-            <span>${formatINR(data.totalAmount)}</span>
-          </div>
-          ${data.paymentMethod ? `
-          <div class="total-row small">
-            <span>Payment Method</span>
-            <span>${data.paymentMethod}</span>
-          </div>` : ''}
-          ${data.paymentStatus ? `
-          <div class="total-row small">
-            <span>Status</span>
-            <span class="${data.paymentStatus === 'Paid' ? 'status-paid' : 'status-unpaid'}">${data.paymentStatus}</span>
-          </div>` : ''}
+      <!-- 1. Customer Tax Bill -->
+      <div class="bill-box">
+        <div class="bill-box-header">
+          <div class="bill-box-title">1. Customer Tax Bill</div>
+          <div class="bill-box-badge">Customer Copy</div>
         </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Particulars</th>
+              <th class="right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Room Charges</td>
+              <td class="right">${fmt(roomPrice)}</td>
+            </tr>
+            ${discount > 0 ? `
+            <tr>
+              <td>Discount</td>
+              <td class="right discount-text">-${fmt(discount)}</td>
+            </tr>` : ''}
+            <tr>
+              <td class="bold">Taxable Value</td>
+              <td class="right bold">${fmt(taxableValue)}</td>
+            </tr>
+            <tr>
+              <td>GST @12%</td>
+              <td class="right">${fmt(gstAmount)}</td>
+            </tr>
+            <tr class="highlight-row">
+              <td>Grand Total</td>
+              <td class="right">${fmt(totalBookingAmount)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 2. Property Settlement Bill -->
+      <div class="bill-box">
+        <div class="bill-box-header">
+          <div class="bill-box-title">Property Settlement Bill</div>
+          <div class="bill-box-badge">To property</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Particulars</th>
+              <th class="right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Room Price</td>
+              <td class="right">${fmt(roomPrice)}</td>
+            </tr>
+            ${discount > 0 ? `
+            <tr>
+              <td>Discount</td>
+              <td class="right discount-text">-${fmt(discount)}</td>
+            </tr>` : ''}
+            <tr>
+              <td class="bold">Commissionable Amount</td>
+              <td class="right bold">${fmt(taxableValue)}</td>
+            </tr>
+            <tr>
+              <td>GST @12%</td>
+              <td class="right">${fmt(gstAmount)}</td>
+            </tr>
+            <tr class="bold">
+              <td>Total Booking Amount</td>
+              <td class="right">${fmt(totalBookingAmount)}</td>
+            </tr>
+            <tr>
+              <td>Less: Triplooper Commission (12% of ${fmt(taxableValue)})</td>
+              <td class="right commission-text">-${fmt(commissionAmount)}</td>
+            </tr>
+            <tr class="payable-row">
+              <td>Amount Payable to Property</td>
+              <td class="right">${fmt(amountPayableToProperty)}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div class="footer">
-        <div class="footer-title">Thank You For Your Stay!</div>
-        <div class="footer-text">If you have any questions concerning this invoice, please contact reception.</div>
-        <div class="footer-small">This is a computer-generated invoice and does not require a signature.</div>
+        <div class="footer-title">Thank You For Your Business!</div>
+        <div class="footer-text">If you have any questions concerning this invoice, please contact Triplooper Support.</div>
+        <div class="footer-small">This is a computer-generated document and does not require a physical signature.</div>
       </div>
       <script>
         window.onload = function() {

@@ -198,31 +198,7 @@ export default function LandingPage() {
     };
   }, []);
 
-  // 20+ Real-looking Property Cards for Live Property Marketplace
-  const initialProperties = [
-    { id: 1, name: "Anya Paradise", loc: "Pondicherry", type: "Luxury Beach Villa", price: 6500, rating: "4.95", image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80", tag: "Beachfront", subdomain: "anyaparadise" },
-    { id: 2, name: "Coolspot Cottage", loc: "Ooty", type: "Heritage Mountain Retreat", price: 4200, rating: "4.89", image: "https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=800&q=80", tag: "Mountain View", subdomain: "coolspot-cottage" },
-    { id: 3, name: "Jayam Castle", loc: "Yercaud", type: "Boutique Forest Lodge", price: 3800, rating: "4.90", image: "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=800&q=80", tag: "Forest Edge", subdomain: "jayam-castle" },
-    { id: 4, name: "Green Apple Property", loc: "Madurai", type: "Premium Stay", price: 3500, rating: "4.85", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80", tag: "City Center", subdomain: "green-apple-property" },
-    { id: 5, name: "Carvery Residency", loc: "Pondicherry", type: "French Quarter Inn", price: 5800, rating: "4.92", image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80", tag: "Heritage Quarter", subdomain: "carvery-residency" },
-    { id: 6, name: "Royal Park", loc: "Chennai", type: "Executive Suite", price: 7200, rating: "4.88", image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80", tag: "Premium Suite", subdomain: "royal-park" },
-    { id: 7, name: "Solitude Beach House", loc: "Pondicherry", type: "Private Beachfront Villa", price: 12000, rating: "4.98", image: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&q=80", tag: "Beachfront" },
-    { id: 8, name: "Verdant Valley Resort", loc: "Kodaikanal", type: "Hillside Plantation Villa", price: 9500, rating: "4.94", image: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=800&q=80", tag: "Mountain View" },
-    { id: 9, name: "Golden Crest Bistro & Inn", loc: "Ooty", type: "Boutique Farmhouse", price: 6000, rating: "4.91", image: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800&q=80", tag: "Eco Stays" },
-    { id: 10, name: "Moongil Illam Cottage", loc: "Pondicherry", type: "Bamboo Design Villa", price: 5200, rating: "4.87", image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80", tag: "Eco Stays", subdomain: "moongil-illam-cottage" },
-    { id: 11, name: "Nest N Rest Cottage", loc: "Ooty", type: "Cozy Wood Cabin", price: 3900, rating: "4.83", image: "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?w=800&q=80", tag: "Mountain View", subdomain: "nest-n-rest-cottage" },
-    { id: 12, name: "Pineapple Nest", loc: "Coimbatore", type: "Modern Loft Stay", price: 4000, rating: "4.86", image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80", tag: "City Center", subdomain: "pineapple-nest" },
-    { id: 13, name: "Sai Residency", loc: "Ooty", type: "Classic Hill Cottage", price: 4500, rating: "4.93", image: "https://images.unsplash.com/photo-1464146072230-91cabc968266?w=800&q=80", tag: "Mountain View", subdomain: "sai-residency" },
-    { id: 14, name: "Coral Reef Resort", loc: "Pondicherry", type: "Coastal Luxury Stay", price: 10500, rating: "4.96", image: "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=800&q=80", tag: "Beachfront" },
-    { id: 15, name: "Emerald Glade Villa", loc: "Yercaud", type: "Orchard Manor", price: 8000, rating: "4.92", image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80", tag: "Eco Stays" },
-    { id: 16, name: "Whispering Pines", loc: "Kodaikanal", type: "Pine Ridge Cabin", price: 5500, rating: "4.89", image: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80", tag: "Mountain View" },
-    { id: 17, name: "Pondy Heights", loc: "Pondicherry", type: "Rooftop Pool Penthouse", price: 6800, rating: "4.88", image: "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80", tag: "Heritage Quarter" },
-    { id: 18, name: "Hilltop Sanctuary", loc: "Ooty", type: "Vintage Estate Bungalow", price: 11000, rating: "4.97", image: "https://images.unsplash.com/photo-1512915922686-57c11dde9b6b?w=800&q=80", tag: "Mountain View" },
-    { id: 19, name: "Kaveri Breeze Hotel", loc: "Tiruchirappalli", type: "Boutique Riverside Stay", price: 3900, rating: "4.84", image: "https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800&q=80", tag: "Heritage Quarter" },
-    { id: 20, name: "Silver Linings Villa", loc: "Coimbatore", type: "Luxury Foothill Villa", price: 8500, rating: "4.91", image: "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800&q=80", tag: "Eco Stays" }
-  ];
-
-  const [propertiesList, setPropertiesList] = useState<any[]>(initialProperties);
+  const [propertiesList, setPropertiesList] = useState<any[]>([]);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState("All Stays");
   const [activeDestinationFilter, setActiveDestinationFilter] = useState("All Destinations");
   const [searchDestination, setSearchDestination] = useState("");
@@ -234,11 +210,13 @@ export default function LandingPage() {
         const { data: tenantsData, error: tenantsError } = await supabase
           .from('tenants')
           .select('id, business_name, subdomain, business_type, hero_image_url, city')
-          .eq('is_active', true)
-          .eq('verification_status', 'approved');
+          .eq('is_active', true);
 
         if (tenantsError) throw tenantsError;
-        if (!tenantsData || tenantsData.length === 0) return;
+        if (!tenantsData || tenantsData.length === 0) {
+          setPropertiesList([]);
+          return;
+        }
 
         const { data: testimonialsData } = await supabase
           .from('testimonials')
@@ -265,15 +243,15 @@ export default function LandingPage() {
           const ratings = tenantRatings[t.id] || [];
           const avgRating = ratings.length > 0
             ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
-            : (4.7 + (index * 0.05) % 0.3).toFixed(2);
+            : "4.85";
 
           const rooms = tenantRooms[t.id] || [];
           const minPrice = rooms.length > 0
             ? Math.min(...rooms.map(r => Number(r.price_per_night)))
-            : 3500 + (index * 500) % 3000;
+            : 3500;
 
           const roomTypes = rooms.map(r => r.type).filter(Boolean);
-          const typeLabel = roomTypes[0] || (t.business_type === 'restaurant' ? 'Boutique Bistro' : 'Premium Residency');
+          const typeLabel = roomTypes[0] || (t.business_type === 'restaurant' ? 'Boutique Bistro' : 'Premium Stay');
           
           const tags = ['Beachfront', 'Mountain View', 'Forest Edge', 'City Center', 'Eco Stays'];
           const tag = tags[index % tags.length];
@@ -295,6 +273,7 @@ export default function LandingPage() {
         setPropertiesList(realProps);
       } catch (err) {
         console.error('Failed to load real properties:', err);
+        setPropertiesList([]);
       }
     }
     loadRealProperties();
