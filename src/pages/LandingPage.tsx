@@ -1586,13 +1586,14 @@ export function InteractiveBookingShowcase() {
   const [step, setStep] = useState(0);
   const [roomType, setRoomType] = useState('Deluxe Villa');
   const [days, setDays] = useState(3);
-  const [extras, setExtras] = useState({ spa: false, dinner: false });
+  const [extras, setExtras] = useState({ driver: false, dinner: false, aiPlanner: false });
 
   const price = useMemo(() => {
     const base = roomType === 'Deluxe Villa' ? 4500 : 7500;
     let total = base * days;
-    if (extras.spa) total += 2000;
+    if (extras.driver) total += 1500;
     if (extras.dinner) total += 1200 * days;
+    if (extras.aiPlanner) total += 500;
     return total;
   }, [roomType, days, extras]);
 
@@ -1645,17 +1646,17 @@ export function InteractiveBookingShowcase() {
 
       {step === 1 && (
         <div className="space-y-4 pt-4">
-          <label className="text-[10px] text-[#0E2A38] uppercase font-black">Add-on Experiences</label>
+          <label className="text-[10px] text-[#0E2A38] uppercase font-black">Add-on Experiences & Services</label>
           <div className="space-y-2">
             <div 
-              onClick={() => setExtras({ ...extras, spa: !extras.spa })}
-              className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${extras.spa ? 'border-[#0E2A38] bg-[#0E2A38]/5' : 'border-zinc-100 bg-[#FAF9F6]'}`}
+              onClick={() => setExtras({ ...extras, driver: !extras.driver })}
+              className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${extras.driver ? 'border-[#0E2A38] bg-[#0E2A38]/5' : 'border-zinc-100 bg-[#FAF9F6]'}`}
             >
               <div>
-                <p className="text-xs font-bold text-[#0E2A38]">Full Body Aromatherapy</p>
-                <p className="text-[9px] text-zinc-500">1 Session • Spa Wellness</p>
+                <p className="text-xs font-bold text-[#0E2A38]">Private Driver & Local Transfer</p>
+                <p className="text-[9px] text-zinc-500">Dedicated Driver • Airport & Sightseeing</p>
               </div>
-              <span className="text-xs font-bold text-[#C9A646]">+₹2,000</span>
+              <span className="text-xs font-bold text-[#C9A646]">+₹1,500</span>
             </div>
 
             <div 
@@ -1663,10 +1664,21 @@ export function InteractiveBookingShowcase() {
               className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${extras.dinner ? 'border-[#0E2A38] bg-[#0E2A38]/5' : 'border-zinc-100 bg-[#FAF9F6]'}`}
             >
               <div>
-                <p className="text-xs font-bold text-[#0E2A38]">Gourmet Dinner Package</p>
-                <p className="text-[9px] text-zinc-500">Buffet Dinners daily</p>
+                <p className="text-xs font-bold text-[#0E2A38]">Gourmet Dining & Room Service</p>
+                <p className="text-[9px] text-zinc-500">Daily In-Stay Dining & QR Orders</p>
               </div>
               <span className="text-xs font-bold text-[#C9A646]">+₹1,200/N</span>
+            </div>
+
+            <div 
+              onClick={() => setExtras({ ...extras, aiPlanner: !extras.aiPlanner })}
+              className={`p-3 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${extras.aiPlanner ? 'border-[#0E2A38] bg-[#0E2A38]/5' : 'border-zinc-100 bg-[#FAF9F6]'}`}
+            >
+              <div>
+                <p className="text-xs font-bold text-[#0E2A38]">AI Smart Trip Planner & Calculator</p>
+                <p className="text-[9px] text-zinc-500">Automated Route & Trip Cost Calculation</p>
+              </div>
+              <span className="text-xs font-bold text-[#C9A646]">+₹500</span>
             </div>
           </div>
 
