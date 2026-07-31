@@ -145,15 +145,15 @@ export default function GuestBill() {
 
         {/* Customer Tax Bill Breakdown */}
         {(() => {
-          const roomCharges = Number(session.amount || 0);
+          const roomPrice = Number(session.amount || 0);
           const discount = (session as any).discount || 0;
-          const taxableValue = Math.max(0, roomCharges - discount);
+          const taxableValue = Math.max(0, roomPrice - discount);
           const gstAmount = Math.round(taxableValue * 0.12);
           const grandTotal = taxableValue + gstAmount + foodTotal;
 
           return (
             <div className="space-y-4 pt-4 border-t border-zinc-800/40 print:border-zinc-350">
-              <h3 className="text-xs uppercase tracking-wider font-semibold text-zinc-400 print:text-zinc-600">1. Customer Tax Bill</h3>
+              <h3 className="text-xs uppercase tracking-wider font-semibold text-zinc-400 print:text-zinc-600">Customer Tax Bill</h3>
 
               <div className="bg-zinc-950/50 border border-zinc-800/80 rounded-2xl p-4 space-y-3">
                 <table className="w-full text-xs">
@@ -165,8 +165,8 @@ export default function GuestBill() {
                   </thead>
                   <tbody className="divide-y divide-zinc-900 text-zinc-300">
                     <tr>
-                      <td className="py-2">Room Charges</td>
-                      <td className="py-2 text-right font-medium">₹{roomCharges.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="py-2">Room Price</td>
+                      <td className="py-2 text-right font-medium">₹{roomPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                     </tr>
                     {discount > 0 && (
                       <tr>

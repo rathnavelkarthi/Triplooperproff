@@ -12,7 +12,7 @@ function buildInvoiceHTML(data: InvoiceData): string {
     const gstAmount = data.gstAmount;
     const totalBookingAmount = data.totalAmount ?? (taxableValue + gstAmount);
     const commissionAmount = data.commissionAmount ?? Math.round(taxableValue * 0.12);
-    const amountPayableToProperty = data.amountPayableToProperty ?? (totalBookingAmount - commissionAmount);
+    const amountPayableToProperty = data.amountPayableToProperty ?? (taxableValue - commissionAmount);
 
     const fmt = (num: number) => `₹${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 

@@ -207,73 +207,103 @@ export default function LandingPage() {
   useEffect(() => {
     async function loadRealProperties() {
       try {
+        let liveProps: any[] = [];
         const { data: tenantsData, error: tenantsError } = await supabase
           .from('tenants')
-          .select('id, business_name, subdomain, business_type, hero_image_url, city')
-          .eq('is_active', true);
+          .select('id, business_name, subdomain, business_type, hero_image_url, city');
 
-        if (tenantsError) throw tenantsError;
-        if (!tenantsData || tenantsData.length === 0) {
-          setPropertiesList([]);
-          return;
+        if (!tenantsError && tenantsData && tenantsData.length > 0) {
+          const { data: testimonialsData } = await supabase
+            .from('testimonials')
+            .select('tenant_id, rating');
+
+          const { data: roomsData } = await supabase
+            .from('rooms')
+            .select('tenant_id, price_per_night, type')
+            .eq('is_available', true);
+
+          const tenantRooms: Record<string, typeof roomsData> = {};
+          roomsData?.forEach(r => {
+            if (!tenantRooms[r.tenant_id]) tenantRooms[r.tenant_id] = [];
+            tenantRooms[r.tenant_id].push(r);
+          });
+
+          const tenantRatings: Record<string, number[]> = {};
+          testimonialsData?.forEach(t => {
+            if (!tenantRatings[t.tenant_id]) tenantRatings[t.tenant_id] = [];
+            tenantRatings[t.tenant_id].push(t.rating);
+          });
+
+          liveProps = tenantsData
+            .filter(t => t.business_name && !t.business_name.toLowerCase().includes('ganesh'))
+            .map((t, index) => {
+              const ratings = tenantRatings[t.id] || [];
+              const avgRating = ratings.length > 0
+                ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
+                : "4.85";
+
+              const rooms = tenantRooms[t.id] || [];
+              const minPrice = rooms.length > 0
+                ? Math.min(...rooms.map(r => Number(r.price_per_night)))
+                : 3500;
+
+              const roomTypes = rooms.map(r => r.type).filter(Boolean);
+              const typeLabel = roomTypes[0] || (t.business_type === 'restaurant' ? 'Boutique Bistro' : 'Premium Stay');
+              
+              const tags = ['Beachfront', 'Mountain View', 'Forest Edge', 'City Center', 'Eco Stays'];
+              const tag = tags[index % tags.length];
+
+              return {
+                id: t.id,
+                name: t.business_name,
+                loc: t.city || 'India',
+                type: typeLabel,
+                price: minPrice,
+                rating: avgRating,
+                image: t.hero_image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
+                tag: tag,
+                subdomain: t.subdomain
+              };
+            });
         }
 
-        const { data: testimonialsData } = await supabase
-          .from('testimonials')
-          .select('tenant_id, rating');
+        const catalogProps = CATALOG_PROPERTIES
+          .filter(c => !c.name.toLowerCase().includes('ganesh'))
+          .map(c => ({
+            id: `cat-${c.id}`,
+            name: c.name,
+            loc: c.city,
+            type: c.type,
+            price: c.nightlyRate,
+            rating: c.rating,
+            image: c.image,
+            tag: c.tag,
+            subdomain: c.subdomain
+          }));
 
-        const { data: roomsData } = await supabase
-          .from('rooms')
-          .select('tenant_id, price_per_night, type')
-          .eq('is_available', true);
+        const liveSubdomains = new Set(liveProps.map(p => (p.subdomain || p.name).toLowerCase()));
+        const uniqueCatalog = catalogProps.filter(c => !liveSubdomains.has((c.subdomain || c.name).toLowerCase()));
 
-        const tenantRooms: Record<string, typeof roomsData> = {};
-        roomsData?.forEach(r => {
-          if (!tenantRooms[r.tenant_id]) tenantRooms[r.tenant_id] = [];
-          tenantRooms[r.tenant_id].push(r);
-        });
+        const combined = [...liveProps, ...uniqueCatalog].filter(p => !p.name.toLowerCase().includes('ganesh'));
+        combined.sort((a, b) => Number(b.rating) - Number(a.rating));
 
-        const tenantRatings: Record<string, number[]> = {};
-        testimonialsData?.forEach(t => {
-          if (!tenantRatings[t.tenant_id]) tenantRatings[t.tenant_id] = [];
-          tenantRatings[t.tenant_id].push(t.rating);
-        });
-
-        const realProps = tenantsData.map((t, index) => {
-          const ratings = tenantRatings[t.id] || [];
-          const avgRating = ratings.length > 0
-            ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
-            : "4.85";
-
-          const rooms = tenantRooms[t.id] || [];
-          const minPrice = rooms.length > 0
-            ? Math.min(...rooms.map(r => Number(r.price_per_night)))
-            : 3500;
-
-          const roomTypes = rooms.map(r => r.type).filter(Boolean);
-          const typeLabel = roomTypes[0] || (t.business_type === 'restaurant' ? 'Boutique Bistro' : 'Premium Stay');
-          
-          const tags = ['Beachfront', 'Mountain View', 'Forest Edge', 'City Center', 'Eco Stays'];
-          const tag = tags[index % tags.length];
-
-          return {
-            id: t.id,
-            name: t.business_name,
-            loc: t.city || 'India',
-            type: typeLabel,
-            price: minPrice,
-            rating: avgRating,
-            image: t.hero_image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80',
-            tag: tag,
-            subdomain: t.subdomain
-          };
-        });
-
-        realProps.sort((a, b) => Number(b.rating) - Number(a.rating));
-        setPropertiesList(realProps);
+        setPropertiesList(combined);
       } catch (err) {
         console.error('Failed to load real properties:', err);
-        setPropertiesList([]);
+        const fallback = CATALOG_PROPERTIES
+          .filter(c => !c.name.toLowerCase().includes('ganesh'))
+          .map(c => ({
+            id: `cat-${c.id}`,
+            name: c.name,
+            loc: c.city,
+            type: c.type,
+            price: c.nightlyRate,
+            rating: c.rating,
+            image: c.image,
+            tag: c.tag,
+            subdomain: c.subdomain
+          }));
+        setPropertiesList(fallback);
       }
     }
     loadRealProperties();

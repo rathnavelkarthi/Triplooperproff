@@ -249,16 +249,16 @@ export default function Billing() {
                 const gstAmount = Math.round(commissionableAmount * 0.12);
                 const totalBookingAmount = commissionableAmount + gstAmount;
                 const triplooperCommission = Math.round(commissionableAmount * 0.12);
-                const payableToProperty = totalBookingAmount - triplooperCommission;
+                const payableToProperty = commissionableAmount - triplooperCommission;
 
                 const copyTableToClipboard = (title: string, text: string) => {
                     navigator.clipboard.writeText(text);
                     toast.success(`${title} copied to clipboard!`);
                 };
 
-                const settlementBillText = `Property Settlement Bill\nParticulars\tAmount\nRoom Price\t₹${roomPrice.toLocaleString('en-IN')}\nDiscount\t-₹${discount.toLocaleString('en-IN')}\nCommissionable Amount\t₹${commissionableAmount.toLocaleString('en-IN')}\nGST @12%\t₹${gstAmount.toLocaleString('en-IN')}\nTotal Booking Amount\t₹${totalBookingAmount.toLocaleString('en-IN')}\nLess: Triplooper Commission (12% of ₹${commissionableAmount.toLocaleString('en-IN')})\t-₹${triplooperCommission.toLocaleString('en-IN')}\nAmount Payable to Property\t₹${payableToProperty.toLocaleString('en-IN')}`;
+                const settlementBillText = `Property Settlement Bill\nParticulars\tAmount\nRoom Price\t₹${roomPrice.toLocaleString('en-IN')}\nDiscount\t-₹${discount.toLocaleString('en-IN')}\nCommissionable Amount\t₹${commissionableAmount.toLocaleString('en-IN')}\nGST @12%\t₹${gstAmount.toLocaleString('en-IN')}\nTotal Booking Amount\t₹${totalBookingAmount.toLocaleString('en-IN')}\nTriplooper Commission (12%)\t-₹${triplooperCommission.toLocaleString('en-IN')}\nAmount Payable to Property\t₹${payableToProperty.toLocaleString('en-IN')}`;
 
-                const customerBillText = `1. Customer Tax Bill\nParticulars\tAmount\nRoom Charges\t₹${roomPrice.toLocaleString('en-IN')}\nDiscount\t-₹${discount.toLocaleString('en-IN')}\nTaxable Value\t₹${commissionableAmount.toLocaleString('en-IN')}\nGST @12%\t₹${gstAmount.toLocaleString('en-IN')}\nGrand Total\t₹${totalBookingAmount.toLocaleString('en-IN')}`;
+                const customerBillText = `Customer Tax Bill\nParticulars\tAmount\nRoom Price\t₹${roomPrice.toLocaleString('en-IN')}\nDiscount\t-₹${discount.toLocaleString('en-IN')}\nTaxable Value\t₹${commissionableAmount.toLocaleString('en-IN')}\nGST @12%\t₹${gstAmount.toLocaleString('en-IN')}\nGrand Total\t₹${totalBookingAmount.toLocaleString('en-IN')}`;
 
                 return (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">

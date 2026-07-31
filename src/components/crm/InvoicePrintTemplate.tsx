@@ -41,7 +41,7 @@ const InvoicePrintTemplate = forwardRef<HTMLDivElement, Props>(({ data, mode = '
     const gstAmount = data.gstAmount;
     const totalBookingAmount = data.totalAmount ?? (taxableValue + gstAmount);
     const commissionAmount = data.commissionAmount ?? Math.round(taxableValue * 0.12);
-    const amountPayableToProperty = data.amountPayableToProperty ?? (totalBookingAmount - commissionAmount);
+    const amountPayableToProperty = data.amountPayableToProperty ?? (taxableValue - commissionAmount);
 
     const showCustomerBill = mode === 'all' || mode === 'customer';
     const showSettlementBill = mode === 'all' || mode === 'settlement';
