@@ -1528,34 +1528,7 @@ export default function TenantSite() {
                         {(() => {
                             const raw = googleMapsUrl || contactAddress || tenant?.business_name || '';
                             const mapUrl = parseGoogleMapsUrl(raw);
-                            const isInsideEditorPreview = typeof window !== 'undefined' && window.self !== window.top;
 
-                            // 1. If running inside Website Editor nested preview iframe, render clean Editor Preview Card to prevent Chrome sub-frame blocking
-                            if (isInsideEditorPreview && mapUrl) {
-                                return (
-                                    <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col items-center justify-center p-6 text-center relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-                                        <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-3.5 backdrop-blur-md shadow-inner border border-white/10">
-                                            <MapPin size={28} className="text-emerald-400" />
-                                        </div>
-                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-300 text-[11px] font-semibold rounded-full border border-emerald-500/30 mb-2">
-                                            ✓ Google Maps Live Embed Configured
-                                        </span>
-                                        <h4 className="font-bold text-white text-lg mb-1">{tenant?.business_name || 'Property Location'}</h4>
-                                        <p className="text-xs text-slate-300 max-w-sm mb-5 leading-relaxed">{contactAddress || 'Ooty, Tamil Nadu'}</p>
-                                        <a
-                                            href={mapUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 text-xs font-bold rounded-xl hover:bg-slate-100 transition-all shadow-lg hover:scale-[1.02]"
-                                        >
-                                            <ExternalLink size={14} /> Open Live Map in New Tab
-                                        </a>
-                                    </div>
-                                );
-                            }
-
-                            // 2. On live website (single-level iframe), render live Google Maps iframe directly
                             if (mapUrl) {
                                 return (
                                     <iframe
@@ -1569,16 +1542,7 @@ export default function TenantSite() {
                                 );
                             }
 
-                            // 3. Fallback location card when no map URL is set
-                            let cleanQuery = (googleMapsUrl || contactAddress || tenant?.business_name || 'Ooty, Tamil Nadu').trim();
-                            if (cleanQuery.includes('<iframe')) {
-                                const m = cleanQuery.match(/src=["']([^"']+)["']/);
-                                if (m && m[1]) cleanQuery = m[1];
-                            }
-                            if (cleanQuery.includes('+')) {
-                                cleanQuery = cleanQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,4}\s*,?\s*/i, '').trim();
-                            }
-                            const searchAddr = encodeURIComponent(cleanQuery || 'Ooty, Tamil Nadu');
+                            const searchAddr = encodeURIComponent(contactAddress || tenant?.business_name || 'Ooty, Tamil Nadu');
 
                             return (
                                 <div className="w-full h-full bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 flex flex-col items-center justify-center p-6 text-center">
@@ -1610,7 +1574,7 @@ export default function TenantSite() {
                             className="text-center mt-6"
                         >
                             <a
-                                href={`https://maps.google.com/maps?q=${encodeURIComponent(contactAddress)}`}
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactAddress)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={isApple ? "inline-flex items-center justify-center gap-2 hover:underline px-4 py-2 transition-colors group" : "inline-flex items-center justify-center gap-2 hover:bg-gray-50 px-4 py-2 rounded-xl transition-colors group"}
