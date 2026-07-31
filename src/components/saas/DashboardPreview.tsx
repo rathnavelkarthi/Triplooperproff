@@ -109,7 +109,7 @@ export default function DashboardPreview() {
                             <div className="flex-1 flex justify-center">
                                 <div className="bg-gray-100 rounded-lg px-3 py-1 text-[10px] text-gray-400 font-medium flex items-center gap-1.5">
                                     <div className="w-2.5 h-2.5 rounded-sm bg-gray-300/50" />
-                                    crm.ganeshresidency.com/dashboard
+                                    crm.anyaparadise.com/dashboard
                                 </div>
                             </div>
                         </div>
@@ -119,7 +119,7 @@ export default function DashboardPreview() {
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                 <div>
                                     <h3 className="font-serif text-xl lg:text-2xl font-bold text-[#0E2A38] tracking-tight">Dashboard Overview</h3>
-                                    <p className="text-gray-500 text-xs mt-0.5">Real-time metrics for Ganesh Residency.</p>
+                                    <p className="text-gray-500 text-xs mt-0.5">Real-time metrics for Anya Paradise.</p>
                                 </div>
                                 <div className="flex bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
                                     {['Daily', 'Monthly', 'Yearly'].map(f => (

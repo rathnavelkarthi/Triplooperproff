@@ -15,6 +15,20 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../lib/supabaseClient';
+import { CATALOG_PROPERTIES } from '../lib/tripPlanner/catalog';
+
+const REGISTERED_SHOWCASE_PROPERTIES = [
+  { id: 'cat-1', name: "Anya Paradise", loc: "Pondicherry", type: "Luxury Beach Villa", price: 6500, rating: "4.95", image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80", tag: "Beachfront", subdomain: "anyaparadise" },
+  { id: 'cat-2', name: "Coolspot Cottage", loc: "Ooty", type: "Heritage Mountain Retreat", price: 4200, rating: "4.89", image: "https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=800&q=80", tag: "Mountain View", subdomain: "coolspot-cottage" },
+  { id: 'cat-3', name: "Jayam Castle", loc: "Yercaud", type: "Boutique Forest Lodge", price: 3800, rating: "4.90", image: "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=800&q=80", tag: "Forest Edge", subdomain: "jayam-castle" },
+  { id: 'cat-4', name: "Green Apple Property", loc: "Madurai", type: "Premium Stay", price: 3500, rating: "4.85", image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80", tag: "City Center", subdomain: "green-apple-property" },
+  { id: 'cat-5', name: "Carvery Residency", loc: "Pondicherry", type: "French Quarter Inn", price: 5800, rating: "4.92", image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80", tag: "Heritage Quarter", subdomain: "carvery-residency" },
+  { id: 'cat-6', name: "Royal Park", loc: "Chennai", type: "Executive Suite", price: 7200, rating: "4.88", image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80", tag: "Premium Suite", subdomain: "royal-park" },
+  { id: 'cat-7', name: "Solitude Beach House", loc: "Pondicherry", type: "Private Beachfront Villa", price: 12000, rating: "4.98", image: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&q=80", tag: "Beachfront" },
+  { id: 'cat-8', name: "Verdant Valley Resort", loc: "Kodaikanal", type: "Hillside Plantation Villa", price: 9500, rating: "4.94", image: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=800&q=80", tag: "Mountain View" },
+  { id: 'cat-9', name: "Golden Crest Bistro & Inn", loc: "Ooty", type: "Boutique Farmhouse", price: 6000, rating: "4.91", image: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800&q=80", tag: "Eco Stays" },
+  { id: 'cat-10', name: "Moongil Illam Cottage", loc: "Pondicherry", type: "Bamboo Design Villa", price: 5200, rating: "4.87", image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80", tag: "Eco Stays", subdomain: "moongil-illam-cottage" }
+];
 
 // Inject luxury fonts and bespoke design system styles
 const masterStyles = `
@@ -198,7 +212,7 @@ export default function LandingPage() {
     };
   }, []);
 
-  const [propertiesList, setPropertiesList] = useState<any[]>([]);
+  const [propertiesList, setPropertiesList] = useState<any[]>(REGISTERED_SHOWCASE_PROPERTIES);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState("All Stays");
   const [activeDestinationFilter, setActiveDestinationFilter] = useState("All Destinations");
   const [searchDestination, setSearchDestination] = useState("");
@@ -267,43 +281,16 @@ export default function LandingPage() {
             });
         }
 
-        const catalogProps = CATALOG_PROPERTIES
-          .filter(c => !c.name.toLowerCase().includes('ganesh'))
-          .map(c => ({
-            id: `cat-${c.id}`,
-            name: c.name,
-            loc: c.city,
-            type: c.type,
-            price: c.nightlyRate,
-            rating: c.rating,
-            image: c.image,
-            tag: c.tag,
-            subdomain: c.subdomain
-          }));
-
         const liveSubdomains = new Set(liveProps.map(p => (p.subdomain || p.name).toLowerCase()));
-        const uniqueCatalog = catalogProps.filter(c => !liveSubdomains.has((c.subdomain || c.name).toLowerCase()));
+        const uniqueShowcase = REGISTERED_SHOWCASE_PROPERTIES.filter(c => !liveSubdomains.has((c.subdomain || c.name).toLowerCase()));
 
-        const combined = [...liveProps, ...uniqueCatalog].filter(p => !p.name.toLowerCase().includes('ganesh'));
+        const combined = [...liveProps, ...uniqueShowcase].filter(p => !p.name.toLowerCase().includes('ganesh'));
         combined.sort((a, b) => Number(b.rating) - Number(a.rating));
 
         setPropertiesList(combined);
       } catch (err) {
         console.error('Failed to load real properties:', err);
-        const fallback = CATALOG_PROPERTIES
-          .filter(c => !c.name.toLowerCase().includes('ganesh'))
-          .map(c => ({
-            id: `cat-${c.id}`,
-            name: c.name,
-            loc: c.city,
-            type: c.type,
-            price: c.nightlyRate,
-            rating: c.rating,
-            image: c.image,
-            tag: c.tag,
-            subdomain: c.subdomain
-          }));
-        setPropertiesList(fallback);
+        setPropertiesList(REGISTERED_SHOWCASE_PROPERTIES.filter(p => !p.name.toLowerCase().includes('ganesh')));
       }
     }
     loadRealProperties();
