@@ -642,6 +642,77 @@ export default function TenantSite() {
         setShowStickyBar(latest > 600);
     });
 
+    const [embedMapUrl, setEmbedMapUrl] = useState<string>('');
+
+    useEffect(() => {
+        let isMounted = true;
+        const settings = siteData?.settings || {};
+        const tenant = siteData?.tenant;
+        const getContent = (section: string, key: string, field: 'content_text' | 'image_url' = 'content_text') => {
+            const block = pageContent.find(p => p.section === section && p.block_key === key);
+            return block && block[field] ? block[field] : null;
+        };
+
+        const contactAddress = settings.contactAddress || getContent('contact', 'address') || '';
+        const googleMapsUrl = settings.googleMapsUrl || '';
+
+        async function resolveMapUrl() {
+            const raw = (googleMapsUrl || contactAddress || tenant?.business_name || '').trim();
+            if (!raw) {
+                if (isMounted) setEmbedMapUrl('');
+                return;
+            }
+
+            let sourceUrl = raw;
+            if (raw.includes('<iframe')) {
+                const match = raw.match(/src=["']([^"']+)["']/);
+                if (match && match[1]) sourceUrl = match[1];
+            }
+
+            if (sourceUrl.includes('google.com/maps/embed')) {
+                if (isMounted) setEmbedMapUrl(sourceUrl);
+                return;
+            }
+
+            let searchQuery = sourceUrl;
+            if (searchQuery.includes('+') && searchQuery.match(/^[A-Z0-9]{4}\+[A-Z0-9]{2,}\s*/i)) {
+                searchQuery = searchQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,}\s*/i, '').trim();
+            }
+            if (!searchQuery || searchQuery.length < 3) {
+                searchQuery = contactAddress || tenant?.business_name || 'Ooty, Tamil Nadu';
+            }
+
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`, {
+                    headers: { 'User-Agent': 'TriplooperApp/1.0' }
+                });
+                const data = await res.json();
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    const bbox = [
+                        (lon - 0.02).toFixed(4),
+                        (lat - 0.02).toFixed(4),
+                        (lon + 0.02).toFixed(4),
+                        (lat + 0.02).toFixed(4)
+                    ].join(',');
+                    const osmEmbed = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
+                    if (isMounted) setEmbedMapUrl(osmEmbed);
+                    return;
+                }
+            } catch (e) {
+                console.warn('Geocoding map fallback error:', e);
+            }
+
+            if (isMounted) {
+                setEmbedMapUrl(`https://www.openstreetmap.org/export/embed.html?layer=mapnik`);
+            }
+        }
+
+        resolveMapUrl();
+        return () => { isMounted = false; };
+    }, [siteData, pageContent]);
+
     useEffect(() => {
         if (!subdomain) return;
         (async () => {
@@ -748,67 +819,6 @@ export default function TenantSite() {
     const heroTitle = settings.heroTitle || getContent('hero', 'title') || tenant.business_name;
     const heroSubtitle = settings.heroSubtitle || getContent('hero', 'subtitle') || (isRestaurant ? 'A culinary experience worth savoring' : 'Experience comfort and luxury');
     const aboutText = settings.aboutText || getContent('about', 'body') || '';
-
-    const [embedMapUrl, setEmbedMapUrl] = useState<string>('');
-
-    useEffect(() => {
-        let isMounted = true;
-        async function resolveMapUrl() {
-            const raw = (googleMapsUrl || contactAddress || tenant?.business_name || '').trim();
-            if (!raw) {
-                if (isMounted) setEmbedMapUrl('');
-                return;
-            }
-
-            let sourceUrl = raw;
-            if (raw.includes('<iframe')) {
-                const match = raw.match(/src=["']([^"']+)["']/);
-                if (match && match[1]) sourceUrl = match[1];
-            }
-
-            if (sourceUrl.includes('google.com/maps/embed')) {
-                if (isMounted) setEmbedMapUrl(sourceUrl);
-                return;
-            }
-
-            let searchQuery = sourceUrl;
-            if (searchQuery.includes('+') && searchQuery.match(/^[A-Z0-9]{4}\+[A-Z0-9]{2,}\s*/i)) {
-                searchQuery = searchQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,}\s*/i, '').trim();
-            }
-            if (!searchQuery || searchQuery.length < 3) {
-                searchQuery = contactAddress || tenant?.business_name || 'Ooty, Tamil Nadu';
-            }
-
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`, {
-                    headers: { 'User-Agent': 'TriplooperApp/1.0' }
-                });
-                const data = await res.json();
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    const bbox = [
-                        (lon - 0.02).toFixed(4),
-                        (lat - 0.02).toFixed(4),
-                        (lon + 0.02).toFixed(4),
-                        (lat + 0.02).toFixed(4)
-                    ].join(',');
-                    const osmEmbed = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
-                    if (isMounted) setEmbedMapUrl(osmEmbed);
-                    return;
-                }
-            } catch (e) {
-                console.warn('Geocoding map fallback error:', e);
-            }
-
-            if (isMounted) {
-                setEmbedMapUrl(`https://www.openstreetmap.org/export/embed.html?layer=mapnik`);
-            }
-        }
-
-        resolveMapUrl();
-        return () => { isMounted = false; };
-    }, [googleMapsUrl, contactAddress, tenant?.business_name]);
 
     const heroBtn = getContent('hero', 'button_text') || 'Book now';
     const aboutHeading = getContent('about', 'heading') || tenant.business_name;
