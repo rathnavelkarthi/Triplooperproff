@@ -784,20 +784,20 @@ export default function WebsiteEditor() {
                                 </div>
 
                                 <div className="border-t border-gray-100 pt-5">
-                                    <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Google Maps Link</label>
-                                    <p className="text-[11px] text-gray-400 mb-2">Paste your Google Maps share link (or a plus code like W5JJ+FJJ Vellakkal, Chennai). We'll embed the map on your website.</p>
+                                    <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Google Maps Link or Plus Code</label>
+                                    <p className="text-[11px] text-gray-400 mb-2">Paste a Google Maps Embed link (https://www.google.com/maps/embed?pb=...), Plus Code (e.g. 9PR3+63 Ooty, Tamil Nadu), or Address. We'll embed a crisp interactive map for your guests.</p>
                                     <input
                                         type="text"
                                         value={settings.googleMapsUrl || ''}
                                         onChange={e => updateSetting('googleMapsUrl', e.target.value)}
-                                        placeholder="https://maps.google.com/?q=..."
+                                        placeholder="9PR3+63 Ooty, Tamil Nadu OR https://www.google.com/maps/embed?pb=..."
                                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none transition-all"
                                     />
                                     {settings.googleMapsUrl && (
                                         <a href={settings.googleMapsUrl.startsWith('http') ? settings.googleMapsUrl : `https://www.google.com/maps/search/${encodeURIComponent(settings.googleMapsUrl)}`}
                                             target="_blank" rel="noopener noreferrer"
                                             className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-[#0E2A38] hover:underline">
-                                            <MapPin size={10} /> Preview on Google Maps
+                                            <MapPin size={10} /> Preview location on Google Maps
                                         </a>
                                     )}
                                 </div>
