@@ -60,12 +60,12 @@ export function parseGoogleMapsUrl(input: string): string {
         }
     }
 
-    // 2. If it's already an embed URL, return it
-    if (trimmed.includes('google.com/maps/embed') || trimmed.includes('google.com/maps/embed/v1') || trimmed.includes('output=embed')) {
+    // 2. If it's already a full Google Maps embed URL, return it
+    if (trimmed.includes('google.com/maps/embed') || trimmed.includes('google.com/maps/embed/v1')) {
         return trimmed;
     }
 
-    // 3. Reject short links because they cannot be embedded and will be blocked
+    // 3. Reject short links because they cannot be embedded directly
     if (trimmed.includes('maps.app.goo.gl') || trimmed.includes('goo.gl/maps')) {
         return '';
     }
@@ -74,19 +74,19 @@ export function parseGoogleMapsUrl(input: string): string {
     const placeMatch = trimmed.match(/\/place\/([^/@?]+)/);
     if (placeMatch && placeMatch[1]) {
         const query = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
-        return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed&z=15`;
+        return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     }
 
     const searchMatch = trimmed.match(/\/search\/([^/@?]+)/);
     if (searchMatch && searchMatch[1]) {
         const query = decodeURIComponent(searchMatch[1].replace(/\+/g, ' '));
-        return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed&z=15`;
+        return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     }
 
     // 5. Extract coordinates from standard Google Maps URLs if present
     const coordMatch = trimmed.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
     if (coordMatch && coordMatch[1] && coordMatch[2]) {
-        return `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&output=embed&z=15`;
+        return `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     }
 
     // 6. If it's a query URL, extract 'q' parameter if possible
@@ -95,7 +95,7 @@ export function parseGoogleMapsUrl(input: string): string {
             const urlObj = new URL(trimmed);
             const q = urlObj.searchParams.get('q');
             if (q) {
-                return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&output=embed&z=15`;
+                return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
             }
         } catch {
             // ignore
@@ -103,8 +103,8 @@ export function parseGoogleMapsUrl(input: string): string {
         return '';
     }
 
-    // 7. Otherwise, treat it as a plain text address / search term
-    return `https://maps.google.com/maps?q=${encodeURIComponent(trimmed)}&output=embed&z=15`;
+    // 7. Otherwise, treat as Plus Code (e.g. "9PR3+63 Ooty, Tamil Nadu") or plain text address
+    return `https://maps.google.com/maps?q=${encodeURIComponent(trimmed)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 }
 
 // --- Star rating ---
@@ -1541,39 +1541,30 @@ export default function TenantSite() {
 
                     {/* Map embed */}
                     <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm h-[300px] md:h-[400px]">
-                        {parseGoogleMapsUrl(settings.googleMapsUrl) ? (
-                            <iframe
-                                title="Location"
-                                className="w-full h-full border-0"
-                                loading="lazy"
-                                allowFullScreen
-                                referrerPolicy="no-referrer-when-downgrade"
-                                src={parseGoogleMapsUrl(settings.googleMapsUrl)}
-                            />
-                        ) : tenant.google_place_id ? (
-                            <iframe
-                                src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY || ''}&q=place_id:${tenant.google_place_id}`}
-                                className="w-full h-full border-0"
-                                loading="lazy"
-                                allowFullScreen
-                                title="Location"
-                            />
-                        ) : contactAddress ? (
-                            <iframe
-                                src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_KEY || ''}&q=${encodeURIComponent(contactAddress)}`}
-                                className="w-full h-full border-0"
-                                loading="lazy"
-                                allowFullScreen
-                                title="Location"
-                            />
-                        ) : (
-                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                <div className="text-center text-gray-400">
-                                    <MapPin size={32} className="mx-auto mb-2 text-gray-300" />
-                                    <p className="text-sm">Map unavailable</p>
+                        {(() => {
+                            const raw = settings.googleMapsUrl || contactAddress || tenant?.business_name || '';
+                            const mapUrl = parseGoogleMapsUrl(raw);
+                            if (mapUrl) {
+                                return (
+                                    <iframe
+                                        title="Location Map"
+                                        className="w-full h-full border-0"
+                                        loading="lazy"
+                                        allowFullScreen
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        src={mapUrl}
+                                    />
+                                );
+                            }
+                            return (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                    <div className="text-center text-gray-400">
+                                        <MapPin size={32} className="mx-auto mb-2 text-gray-300" />
+                                        <p className="text-sm">Map unavailable</p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
                     </div>
 
                     {/* Address below map */}

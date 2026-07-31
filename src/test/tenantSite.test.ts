@@ -18,19 +18,16 @@ describe('parseGoogleMapsUrl', () => {
   });
 
   it('extracts query param q from raw search urls', () => {
-    const searchUrl = 'https://maps.google.com/maps?q=Ganesh+Residency+Chennai&output=embed&z=15';
-    expect(parseGoogleMapsUrl(searchUrl)).toBe(searchUrl);
-
     const rawUrl = 'https://www.google.com/maps?q=12.9233,80.2014';
-    expect(parseGoogleMapsUrl(rawUrl)).toBe('https://maps.google.com/maps?q=12.9233%2C80.2014&output=embed&z=15');
+    expect(parseGoogleMapsUrl(rawUrl)).toBe('https://maps.google.com/maps?q=12.9233%2C80.2014&t=&z=15&ie=UTF8&iwloc=&output=embed');
   });
 
   it('extracts place names or coordinates from standard Google Maps URLs', () => {
     const placeUrl = 'https://www.google.com/maps/place/Ganesh+Residency/@12.9233,80.2014,17z/data=...';
-    expect(parseGoogleMapsUrl(placeUrl)).toBe('https://maps.google.com/maps?q=Ganesh%20Residency&output=embed&z=15');
+    expect(parseGoogleMapsUrl(placeUrl)).toBe('https://maps.google.com/maps?q=Ganesh%20Residency&t=&z=15&ie=UTF8&iwloc=&output=embed');
 
     const coordsUrl = 'https://www.google.com/maps/@12.9233,-80.2014,17z';
-    expect(parseGoogleMapsUrl(coordsUrl)).toBe('https://maps.google.com/maps?q=12.9233,-80.2014&output=embed&z=15');
+    expect(parseGoogleMapsUrl(coordsUrl)).toBe('https://maps.google.com/maps?q=12.9233,-80.2014&t=&z=15&ie=UTF8&iwloc=&output=embed');
   });
 
   it('returns empty string for unembeddable short links', () => {
@@ -38,8 +35,11 @@ describe('parseGoogleMapsUrl', () => {
     expect(parseGoogleMapsUrl('https://goo.gl/maps/abcdef123')).toBe('');
   });
 
-  it('wraps plain text address queries into embedded maps queries', () => {
+  it('wraps plain text address or Plus Code queries into embedded maps queries', () => {
     const address = 'Ganesh Residency, OMR Road, Chennai';
-    expect(parseGoogleMapsUrl(address)).toBe('https://maps.google.com/maps?q=Ganesh%20Residency%2C%20OMR%20Road%2C%20Chennai&output=embed&z=15');
+    expect(parseGoogleMapsUrl(address)).toBe('https://maps.google.com/maps?q=Ganesh%20Residency%2C%20OMR%20Road%2C%20Chennai&t=&z=15&ie=UTF8&iwloc=&output=embed');
+
+    const plusCode = '9PR3+63 Ooty, Tamil Nadu';
+    expect(parseGoogleMapsUrl(plusCode)).toBe('https://maps.google.com/maps?q=9PR3%2B63%20Ooty%2C%20Tamil%20Nadu&t=&z=15&ie=UTF8&iwloc=&output=embed');
   });
 });
