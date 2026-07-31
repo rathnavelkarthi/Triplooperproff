@@ -49,14 +49,14 @@ const amenityIcons: Record<string, React.ElementType> = {
 // --- Google Maps URL parser ---
 export function parseGoogleMapsUrl(input: string): string {
     if (!input) return '';
-    const trimmed = input.trim();
+    let trimmed = input.trim();
     if (!trimmed) return '';
 
     // 1. If it's a full iframe HTML snippet, extract the src attribute
-    if (trimmed.startsWith('<iframe') || trimmed.includes('<iframe')) {
+    if (trimmed.includes('<iframe')) {
         const match = trimmed.match(/src=["']([^"']+)["']/);
         if (match && match[1]) {
-            return match[1];
+            trimmed = match[1];
         }
     }
 
@@ -65,12 +65,7 @@ export function parseGoogleMapsUrl(input: string): string {
         return trimmed;
     }
 
-    // 3. Reject short links because they cannot be embedded directly
-    if (trimmed.includes('maps.app.goo.gl') || trimmed.includes('goo.gl/maps')) {
-        return '';
-    }
-
-    // 4. Extract place name from standard Google Maps URLs if present
+    // 3. Extract place name from standard Google Maps URLs if present
     const placeMatch = trimmed.match(/\/place\/([^/@?]+)/);
     if (placeMatch && placeMatch[1]) {
         const query = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
@@ -83,13 +78,13 @@ export function parseGoogleMapsUrl(input: string): string {
         return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     }
 
-    // 5. Extract coordinates from standard Google Maps URLs if present
+    // 4. Extract coordinates from standard Google Maps URLs if present
     const coordMatch = trimmed.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
     if (coordMatch && coordMatch[1] && coordMatch[2]) {
         return `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     }
 
-    // 6. If it's a query URL, extract 'q' parameter if possible
+    // 5. Extract 'q' query param from HTTP search URLs if present
     if (trimmed.startsWith('http')) {
         try {
             const urlObj = new URL(trimmed);
@@ -100,11 +95,20 @@ export function parseGoogleMapsUrl(input: string): string {
         } catch {
             // ignore
         }
-        return '';
     }
 
-    // 7. Otherwise, treat as Plus Code (e.g. "9PR3+63 Ooty, Tamil Nadu") or plain text address
-    return `https://maps.google.com/maps?q=${encodeURIComponent(trimmed)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    // 6. Plus Codes (e.g. "9PR3+63 Ooty, Tamil Nadu"): strip Plus Code prefix
+    // Plus Code prefixes trigger 302 redirects in Google Maps that get blocked by X-Frame-Options in browsers.
+    let cleanQuery = trimmed;
+    if (cleanQuery.includes('+')) {
+        cleanQuery = cleanQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,4}\s*,?\s*/i, '').trim();
+    }
+
+    if (!cleanQuery) {
+        cleanQuery = 'Ooty, Tamil Nadu';
+    }
+
+    return `https://maps.google.com/maps?q=${encodeURIComponent(cleanQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 }
 
 // --- Star rating ---
@@ -641,77 +645,6 @@ export default function TenantSite() {
     useMotionValueEvent(scrollY, 'change', (latest) => {
         setShowStickyBar(latest > 600);
     });
-
-    const [embedMapUrl, setEmbedMapUrl] = useState<string>('');
-
-    useEffect(() => {
-        let isMounted = true;
-        const settings = siteData?.settings || {};
-        const tenant = siteData?.tenant;
-        const getContent = (section: string, key: string, field: 'content_text' | 'image_url' = 'content_text') => {
-            const block = pageContent.find(p => p.section === section && p.block_key === key);
-            return block && block[field] ? block[field] : null;
-        };
-
-        const contactAddress = settings.contactAddress || getContent('contact', 'address') || '';
-        const googleMapsUrl = settings.googleMapsUrl || '';
-
-        async function resolveMapUrl() {
-            const raw = (googleMapsUrl || contactAddress || tenant?.business_name || '').trim();
-            if (!raw) {
-                if (isMounted) setEmbedMapUrl('');
-                return;
-            }
-
-            let sourceUrl = raw;
-            if (raw.includes('<iframe')) {
-                const match = raw.match(/src=["']([^"']+)["']/);
-                if (match && match[1]) sourceUrl = match[1];
-            }
-
-            if (sourceUrl.includes('google.com/maps/embed')) {
-                if (isMounted) setEmbedMapUrl(sourceUrl);
-                return;
-            }
-
-            let searchQuery = sourceUrl;
-            if (searchQuery.includes('+') && searchQuery.match(/^[A-Z0-9]{4}\+[A-Z0-9]{2,}\s*/i)) {
-                searchQuery = searchQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,}\s*/i, '').trim();
-            }
-            if (!searchQuery || searchQuery.length < 3) {
-                searchQuery = contactAddress || tenant?.business_name || 'Ooty, Tamil Nadu';
-            }
-
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`, {
-                    headers: { 'User-Agent': 'TriplooperApp/1.0' }
-                });
-                const data = await res.json();
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    const bbox = [
-                        (lon - 0.02).toFixed(4),
-                        (lat - 0.02).toFixed(4),
-                        (lon + 0.02).toFixed(4),
-                        (lat + 0.02).toFixed(4)
-                    ].join(',');
-                    const osmEmbed = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`;
-                    if (isMounted) setEmbedMapUrl(osmEmbed);
-                    return;
-                }
-            } catch (e) {
-                console.warn('Geocoding map fallback error:', e);
-            }
-
-            if (isMounted) {
-                setEmbedMapUrl(`https://www.openstreetmap.org/export/embed.html?layer=mapnik`);
-            }
-        }
-
-        resolveMapUrl();
-        return () => { isMounted = false; };
-    }, [siteData, pageContent]);
 
     useEffect(() => {
         if (!subdomain) return;
@@ -1612,23 +1545,30 @@ export default function TenantSite() {
 
                     {/* Map embed */}
                     <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm h-[300px] md:h-[400px]">
-                        {embedMapUrl ? (
-                            <iframe
-                                title="Location Map"
-                                className="w-full h-full border-0"
-                                loading="lazy"
-                                allowFullScreen
-                                referrerPolicy="no-referrer-when-downgrade"
-                                src={embedMapUrl}
-                            />
-                        ) : (
-                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                <div className="text-center text-gray-400">
-                                    <MapPin size={32} className="mx-auto mb-2 text-gray-300" />
-                                    <p className="text-sm">Map unavailable</p>
+                        {(() => {
+                            const raw = googleMapsUrl || contactAddress || tenant?.business_name || '';
+                            const mapUrl = parseGoogleMapsUrl(raw);
+                            if (mapUrl) {
+                                return (
+                                    <iframe
+                                        title="Location Map"
+                                        className="w-full h-full border-0"
+                                        loading="lazy"
+                                        allowFullScreen
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        src={mapUrl}
+                                    />
+                                );
+                            }
+                            return (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                    <div className="text-center text-gray-400">
+                                        <MapPin size={32} className="mx-auto mb-2 text-gray-300" />
+                                        <p className="text-sm">Map unavailable</p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
                     </div>
 
                     {/* Address below map */}
