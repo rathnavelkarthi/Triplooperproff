@@ -52,7 +52,7 @@ export function parseGoogleMapsUrl(input: string): string {
     let trimmed = input.trim();
     if (!trimmed) return '';
 
-    // 1. If it's a full iframe HTML snippet, extract the src attribute
+    // 1. If user pasted full iframe HTML, extract src
     if (trimmed.includes('<iframe')) {
         const match = trimmed.match(/src=["']([^"']+)["']/);
         if (match && match[1]) {
@@ -60,55 +60,24 @@ export function parseGoogleMapsUrl(input: string): string {
         }
     }
 
-    // 2. If it's already a full Google Maps embed URL, return it
-    if (trimmed.includes('google.com/maps/embed') || trimmed.includes('google.com/maps/embed/v1')) {
+    // 2. Official Google Maps Embed URL (google.com/maps/embed) -> Allowed by Google in IFrames!
+    if (trimmed.includes('google.com/maps/embed')) {
         return trimmed;
     }
 
-    // 3. Extract place name from standard Google Maps URLs if present
-    const placeMatch = trimmed.match(/\/place\/([^/@?]+)/);
-    if (placeMatch && placeMatch[1]) {
-        const query = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
-        return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-    }
-
-    const searchMatch = trimmed.match(/\/search\/([^/@?]+)/);
-    if (searchMatch && searchMatch[1]) {
-        const query = decodeURIComponent(searchMatch[1].replace(/\+/g, ' '));
-        return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-    }
-
-    // 4. Extract coordinates from standard Google Maps URLs if present
-    const coordMatch = trimmed.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (coordMatch && coordMatch[1] && coordMatch[2]) {
-        return `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-    }
-
-    // 5. Extract 'q' query param from HTTP search URLs if present
-    if (trimmed.startsWith('http')) {
-        try {
-            const urlObj = new URL(trimmed);
-            const q = urlObj.searchParams.get('q');
-            if (q) {
-                return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-            }
-        } catch {
-            // ignore
+    // 3. If Google Maps API key is configured in environment, use Google Maps Embed API v1
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+    if (apiKey) {
+        let cleanQuery = trimmed;
+        if (cleanQuery.includes('+')) {
+            cleanQuery = cleanQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,4}\s*,?\s*/i, '').trim();
         }
+        return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(cleanQuery || 'Ooty, Tamil Nadu')}`;
     }
 
-    // 6. Plus Codes (e.g. "9PR3+63 Ooty, Tamil Nadu"): strip Plus Code prefix
-    // Plus Code prefixes trigger 302 redirects in Google Maps that get blocked by X-Frame-Options in browsers.
-    let cleanQuery = trimmed;
-    if (cleanQuery.includes('+')) {
-        cleanQuery = cleanQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,4}\s*,?\s*/i, '').trim();
-    }
-
-    if (!cleanQuery) {
-        cleanQuery = 'Ooty, Tamil Nadu';
-    }
-
-    return `https://maps.google.com/maps?q=${encodeURIComponent(cleanQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    // 4. Unauthenticated maps.google.com/maps?q= is blocked by Google (X-Frame-Options: SAMEORIGIN).
+    // Return empty so TenantSite renders a clean location card fallback instead of a blocked iframe.
+    return '';
 }
 
 // --- Star rating ---
@@ -1560,12 +1529,33 @@ export default function TenantSite() {
                                     />
                                 );
                             }
+
+                            let cleanQuery = (googleMapsUrl || contactAddress || tenant?.business_name || 'Ooty, Tamil Nadu').trim();
+                            if (cleanQuery.includes('<iframe')) {
+                                const m = cleanQuery.match(/src=["']([^"']+)["']/);
+                                if (m && m[1]) cleanQuery = m[1];
+                            }
+                            if (cleanQuery.includes('+')) {
+                                cleanQuery = cleanQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,4}\s*,?\s*/i, '').trim();
+                            }
+                            const searchAddr = encodeURIComponent(cleanQuery || 'Ooty, Tamil Nadu');
+
                             return (
-                                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                    <div className="text-center text-gray-400">
-                                        <MapPin size={32} className="mx-auto mb-2 text-gray-300" />
-                                        <p className="text-sm">Map unavailable</p>
+                                <div className="w-full h-full bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 flex flex-col items-center justify-center p-6 text-center">
+                                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3.5 shadow-inner">
+                                        <MapPin size={28} className="text-primary" />
                                     </div>
+                                    <h4 className="font-bold text-gray-900 text-lg mb-1">{tenant?.business_name || 'Property Location'}</h4>
+                                    <p className="text-xs text-gray-500 max-w-sm mb-5 leading-relaxed">{contactAddress || googleMapsUrl || 'Ooty, Tamil Nadu'}</p>
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${searchAddr}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-xl hover:bg-primary-hover transition-all shadow-md hover:scale-[1.02]"
+                                    >
+                                        <MapPin size={15} /> Open Location on Google Maps
+                                        <ExternalLink size={13} className="opacity-80" />
+                                    </a>
                                 </div>
                             );
                         })()}

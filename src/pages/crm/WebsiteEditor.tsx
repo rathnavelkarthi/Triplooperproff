@@ -784,20 +784,28 @@ export default function WebsiteEditor() {
                                 </div>
 
                                 <div className="border-t border-gray-100 pt-5">
-                                    <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Google Maps Link or Plus Code</label>
-                                    <p className="text-[11px] text-gray-400 mb-2">Paste a Google Maps Embed link (https://www.google.com/maps/embed?pb=...), Plus Code (e.g. 9PR3+63 Ooty, Tamil Nadu), or Address. We'll embed a crisp interactive map for your guests.</p>
+                                    <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Google Maps Embed Link or Address</label>
+                                    <p className="text-[11px] text-gray-400 mb-2">To display live Google Maps inside your site: Open Google Maps &rarr; Search your hotel &rarr; Click <strong>Share</strong> &rarr; Select <strong>Embed a map</strong> &rarr; Copy HTML and paste it here.</p>
                                     <input
                                         type="text"
                                         value={settings.googleMapsUrl || ''}
                                         onChange={e => updateSetting('googleMapsUrl', e.target.value)}
-                                        placeholder="9PR3+63 Ooty, Tamil Nadu OR https://www.google.com/maps/embed?pb=..."
+                                        placeholder="Paste Embed HTML (<iframe src=...) or Embed URL"
                                         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none transition-all"
                                     />
+                                    <div className="mt-2 p-2.5 bg-gray-50 border border-gray-150 rounded-lg space-y-1">
+                                        <p className="text-[10px] font-semibold text-gray-600">💡 Free 1-Click Embed Guide:</p>
+                                        <ol className="text-[10px] text-gray-500 list-decimal pl-3.5 space-y-0.5">
+                                            <li>Go to <a href="https://maps.google.com" target="_blank" rel="noreferrer" className="underline text-primary">Google Maps</a> and search your property location.</li>
+                                            <li>Click <strong>Share</strong> &rarr; <strong>Embed a map</strong> &rarr; Click <strong>COPY HTML</strong>.</li>
+                                            <li>Paste the code into the input field above!</li>
+                                        </ol>
+                                    </div>
                                     {settings.googleMapsUrl && (
                                         <a href={settings.googleMapsUrl.startsWith('http') ? settings.googleMapsUrl : `https://www.google.com/maps/search/${encodeURIComponent(settings.googleMapsUrl)}`}
                                             target="_blank" rel="noopener noreferrer"
-                                            className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-[#0E2A38] hover:underline">
-                                            <MapPin size={10} /> Preview location on Google Maps
+                                            className="mt-2 inline-flex items-center gap-1 text-[11px] text-[#0E2A38] hover:underline font-medium">
+                                            <MapPin size={11} /> Open location search on Google Maps
                                         </a>
                                     )}
                                 </div>
