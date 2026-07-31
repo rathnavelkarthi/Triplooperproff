@@ -278,12 +278,12 @@ export default function LandingPage() {
             : "4.95";
 
           const rooms = tenantRooms[t.id] || [];
-          const minPrice = rooms.length > 0
+          const minPrice = t.min_price || (rooms.length > 0
             ? Math.min(...rooms.map(r => Number(r.price_per_night)))
-            : 6500;
+            : 3000);
 
           const roomTypes = rooms.map(r => r.type).filter(Boolean);
-          const typeLabel = roomTypes[0] || (t.business_type === 'restaurant' ? 'Boutique Bistro' : 'Luxury Beach Villa');
+          const typeLabel = t.room_type || roomTypes[0] || (t.business_type === 'restaurant' ? 'Boutique Bistro' : 'Standard Room');
           
           const tags = ['Beachfront', 'Mountain View', 'Forest Edge', 'City Center', 'Eco Stays'];
           const tag = tags[index % tags.length];
