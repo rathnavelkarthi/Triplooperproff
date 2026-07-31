@@ -52,7 +52,7 @@ export function parseGoogleMapsUrl(input: string): string {
     let trimmed = input.trim();
     if (!trimmed) return '';
 
-    // 1. If user pasted full iframe HTML, extract src
+    // 1. If user pasted full iframe HTML snippet, extract src attribute
     if (trimmed.includes('<iframe')) {
         const match = trimmed.match(/src=["']([^"']+)["']/);
         if (match && match[1]) {
@@ -60,7 +60,7 @@ export function parseGoogleMapsUrl(input: string): string {
         }
     }
 
-    // 2. Official Google Maps Embed URL (google.com/maps/embed) -> Allowed by Google in IFrames!
+    // 2. Official Google Maps Embed URL (google.com/maps/embed) -> 100% allowed by Google in IFrames!
     if (trimmed.includes('google.com/maps/embed')) {
         return trimmed;
     }
@@ -75,9 +75,20 @@ export function parseGoogleMapsUrl(input: string): string {
         return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(cleanQuery || 'Ooty, Tamil Nadu')}`;
     }
 
-    // 4. Unauthenticated maps.google.com/maps?q= is blocked by Google (X-Frame-Options: SAMEORIGIN).
-    // Return empty so TenantSite renders a clean location card fallback instead of a blocked iframe.
-    return '';
+    // 4. Otherwise, format plain address / search term for standard map embed
+    let cleanQuery = trimmed;
+    if (cleanQuery.includes('+')) {
+        cleanQuery = cleanQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,4}\s*,?\s*/i, '').trim();
+    }
+    if (cleanQuery.startsWith('http')) {
+        try {
+            const urlObj = new URL(cleanQuery);
+            const q = urlObj.searchParams.get('q');
+            if (q) cleanQuery = q;
+        } catch {}
+    }
+
+    return `https://maps.google.com/maps?q=${encodeURIComponent(cleanQuery || 'Ooty, Tamil Nadu')}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 }
 
 // --- Star rating ---

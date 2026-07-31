@@ -20,14 +20,14 @@ describe('parseGoogleMapsUrl', () => {
     expect(parseGoogleMapsUrl(embedUrl)).toBe(embedUrl);
   });
 
-  it('returns empty string for unauthenticated search URLs or raw addresses without Google Embed key', () => {
+  it('formats raw search URLs, addresses, or Plus Codes into embedded maps queries', () => {
     const rawUrl = 'https://www.google.com/maps?q=12.9233,80.2014';
-    expect(parseGoogleMapsUrl(rawUrl)).toBe('');
+    expect(parseGoogleMapsUrl(rawUrl)).toBe('https://maps.google.com/maps?q=12.9233%2C80.2014&t=&z=15&ie=UTF8&iwloc=&output=embed');
 
     const address = 'Ganesh Residency, OMR Road, Chennai';
-    expect(parseGoogleMapsUrl(address)).toBe('');
+    expect(parseGoogleMapsUrl(address)).toBe('https://maps.google.com/maps?q=Ganesh%20Residency%2C%20OMR%20Road%2C%20Chennai&t=&z=15&ie=UTF8&iwloc=&output=embed');
 
     const plusCode = '9PR3+63 Ooty, Tamil Nadu';
-    expect(parseGoogleMapsUrl(plusCode)).toBe('');
+    expect(parseGoogleMapsUrl(plusCode)).toBe('https://maps.google.com/maps?q=Ooty%2C%20Tamil%20Nadu&t=&z=15&ie=UTF8&iwloc=&output=embed');
   });
 });
