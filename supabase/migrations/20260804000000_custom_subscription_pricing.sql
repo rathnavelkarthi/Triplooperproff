@@ -12,6 +12,12 @@ ALTER TABLE IF EXISTS subscriptions
   ADD COLUMN IF NOT EXISTS custom_monthly_price numeric DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS selected_addons text[] DEFAULT '{}';
 
+-- Auto-set 30-day expiration date for any existing active custom subscription tenants missing an expiration date
+UPDATE tenants 
+SET subscription_expires_at = COALESCE(created_at, NOW()) + INTERVAL '30 days'
+WHERE (subscription_plan = 'subscription_custom' OR plan = 'subscription_custom' OR subscription_plan = 'subscription')
+  AND subscription_expires_at IS NULL;
+
 -- Update get_subscription_info to recognize custom pricing & mode
 DROP FUNCTION IF EXISTS public.get_subscription_info(uuid);
 CREATE OR REPLACE FUNCTION public.get_subscription_info(p_tenant_id uuid)

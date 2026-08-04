@@ -352,7 +352,18 @@ export async function createAndSendCustomPaymentLink(
             data.url || 
             (data.payment_link_id ? `https://rzp.io/i/${data.payment_link_id}` : `https://triplooper.com/admin/login?tenant=${tenantId}`);
 
-        // Update database with custom_monthly_price & payment_link_url
+        // Calculate 30-day expiration timestamp from now if not already set
+        const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+        // Update database with custom_monthly_price, payment_link_url, and subscription_expires_at
+        const { data: existingTenant } = await supabase
+            .from('tenants')
+            .select('subscription_expires_at')
+            .eq('id', tenantId)
+            .maybeSingle();
+
+        const expiresAtToSet = existingTenant?.subscription_expires_at || thirtyDaysFromNow;
+
         await supabase
             .from('tenants')
             .update({
@@ -360,7 +371,8 @@ export async function createAndSendCustomPaymentLink(
                 payment_link_url: paymentLinkUrl,
                 payment_link_id: data.payment_link_id,
                 subscription_plan: 'subscription_custom',
-                subscription_status: 'pending_payment'
+                subscription_status: 'pending_payment',
+                subscription_expires_at: expiresAtToSet
             })
             .eq('id', tenantId);
 
@@ -371,6 +383,7 @@ export async function createAndSendCustomPaymentLink(
                 plan: 'subscription_custom',
                 status: 'pending_payment',
                 custom_monthly_price: monthlyPrice,
+                expires_at: expiresAtToSet,
                 updated_at: new Date().toISOString()
             });
 

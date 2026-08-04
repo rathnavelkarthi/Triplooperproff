@@ -554,6 +554,10 @@ export default function PlatformAdmin() {
       if (updates.plan !== undefined) {
         tenantPayload.plan = updates.plan;
         tenantPayload.subscription_plan = updates.plan;
+        if ((updates.plan === 'subscription_custom' || updates.plan === 'subscription') && !currentExpires && updates.subscription_expires_at === undefined) {
+          const autoThirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+          tenantPayload.subscription_expires_at = autoThirtyDays;
+        }
       }
       if (updates.subscription_expires_at !== undefined) {
         tenantPayload.subscription_expires_at = updates.subscription_expires_at;
@@ -1158,9 +1162,13 @@ export default function PlatformAdmin() {
                                            <label className="block text-[9px] font-bold text-gray-400 uppercase">
                                              Expiration Date (+3-Day Grace)
                                            </label>
-                                           {subInfo.daysRemaining !== null && (
-                                             <span className="text-[10px] font-bold text-emerald-600">
+                                           {subInfo.daysRemaining !== null ? (
+                                             <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
                                                {subInfo.daysRemaining}d left
+                                             </span>
+                                           ) : (
+                                             <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 animate-pulse">
+                                               No Expiry Date!
                                              </span>
                                            )}
                                          </div>
@@ -1180,7 +1188,7 @@ export default function PlatformAdmin() {
                                                const next30 = new Date(current.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
                                                updatePropertySubscription(p.id, { subscription_expires_at: next30, manual_override: null });
                                              }}
-                                             className="px-2 py-1 bg-[#0E2A38] hover:bg-[#163a4d] text-white text-[10px] font-bold rounded cursor-pointer transition-all"
+                                             className="px-2.5 py-1 bg-[#0E2A38] hover:bg-[#163a4d] text-white text-[10px] font-bold rounded cursor-pointer transition-all flex items-center gap-1"
                                              title="Set 30-Day Expiration Date & Auto-Calculate"
                                            >
                                              +30d
