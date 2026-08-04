@@ -1001,6 +1001,49 @@ export interface CustomEmailData {
   businessName: string;
 }
 
+export interface CustomSubscriptionEmailData {
+  email: string;
+  businessName: string;
+  monthlyPrice: number;
+  paymentUrl: string;
+}
+
+function customSubscriptionEmailHtml(data: CustomSubscriptionEmailData): string {
+  return baseTemplate({
+    preheader: `Your Triplooper Monthly Subscription Offer — ₹${data.monthlyPrice}/mo (Tax Inclusive)`,
+    businessName: data.businessName,
+    ctaText: 'Pay & Activate Subscription Now',
+    ctaUrl: data.paymentUrl,
+    bodyContent: `
+      ${heading(`Special Subscription Offer for ${data.businessName}`)}
+      <p style="font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.6;">
+        Greetings from Triplooper! We have configured your special monthly subscription rate.
+      </p>
+      <div style="background:${T.bgOuter};padding:20px;border:1px solid ${T.border};border-radius:8px;margin:20px 0;text-align:center;">
+        <span style="font-family:${ff};font-size:12px;color:${T.textTertiary};text-transform:uppercase;letter-spacing:1px;font-weight:600;display:block;">Monthly Subscription Price</span>
+        <span style="font-family:${ff};font-size:32px;font-weight:800;color:${T.textPrimary};display:block;margin:6px 0;">₹${data.monthlyPrice.toLocaleString('en-IN')}<span style="font-size:14px;font-weight:500;color:${T.textTertiary};"> / month</span></span>
+        <span style="display:inline-block;padding:4px 12px;background:#E6F4EA;color:#137333;font-size:11px;font-weight:700;border-radius:12px;margin-top:4px;">TAX INCLUSIVE • ALL APPS INCLUDED</span>
+      </div>
+      <p style="font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.6;">
+        Your subscription unlocks full access to <strong>Website (Direct Bookings)</strong>, <strong>Staff Management</strong>, <strong>WhatsApp Management</strong>, <strong>Room Management (Unlimited Rooms)</strong>, <strong>Channel Manager</strong>, and <strong>POS</strong>.
+      </p>
+      <p style="font-family:${ff};font-size:12px;color:${T.textTertiary};line-height:1.5;margin-top:24px;">
+        Need help or have questions? Contact support anytime at support@triplooper.com
+      </p>
+    `,
+    accentColor: T.accent,
+  });
+}
+
+export async function sendCustomSubscriptionInvite(data: CustomSubscriptionEmailData): Promise<boolean> {
+  if (!data.email) return false;
+  return sendResendEmail(
+    data.email,
+    `Your Special Triplooper Subscription (₹${data.monthlyPrice}/mo)`,
+    customSubscriptionEmailHtml(data)
+  );
+}
+
 function customEmailHtml(data: CustomEmailData): string {
   return baseTemplate({
     preheader: data.subject,

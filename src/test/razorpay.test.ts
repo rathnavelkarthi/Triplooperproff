@@ -10,7 +10,9 @@ describe('PLAN_PRICES', () => {
     expect(PLAN_PRICES.sub_1year.monthly.amount).toBe(1999);
     expect(PLAN_PRICES.sub_6months.monthly.amount).toBe(2300);
     expect(PLAN_PRICES.sub_3months.monthly.amount).toBe(2500);
-    expect(PLAN_PRICES.sub_1month.monthly.amount).toBe(2700);
+    expect(Object.keys(PLAN_PRICES)).toContain('subscription_2700');
+    expect(PLAN_PRICES.subscription_2700.monthly.amount).toBe(2700);
+    expect(PLAN_PRICES.subscription_2700.yearly.amount).toBe(27000);
   });
 
   it('each plan has monthly and yearly pricing', () => {

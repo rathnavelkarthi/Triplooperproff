@@ -104,7 +104,7 @@ serve(async (req) => {
 
     // If it's a subscription plan, log to subscriptions table
     let expiresAt = null;
-    if (plan.startsWith('subscription') || plan === 'growth' || plan === 'pro' || plan === 'enterprise') {
+    if (plan.startsWith('subscription') || plan.startsWith('sub_') || plan === 'growth' || plan === 'pro' || plan === 'enterprise') {
       const durationDays = billing_cycle === 'yearly' ? 365 : 30;
       expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
 

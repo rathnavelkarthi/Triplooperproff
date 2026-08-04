@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendBusinessInvite, sendVerificationApproved, sendVerificationRejected, sendCustomEmail } from '../../lib/email';
 import { getPropertySubscriptionDetails, PLAN_NAMES } from '../../lib/subscriptionUtils';
+import { createAndSendCustomPaymentLink } from '../../lib/razorpay';
 import { toast } from 'sonner';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -39,6 +40,8 @@ interface PlatformUser {
     grace_period_days?: number;
     manual_override?: boolean | null;
     subscription_status?: string;
+    custom_monthly_price?: number | null;
+    payment_link_url?: string | null;
     dailyRevenue?: number;
     monthlyRevenue?: number;
     dailyCommission?: number;
@@ -225,7 +228,7 @@ export default function PlatformAdmin() {
       // Load all tenants
       const { data: tenants } = await supabase
         .from('tenants')
-        .select('id, business_name, business_type, subdomain, plan, is_active, owner_id, custom_email, created_at, verification_status, verification_reason, verified_at, subscription_plan, subscription_expires_at, grace_period_days, manual_override')
+        .select('id, business_name, business_type, subdomain, plan, is_active, owner_id, custom_email, created_at, verification_status, verification_reason, verified_at, subscription_plan, subscription_expires_at, grace_period_days, manual_override, custom_monthly_price, payment_link_url')
         .order('created_at', { ascending: false });
 
       // Load all property documents
@@ -355,6 +358,8 @@ export default function PlatformAdmin() {
              subscription_expires_at: propExpires,
              grace_period_days: propGrace,
              manual_override: propOverride,
+             custom_monthly_price: tenantSub?.custom_monthly_price || tenant.custom_monthly_price || null,
+             payment_link_url: tenant.payment_link_url || null,
              ...stats
            });
            
@@ -405,6 +410,8 @@ export default function PlatformAdmin() {
                subscription_expires_at: propExpires,
                grace_period_days: propGrace,
                manual_override: propOverride,
+               custom_monthly_price: tenantSub?.custom_monthly_price || t.custom_monthly_price || null,
+               payment_link_url: t.payment_link_url || null,
                ...stats
              });
              
@@ -516,6 +523,9 @@ export default function PlatformAdmin() {
     }
   };
 
+  const [sendingLinkFor, setSendingLinkFor] = useState<string | null>(null);
+  const [customPriceInput, setCustomPriceInput] = useState<Record<string, number>>({});
+
   const updatePropertySubscription = async (
     tenantId: string,
     updates: {
@@ -523,6 +533,7 @@ export default function PlatformAdmin() {
       subscription_expires_at?: string | null;
       manual_override?: boolean | null;
       grace_period_days?: number;
+      custom_monthly_price?: number | null;
     }
   ) => {
     try {
@@ -532,6 +543,7 @@ export default function PlatformAdmin() {
       const currentExpires = updates.subscription_expires_at !== undefined ? updates.subscription_expires_at : targetProperty?.subscription_expires_at;
       const currentOverride = updates.manual_override !== undefined ? updates.manual_override : targetProperty?.manual_override;
       const currentGrace = updates.grace_period_days !== undefined ? updates.grace_period_days : (targetProperty?.grace_period_days || 3);
+      const currentCustomPrice = updates.custom_monthly_price !== undefined ? updates.custom_monthly_price : (targetProperty?.custom_monthly_price || null);
 
       const subInfo = getPropertySubscriptionDetails(currentPlan, currentExpires, currentOverride, currentGrace);
 
@@ -552,6 +564,9 @@ export default function PlatformAdmin() {
       if (updates.grace_period_days !== undefined) {
         tenantPayload.grace_period_days = updates.grace_period_days;
       }
+      if (updates.custom_monthly_price !== undefined) {
+        tenantPayload.custom_monthly_price = updates.custom_monthly_price;
+      }
 
       const { error: tenantErr } = await supabase
         .from('tenants')
@@ -568,6 +583,7 @@ export default function PlatformAdmin() {
         expires_at: currentExpires,
         manual_override: currentOverride,
         grace_period_days: currentGrace,
+        custom_monthly_price: currentCustomPrice,
         updated_at: new Date().toISOString()
       };
 
@@ -587,6 +603,28 @@ export default function PlatformAdmin() {
       await loadData();
     } catch (err: any) {
       toast.error('Failed to update subscription: ' + (err.message || err));
+    }
+  };
+
+  const handleSendPaymentLink = async (tenantId: string, ownerEmail: string, businessName: string) => {
+    const amount = customPriceInput[tenantId] !== undefined ? customPriceInput[tenantId] : 500;
+    if (!ownerEmail || ownerEmail === 'N/A' || !ownerEmail.includes('@')) {
+      toast.error('Valid owner email is required to send payment link.');
+      return;
+    }
+    setSendingLinkFor(tenantId);
+    try {
+      const result = await createAndSendCustomPaymentLink(tenantId, ownerEmail, businessName, amount);
+      if (result.success) {
+        toast.success(`Payment link generated (₹${amount}) & sent to ${ownerEmail}!`);
+        await loadData();
+      } else {
+        toast.error(result.error || 'Failed to generate payment link');
+      }
+    } catch (err: any) {
+      toast.error('Error: ' + (err.message || err));
+    } finally {
+      setSendingLinkFor(null);
     }
   };
 
@@ -1054,98 +1092,123 @@ export default function PlatformAdmin() {
                                       </span>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
-                                      {/* 1. Subscription Plan Selection */}
-                                      <div>
-                                        <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
-                                          Subscription Type / Plan
-                                        </label>
-                                        <select
-                                          value={p.plan || 'starter'}
-                                          onChange={(e) => updatePropertySubscription(p.id, { plan: e.target.value })}
-                                          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#0E2A38]"
-                                        >
-                                          <option value="starter">Starter Plan</option>
-                                          <option value="growth">Growth Plan</option>
-                                          <option value="pro">Pro Plan</option>
-                                          <option value="enterprise">Enterprise Plan</option>
-                                          <option value="subscription_2700">Subscription (₹2,700/mo)</option>
-                                          <option value="subscription_small">Subscription (Max 10 Rooms)</option>
-                                          <option value="subscription_large">Subscription (Unlimited Rooms)</option>
-                                          <option value="subscription_test">Subscription (Test Plan - ₹1)</option>
-                                          <option value="commission">12% Commission Only</option>
-                                        </select>
-                                      </div>
+                                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 items-end">
+                                       {/* 1. Subscription Plan Selection */}
+                                       <div>
+                                         <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
+                                           Subscription Type / Plan
+                                         </label>
+                                         <select
+                                           value={p.plan === 'commission' ? 'commission' : 'subscription_custom'}
+                                           onChange={(e) => updatePropertySubscription(p.id, { plan: e.target.value })}
+                                           className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#0E2A38]"
+                                         >
+                                           <option value="subscription_custom">Subscribed Mode (Custom Monthly Price)</option>
+                                           <option value="commission">12% Commission Only (Trial / PMS Mode)</option>
+                                         </select>
+                                       </div>
 
-                                      {/* 2. Expiration Date (3-Day Grace Auto Applies) */}
-                                      <div>
-                                        <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
-                                          Expiration Date (3-Day Grace Auto Applies)
-                                        </label>
-                                        <div className="flex items-center gap-1.5">
-                                          <input
-                                            type="date"
-                                            value={p.subscription_expires_at ? p.subscription_expires_at.split('T')[0] : ''}
-                                            onChange={(e) => {
-                                              const dateVal = e.target.value ? new Date(e.target.value).toISOString() : null;
-                                              updatePropertySubscription(p.id, { subscription_expires_at: dateVal });
-                                            }}
-                                            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#0E2A38]"
-                                          />
-                                          <button
-                                            onClick={() => {
-                                              const current = p.subscription_expires_at ? new Date(p.subscription_expires_at) : new Date();
-                                              const next30 = new Date(current.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-                                              updatePropertySubscription(p.id, { subscription_expires_at: next30 });
-                                            }}
-                                            className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-bold rounded cursor-pointer"
-                                            title="Add 30 Days"
-                                          >
-                                            +30d
-                                          </button>
-                                        </div>
-                                      </div>
+                                       {/* 2. Custom Rate & Send Payment Link */}
+                                       <div>
+                                         <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
+                                           Custom Price (₹/mo Tax-Inclusive)
+                                         </label>
+                                         <div className="flex items-center gap-1.5">
+                                           <div className="relative flex-1">
+                                             <span className="absolute left-2 top-1.5 text-xs text-gray-400 font-bold">₹</span>
+                                             <input
+                                               type="number"
+                                               value={customPriceInput[p.id] !== undefined ? customPriceInput[p.id] : (p.custom_monthly_price || 500)}
+                                               onChange={(e) => setCustomPriceInput({ ...customPriceInput, [p.id]: Number(e.target.value) })}
+                                               placeholder="500"
+                                               className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-5 pr-2 py-1 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-[#0E2A38]"
+                                             />
+                                           </div>
+                                           <button
+                                             onClick={() => handleSendPaymentLink(p.id, u.email, p.business_name)}
+                                             disabled={sendingLinkFor === p.id}
+                                             className="px-2.5 py-1.5 bg-[#0E2A38] hover:bg-[#163a4d] text-white text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                                             title="Generate Razorpay payment link & email owner"
+                                           >
+                                             {sendingLinkFor === p.id ? (
+                                               <Loader2 size={11} className="animate-spin" />
+                                             ) : (
+                                               <Send size={11} />
+                                             )}
+                                             Send Link
+                                           </button>
+                                         </div>
+                                       </div>
 
-                                      {/* 3. Manual Subscription Override Toggle */}
-                                      <div>
-                                        <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
-                                          Manual Override Toggle
-                                        </label>
-                                        <div className="flex items-center gap-1">
-                                          <button
-                                            onClick={() => updatePropertySubscription(p.id, { manual_override: true })}
-                                            className={`flex-1 py-1 px-2 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                                              p.manual_override === true
-                                                ? 'bg-emerald-600 text-white shadow-sm'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
-                                            }`}
-                                          >
-                                            Turn ON
-                                          </button>
-                                          <button
-                                            onClick={() => updatePropertySubscription(p.id, { manual_override: false })}
-                                            className={`flex-1 py-1 px-2 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                                              p.manual_override === false
-                                                ? 'bg-red-600 text-white shadow-sm'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-700'
-                                            }`}
-                                          >
-                                            Turn OFF
-                                          </button>
-                                          <button
-                                            onClick={() => updatePropertySubscription(p.id, { manual_override: null })}
-                                            className={`py-1 px-2 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                                              p.manual_override === null || p.manual_override === undefined
-                                                ? 'bg-[#0E2A38] text-white shadow-sm'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                            }`}
-                                            title="Auto Expiration + 3-Day Grace Period"
-                                          >
-                                            Auto
-                                          </button>
-                                        </div>
-                                      </div>
-                                    </div>
+                                       {/* 3. Expiration Date (3-Day Grace Auto Applies) */}
+                                       <div>
+                                         <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
+                                           Expiration Date (+3-Day Grace)
+                                         </label>
+                                         <div className="flex items-center gap-1.5">
+                                           <input
+                                             type="date"
+                                             value={p.subscription_expires_at ? p.subscription_expires_at.split('T')[0] : ''}
+                                             onChange={(e) => {
+                                               const dateVal = e.target.value ? new Date(e.target.value).toISOString() : null;
+                                               updatePropertySubscription(p.id, { subscription_expires_at: dateVal });
+                                             }}
+                                             className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#0E2A38]"
+                                           />
+                                           <button
+                                             onClick={() => {
+                                               const current = p.subscription_expires_at ? new Date(p.subscription_expires_at) : new Date();
+                                               const next30 = new Date(current.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+                                               updatePropertySubscription(p.id, { subscription_expires_at: next30 });
+                                             }}
+                                             className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-bold rounded cursor-pointer"
+                                             title="Add 30 Days"
+                                           >
+                                             +30d
+                                           </button>
+                                         </div>
+                                       </div>
+
+                                       {/* 4. Manual Subscription Override Toggle */}
+                                       <div>
+                                         <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
+                                           Manual Override Toggle
+                                         </label>
+                                         <div className="flex items-center gap-1">
+                                           <button
+                                             onClick={() => updatePropertySubscription(p.id, { manual_override: true })}
+                                             className={`flex-1 py-1 px-2 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                                               p.manual_override === true
+                                                 ? 'bg-emerald-600 text-white shadow-sm'
+                                                 : 'bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
+                                             }`}
+                                           >
+                                             Turn ON
+                                           </button>
+                                           <button
+                                             onClick={() => updatePropertySubscription(p.id, { manual_override: false })}
+                                             className={`flex-1 py-1 px-2 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                                               p.manual_override === false
+                                                 ? 'bg-red-600 text-white shadow-sm'
+                                                 : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-700'
+                                             }`}
+                                           >
+                                             Turn OFF
+                                           </button>
+                                           <button
+                                             onClick={() => updatePropertySubscription(p.id, { manual_override: null })}
+                                             className={`py-1 px-2 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                                               p.manual_override === null || p.manual_override === undefined
+                                                 ? 'bg-[#0E2A38] text-white shadow-sm'
+                                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                             }`}
+                                             title="Auto Expiration + 3-Day Grace Period"
+                                           >
+                                             Auto
+                                           </button>
+                                         </div>
+                                       </div>
+                                     </div>
                                   </div>
                                 );
                               })()}

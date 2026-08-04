@@ -310,3 +310,81 @@ export async function initiateCustomBundlePayment(
     });
 }
 
+export async function createAndSendCustomPaymentLink(
+    tenantId: string,
+    ownerEmail: string,
+    businessName: string,
+    monthlyPrice: number
+): Promise<{ success: boolean; paymentLinkUrl?: string; error?: string }> {
+    try {
+        const token = await getSupabaseToken();
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/create-razorpay-order`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                create_payment_link: true,
+                custom_amount: monthlyPrice,
+                tenant_id: tenantId,
+                customer_email: ownerEmail,
+                customer_name: businessName,
+                plan: 'subscription_custom'
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+            return { success: false, error: err.error || 'Failed to create payment link' };
+        }
+
+        const data = await res.json();
+        const paymentLinkUrl = data.short_url;
+
+        // Update database with custom_monthly_price & payment_link_url
+        await supabase
+            .from('tenants')
+            .update({
+                custom_monthly_price: monthlyPrice,
+                payment_link_url: paymentLinkUrl,
+                payment_link_id: data.payment_link_id,
+                subscription_plan: 'subscription_custom',
+                subscription_status: 'pending_payment'
+            })
+            .eq('id', tenantId);
+
+        await supabase
+            .from('subscriptions')
+            .upsert({
+                tenant_id: tenantId,
+                plan: 'subscription_custom',
+                status: 'pending_payment',
+                custom_monthly_price: monthlyPrice,
+                updated_at: new Date().toISOString()
+            });
+
+        // Send email with payment link
+        const { sendCustomSubscriptionInvite } = await import('./email');
+        const emailSent = await sendCustomSubscriptionInvite({
+            email: ownerEmail,
+            businessName,
+            monthlyPrice,
+            paymentUrl: paymentLinkUrl
+        });
+
+        return {
+            success: true,
+            paymentLinkUrl,
+            error: emailSent ? undefined : 'Link created, but email notification failed'
+        };
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Error generating payment link' };
+    }
+}
+

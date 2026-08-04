@@ -6,11 +6,13 @@ export type ResourceType = 'rooms' | 'reservations' | 'menu_items' | 'tables' | 
 const UNLIMITED = Infinity;
 
 export const PLAN_LIMITS: Record<string, Record<ResourceType, number>> = {
+    subscription: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
+    subscription_custom: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     sub_1year: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     sub_6months: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     sub_3months: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     sub_1month: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
-    commission: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: 0, staff: UNLIMITED, food_orders: 0 },
+    commission: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     starter: { rooms: 5, reservations: 20, menu_items: 10, tables: 5, staff: 2, food_orders: 20 },
     growth: { rooms: 30, reservations: UNLIMITED, menu_items: 50, tables: 20, staff: 5, food_orders: UNLIMITED },
     pro: { rooms: 75, reservations: UNLIMITED, menu_items: 200, tables: 50, staff: 15, food_orders: UNLIMITED },
@@ -21,11 +23,13 @@ export const PLAN_LIMITS: Record<string, Record<ResourceType, number>> = {
 };
 
 const PLAN_LABELS: Record<string, string> = {
+    subscription: 'Subscribed Plan (Unlimited Rooms + 12% Commission)',
+    subscription_custom: 'Custom Subscribed Plan (Tax Inclusive + 12% Commission)',
     sub_1year: '1 Year Plan (₹1,999/mo + 18% GST)',
     sub_6months: '6 Months Plan (₹2,300/mo + 18% GST)',
     sub_3months: '3 Months Plan (₹2,500/mo + 18% GST)',
     sub_1month: '1 Month Plan (₹2,700/mo + 18% GST)',
-    commission: '12% Commission Only',
+    commission: '12% Commission Only (Trial / PMS Mode)',
     starter: 'Starter',
     growth: 'Growth',
     pro: 'Pro',

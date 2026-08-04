@@ -61,46 +61,26 @@ export default function Billing() {
     };
  
     const getPlanDetails = () => {
-        if (tenant?.plan === 'sub_1year') {
+        const customPrice = (tenant as any)?.custom_monthly_price;
+        if (customPrice && typeof customPrice === 'number' && customPrice > 0) {
             return {
-                name: '1 Year Subscription Plan',
-                price: '₹1,999 / month (+18% GST)',
-                desc: 'Access to all features. Billed yearly at ₹23,988 + 18% GST. 12% monthly commission on booking earnings.',
+                name: 'Custom Monthly Subscription Plan',
+                price: `₹${customPrice.toLocaleString('en-IN')} / month (Tax Inclusive)`,
+                desc: 'Full access to Website, Staff Management, WhatsApp Management, Unlimited Rooms, Channel Manager & POS. 12% monthly commission on booking earnings.',
                 autoPay: true,
             };
-        } else if (tenant?.plan === 'sub_6months') {
+        } else if (tenant?.plan === 'commission') {
             return {
-                name: '6 Months Subscription Plan',
-                price: '₹2,300 / month (+18% GST)',
-                desc: 'Access to all features. Billed half-yearly at ₹13,800 + 18% GST. 12% monthly commission on booking earnings.',
-                autoPay: true,
-            };
-        } else if (tenant?.plan === 'sub_3months') {
-            return {
-                name: '3 Months Subscription Plan',
-                price: '₹2,500 / month (+18% GST)',
-                desc: 'Access to all features. Billed quarterly at ₹7,500 + 18% GST. 12% monthly commission on booking earnings.',
-                autoPay: true,
-            };
-        } else if (tenant?.plan === 'sub_1month') {
-            return {
-                name: '1 Month Subscription Plan',
-                price: '₹2,700 / month (+18% GST)',
-                desc: 'Access to all features. Billed monthly at ₹2,700 + 18% GST. 12% monthly commission on booking earnings.',
-                autoPay: true,
-            };
-        } else if (tenant?.plan === 'subscription_small' || tenant?.plan === 'subscription_large' || tenant?.plan === 'subscription_2700') {
-            return {
-                name: 'Full Subscription Plan',
-                price: 'Subscription Active',
-                desc: 'Access to all features. 12% monthly commission on booking earnings.',
-                autoPay: true,
+                name: '12% Commission Only (Trial / PMS Mode)',
+                price: '₹0 / month',
+                desc: 'Core software & Channel Manager trial mode. 12% monthly commission on booking earnings. Additional app modules available as add-ons.',
+                autoPay: false,
             };
         } else {
             return {
-                name: '12% Commission Only',
-                price: '₹0 / year',
-                desc: 'Channel Manager and Restaurant POS disabled. 12% monthly commission on booking earnings.',
+                name: 'Subscribed Plan',
+                price: 'Subscription Active',
+                desc: 'Full access to Website, Staff Management, WhatsApp Management, Unlimited Rooms, Channel Manager & POS. 12% monthly commission on booking earnings.',
                 autoPay: true,
             };
         }
