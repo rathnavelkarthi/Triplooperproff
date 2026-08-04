@@ -1077,8 +1077,11 @@ export default function PlatformAdmin() {
                                   p.subscription_expires_at,
                                   p.manual_override,
                                   p.grace_period_days || 3,
-                                  p.is_active
+                                  p.is_active,
+                                  p.created_at
                                 );
+
+                                const effectiveExpires = p.subscription_expires_at || subInfo.expiresAt;
 
                                 return (
                                   <div className="bg-white p-3.5 rounded-lg border border-gray-100/80 text-xs space-y-3">
@@ -1175,7 +1178,7 @@ export default function PlatformAdmin() {
                                          <div className="flex items-center gap-1.5">
                                            <input
                                              type="date"
-                                             value={p.subscription_expires_at ? p.subscription_expires_at.split('T')[0] : ''}
+                                             value={effectiveExpires ? effectiveExpires.split('T')[0] : ''}
                                              onChange={(e) => {
                                                const dateVal = e.target.value ? new Date(e.target.value).toISOString() : null;
                                                updatePropertySubscription(p.id, { subscription_expires_at: dateVal, manual_override: null });

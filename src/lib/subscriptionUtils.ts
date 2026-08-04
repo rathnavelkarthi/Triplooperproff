@@ -47,23 +47,45 @@ export function getPropertySubscriptionDetails(
   expiresAt?: string | null,
   manualOverride?: boolean | null,
   gracePeriodDays: number = 3,
-  tenantIsActive: boolean = true
+  tenantIsActive: boolean = true,
+  createdAt?: string | null
 ): PropertySubscription {
   const currentPlan = plan || 'starter';
+
+  // If no explicit expiration date is passed, but the property is on a monthly subscription plan,
+  // infer the 30-day expiration window from creation date or current timestamp.
+  const isSubscriptionPlan = currentPlan === 'subscription_custom' || 
+                             currentPlan === 'subscription' || 
+                             currentPlan.startsWith('sub_') || 
+                             currentPlan.startsWith('subscription_');
+
+  const resolvedExpiresAt = expiresAt || (isSubscriptionPlan 
+    ? new Date((createdAt ? new Date(createdAt).getTime() : Date.now()) + 30 * 24 * 60 * 60 * 1000).toISOString() 
+    : null);
+
+  const now = new Date();
+  let daysLeft: number | null = null;
+  if (resolvedExpiresAt) {
+    const expDate = new Date(resolvedExpiresAt);
+    const diffTime = expDate.getTime() - now.getTime();
+    daysLeft = Math.max(0, Math.ceil(diffTime / (1000 * 3600 * 24)));
+  }
 
   // 1. Manual Override ON
   if (manualOverride === true) {
     return {
       plan: currentPlan,
       status: 'manual_on',
-      statusLabel: 'Subscription Active (Manual Override ON)',
+      statusLabel: daysLeft !== null 
+        ? `Subscription Active (Manual ON — ${daysLeft}d left)`
+        : 'Subscription Active (Manual Override ON)',
       badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-      badgeText: 'Manual ON',
+      badgeText: daysLeft !== null ? `Manual ON (${daysLeft}d left)` : 'Manual ON',
       isAccessAllowed: true,
-      expiresAt: expiresAt || null,
+      expiresAt: resolvedExpiresAt,
       gracePeriodDays,
       manualOverride: true,
-      daysRemaining: null,
+      daysRemaining: daysLeft,
       daysRemainingGrace: null,
     };
   }
@@ -77,7 +99,7 @@ export function getPropertySubscriptionDetails(
       badgeBg: 'bg-red-100 text-red-800 border-red-300',
       badgeText: 'Manual OFF',
       isAccessAllowed: false,
-      expiresAt: expiresAt || null,
+      expiresAt: resolvedExpiresAt,
       gracePeriodDays,
       manualOverride: false,
       daysRemaining: 0,
@@ -86,7 +108,7 @@ export function getPropertySubscriptionDetails(
   }
 
   // 3. No expiration date set -> Ongoing plan
-  if (!expiresAt) {
+  if (!resolvedExpiresAt) {
     return {
       plan: currentPlan,
       status: tenantIsActive ? 'active' : 'expired',
@@ -102,31 +124,29 @@ export function getPropertySubscriptionDetails(
     };
   }
 
-  // 4. Calculate date differences
-  const now = new Date();
-  const expDate = new Date(expiresAt);
+  // 4. Expiration date is present
+  const expDate = new Date(resolvedExpiresAt);
   const diffTime = expDate.getTime() - now.getTime();
   const diffDays = diffTime / (1000 * 3600 * 24);
 
-  // Active (Expiration is in the future)
   if (diffDays >= 0) {
-    const daysLeft = Math.ceil(diffDays);
+    const activeDays = Math.ceil(diffDays);
     return {
       plan: currentPlan,
       status: 'active',
-      statusLabel: `Active (${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left)`,
+      statusLabel: `Active (${activeDays} ${activeDays === 1 ? 'day' : 'days'} left)`,
       badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      badgeText: `Active (${daysLeft}d left)`,
+      badgeText: `Active (${activeDays}d left)`,
       isAccessAllowed: true,
-      expiresAt,
+      expiresAt: resolvedExpiresAt,
       gracePeriodDays,
       manualOverride: null,
-      daysRemaining: daysLeft,
+      daysRemaining: activeDays,
       daysRemainingGrace: null,
     };
   }
 
-  // Subscription expired, check 3-day Grace Period
+  // Check 3-day Grace Period
   const daysPastExpiry = Math.abs(diffDays);
   if (daysPastExpiry <= gracePeriodDays) {
     const graceDaysLeft = Math.max(1, Math.ceil(gracePeriodDays - daysPastExpiry));
@@ -136,8 +156,8 @@ export function getPropertySubscriptionDetails(
       statusLabel: `3-Day Grace Period (${graceDaysLeft} ${graceDaysLeft === 1 ? 'day' : 'days'} left)`,
       badgeBg: 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse',
       badgeText: `Grace Period (${graceDaysLeft}d left)`,
-      isAccessAllowed: true, // Grace period keeps platform access ACTIVE!
-      expiresAt,
+      isAccessAllowed: true,
+      expiresAt: resolvedExpiresAt,
       gracePeriodDays,
       manualOverride: null,
       daysRemaining: 0,
@@ -145,7 +165,7 @@ export function getPropertySubscriptionDetails(
     };
   }
 
-  // Grace Period expired (> 3 days past expiration date)
+  // Expired
   const overdueDays = Math.floor(daysPastExpiry - gracePeriodDays);
   return {
     plan: currentPlan,
@@ -154,7 +174,7 @@ export function getPropertySubscriptionDetails(
     badgeBg: 'bg-red-50 text-red-700 border-red-200',
     badgeText: 'Expired',
     isAccessAllowed: false,
-    expiresAt,
+    expiresAt: resolvedExpiresAt,
     gracePeriodDays,
     manualOverride: null,
     daysRemaining: 0,
