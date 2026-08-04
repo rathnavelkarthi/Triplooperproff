@@ -64,9 +64,9 @@ export default function Billing() {
         const customPrice = (tenant as any)?.custom_monthly_price;
         if (customPrice && typeof customPrice === 'number' && customPrice > 0) {
             return {
-                name: 'Custom Monthly Subscription Plan',
+                name: 'Advance Platform Subscription Plan',
                 price: `₹${customPrice.toLocaleString('en-IN')} / month (Tax Inclusive)`,
-                desc: 'Full access to Website, Staff Management, WhatsApp Management, Unlimited Rooms, Channel Manager & POS. 12% monthly commission on booking earnings.',
+                desc: 'Advance software subscription providing full operational access to Website, Staff Management, WhatsApp Management, Unlimited Rooms, Channel Manager & POS.',
                 autoPay: true,
             };
         } else if (tenant?.plan === 'commission') {
