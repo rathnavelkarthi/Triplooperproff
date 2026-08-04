@@ -82,6 +82,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Calculate 30-day (1 month) subscription expiration date
+    const durationDays = billing_cycle === 'yearly' ? 365 : 30;
+    const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+
     const maxRoomsVal = plan === 'commission'
       ? 9999
       : (plan === 'subscription_small' ? 10 : 9999);
@@ -89,7 +93,12 @@ serve(async (req) => {
     const { error: updateError } = await supabaseAdmin
       .from('tenants')
       .update({
-        plan,
+        plan: plan || 'subscription_custom',
+        subscription_plan: plan || 'subscription_custom',
+        subscription_expires_at: expiresAt,
+        subscription_status: 'active',
+        is_active: true,
+        manual_override: null,
         payment_setup: true,
         max_rooms: maxRoomsVal,
         razorpay_customer_id: orderData.customer_id || 'cust_' + Math.random().toString(36).substring(7),
@@ -102,23 +111,20 @@ serve(async (req) => {
       throw updateError;
     }
 
-    // If it's a subscription plan, log to subscriptions table
-    let expiresAt = null;
-    if (plan.startsWith('subscription') || plan.startsWith('sub_') || plan === 'growth' || plan === 'pro' || plan === 'enterprise') {
-      const durationDays = billing_cycle === 'yearly' ? 365 : 30;
-      expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+    // Upsert subscriptions table record with 30-day expiration
+    const { error: insertError } = await supabaseAdmin.from('subscriptions').upsert({
+      tenant_id,
+      plan: plan || 'subscription_custom',
+      status: 'active',
+      amount: orderData.amount / 100,
+      expires_at: expiresAt,
+      manual_override: null,
+      razorpay_payment_id,
+      updated_at: new Date().toISOString()
+    });
 
-      const { error: insertError } = await supabaseAdmin.from('subscriptions').insert({
-        tenant_id,
-        plan,
-        status: 'paid',
-        amount: orderData.amount / 100,
-        expires_at: expiresAt,
-        razorpay_payment_id,
-      });
-      if (insertError) {
-        throw insertError;
-      }
+    if (insertError) {
+      console.error("Failed to update subscriptions table:", insertError);
     }
 
     return new Response(JSON.stringify({

@@ -1142,27 +1142,34 @@ export default function PlatformAdmin() {
 
                                        {/* 3. Expiration Date (3-Day Grace Auto Applies) */}
                                        <div>
-                                         <label className="block text-[9px] font-bold text-gray-400 uppercase mb-1">
-                                           Expiration Date (+3-Day Grace)
-                                         </label>
+                                         <div className="flex items-center justify-between mb-1">
+                                           <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                                             Expiration Date (+3-Day Grace)
+                                           </label>
+                                           {subInfo.daysRemaining !== null && (
+                                             <span className="text-[10px] font-bold text-emerald-600">
+                                               {subInfo.daysRemaining}d left
+                                             </span>
+                                           )}
+                                         </div>
                                          <div className="flex items-center gap-1.5">
                                            <input
                                              type="date"
                                              value={p.subscription_expires_at ? p.subscription_expires_at.split('T')[0] : ''}
                                              onChange={(e) => {
                                                const dateVal = e.target.value ? new Date(e.target.value).toISOString() : null;
-                                               updatePropertySubscription(p.id, { subscription_expires_at: dateVal });
+                                               updatePropertySubscription(p.id, { subscription_expires_at: dateVal, manual_override: null });
                                              }}
                                              className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#0E2A38]"
                                            />
                                            <button
                                              onClick={() => {
-                                               const current = p.subscription_expires_at ? new Date(p.subscription_expires_at) : new Date();
+                                               const current = new Date();
                                                const next30 = new Date(current.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-                                               updatePropertySubscription(p.id, { subscription_expires_at: next30 });
+                                               updatePropertySubscription(p.id, { subscription_expires_at: next30, manual_override: null });
                                              }}
-                                             className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-[10px] font-bold rounded cursor-pointer"
-                                             title="Add 30 Days"
+                                             className="px-2 py-1 bg-[#0E2A38] hover:bg-[#163a4d] text-white text-[10px] font-bold rounded cursor-pointer transition-all"
+                                             title="Set 30-Day Expiration Date & Auto-Calculate"
                                            >
                                              +30d
                                            </button>

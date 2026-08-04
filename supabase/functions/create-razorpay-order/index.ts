@@ -34,8 +34,11 @@ serve(async (req) => {
 
     // Determine price in paise (1 INR = 100 paise)
     let amount = 0;
-    if (custom_amount && typeof custom_amount === 'number' && custom_amount > 0) {
-      amount = Math.round(custom_amount * 100);
+    const parsedCustom = Number(custom_amount);
+    if (!isNaN(parsedCustom) && parsedCustom > 0) {
+      amount = Math.round(parsedCustom * 100);
+    } else if (plan === 'subscription_custom' || plan === 'subscription') {
+      amount = 50000; // default ₹500
     } else if (plan === 'sub_1year') {
       amount = Math.round(23988 * 1.18 * 100);
     } else if (plan === 'sub_6months') {
@@ -108,11 +111,11 @@ serve(async (req) => {
           description: `Triplooper Monthly Subscription (${customer_name || 'Property'})`,
           customer: {
             name: customer_name || 'Property Owner',
-            email: customer_email || '',
+            email: (customer_email && customer_email.includes('@')) ? customer_email : 'onboarding@triplooper.com',
           },
           notify: {
-            sms: true,
-            email: true
+            sms: false,
+            email: Boolean(customer_email && customer_email.includes('@'))
           },
           reminder_enable: true,
           notes: {

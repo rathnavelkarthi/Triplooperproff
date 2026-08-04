@@ -331,10 +331,11 @@ export async function createAndSendCustomPaymentLink(
             headers,
             body: JSON.stringify({
                 create_payment_link: true,
+                billing_cycle: 'monthly',
                 custom_amount: monthlyPrice,
                 tenant_id: tenantId,
-                customer_email: ownerEmail,
-                customer_name: businessName,
+                customer_email: ownerEmail && ownerEmail.includes('@') ? ownerEmail : 'onboarding@triplooper.com',
+                customer_name: businessName || 'Property Owner',
                 plan: 'subscription_custom'
             })
         });
