@@ -1012,38 +1012,46 @@ function customSubscriptionEmailHtml(data: CustomSubscriptionEmailData): string 
   const payUrl = data.paymentUrl || '';
 
   return baseTemplate({
-    preheader: `Official Advance Payment Advice — Triplooper Software Subscription (₹${data.monthlyPrice.toLocaleString('en-IN')}/mo)`,
+    preheader: `Advance Payment Link — Triplooper Platform Subscription for ${data.businessName}`,
     businessName: data.businessName,
-    ctaText: 'Remit Advance Payment & Activate Access',
+    ctaText: 'Pay & Activate Subscription Now',
     ctaUrl: payUrl,
     bodyContent: `
-      ${heading(`Advance Subscription Payment Advice — ${data.businessName}`)}
-      <p style="font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.6;">
-        This formal payment advice details the advance subscription schedule for the Triplooper Property &amp; Billing Management Infrastructure configured for <strong>${data.businessName}</strong>.
+      ${heading(`Advance Payment for Platform Subscription`)}
+      <p style="font-family:${ff};font-size:15px;color:${T.textPrimary};line-height:1.6;font-weight:600;margin:0 0 6px 0;">
+        Greetings from Triplooper!
       </p>
-      <div style="background:${T.bgOuter};padding:24px;border:1px solid ${T.border};border-radius:8px;margin:24px 0;text-align:center;">
-        <span style="font-family:${ff};font-size:11px;color:${T.textTertiary};text-transform:uppercase;letter-spacing:1.5px;font-weight:600;display:block;">Advance Software Subscription Fee</span>
+      <p style="font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.6;margin:0 0 20px 0;">
+        Advance payment link for the platform subscription configured for <strong>${data.businessName}</strong>.
+      </p>
+      <div style="background:${T.bgOuter};padding:24px;border:1px solid ${T.border};border-radius:8px;margin:20px 0;text-align:center;">
+        <span style="font-family:${ff};font-size:11px;color:${T.textTertiary};text-transform:uppercase;letter-spacing:1.5px;font-weight:600;display:block;">Advance Platform Subscription Price</span>
         <span style="font-family:${ff};font-size:32px;font-weight:800;color:${T.textPrimary};display:block;margin:8px 0;">₹${data.monthlyPrice.toLocaleString('en-IN')}<span style="font-size:14px;font-weight:500;color:${T.textTertiary};"> / month</span></span>
-        <span style="display:inline-block;padding:6px 14px;background:#E6F4EA;color:#137333;font-size:11px;font-weight:700;border-radius:12px;margin-top:4px;letter-spacing:0.5px;">TAX INCLUSIVE • FULL BILLING &amp; SOFTWARE SUITE UNLOCKED</span>
+        <span style="display:inline-block;padding:6px 14px;background:#E6F4EA;color:#137333;font-size:11px;font-weight:700;border-radius:12px;margin-top:4px;letter-spacing:0.5px;">TAX INCLUSIVE • ALL APPS INCLUDED</span>
       </div>
-      <p style="font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7;">
-        Remitting this advance payment activates complete operational access to all Triplooper platform applications: <strong>Website (Direct Bookings)</strong>, <strong>Staff Management</strong>, <strong>WhatsApp Guest Operations</strong>, <strong>Room &amp; Property Management (Unlimited Rooms)</strong>, <strong>Multi-Channel OTA Manager</strong>, and <strong>POS System</strong>.
+      <p style="font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.7;margin:0 0 16px 0;">
+        Your subscription unlocks full access to <strong>Website (Direct Bookings)</strong>, <strong>Staff Management</strong>, <strong>WhatsApp Management</strong>, <strong>Room Management (Unlimited Rooms)</strong>, <strong>Channel Manager</strong>, and <strong>POS</strong>.
       </p>
+      <div style="background:${T.bgWarnSoft};border-left:3px solid ${T.gold};padding:14px 18px;border-radius:4px;margin:20px 0;">
+        <p style="margin:0;font-family:${ff};font-size:13px;color:${T.gold};font-weight:600;line-height:1.6;">
+          Kindly pay remaining amount on or before committed date.
+        </p>
+      </div>
 
       ${payUrl ? `
       <div style="text-align:center;margin:32px 0 20px 0;">
         <a href="${payUrl}" target="_blank" style="background:${T.accent};color:${T.textOnAccent};font-family:${ff};font-size:15px;font-weight:600;text-decoration:none;display:inline-block;padding:16px 36px;border-radius:6px;letter-spacing:0.5px;">
-          Remit Advance Payment &amp; Activate Platform Now &rarr;
+          Pay &amp; Activate Subscription Now &rarr;
         </a>
       </div>
       <div style="background:${T.bgMuted};padding:14px 18px;border-radius:6px;border:1px solid ${T.border};margin:16px 0;text-align:center;">
-        <span style="font-family:${ff};font-size:12px;color:${T.textTertiary};display:block;margin-bottom:6px;font-weight:500;">Secure Payment Remittance Portal:</span>
+        <span style="font-family:${ff};font-size:12px;color:${T.textTertiary};display:block;margin-bottom:6px;font-weight:500;">Payment Link URL:</span>
         <a href="${payUrl}" target="_blank" style="font-family:${mono};font-size:13px;color:${T.blue};word-break:break-all;font-weight:600;text-decoration:underline;">${payUrl}</a>
       </div>
       ` : ''}
 
       <p style="font-family:${ff};font-size:12px;color:${T.textTertiary};line-height:1.5;margin-top:28px;border-top:1px solid ${T.borderLight};padding-top:16px;">
-        This advance payment advice is issued by Triplooper Management Systems. For billing or corporate inquiries, please contact accounting at support@triplooper.com.
+        Need help or have questions? Contact support anytime at support@triplooper.com.
       </p>
     `,
     accentColor: T.accent,
@@ -1054,7 +1062,7 @@ export async function sendCustomSubscriptionInvite(data: CustomSubscriptionEmail
   if (!data.email) return false;
   return sendResendEmail(
     data.email,
-    `Official Advance Payment Advice — Triplooper Platform Subscription (₹${data.monthlyPrice.toLocaleString('en-IN')}/mo)`,
+    `Advance Payment Link — Triplooper Platform Subscription (₹${data.monthlyPrice.toLocaleString('en-IN')}/mo)`,
     customSubscriptionEmailHtml(data)
   );
 }
