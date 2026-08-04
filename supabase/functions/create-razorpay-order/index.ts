@@ -131,7 +131,7 @@ serve(async (req) => {
         throw new Error(linkData.error?.description || "Razorpay Payment Link creation failed");
       }
 
-      const linkUrl = linkData.short_url || linkData.url;
+      const linkUrl = linkData.short_url || linkData.url || (linkData.id ? `https://rzp.io/i/${linkData.id}` : null);
       return new Response(JSON.stringify({
         success: true,
         payment_link_id: linkData.id,

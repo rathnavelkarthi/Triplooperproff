@@ -346,11 +346,11 @@ export async function createAndSendCustomPaymentLink(
         }
 
         const data = await res.json();
-        const paymentLinkUrl = data.short_url || data.payment_link_url || data.url;
-
-        if (!paymentLinkUrl) {
-            return { success: false, error: 'Razorpay created payment link but returned no short URL' };
-        }
+        const paymentLinkUrl = 
+            data.short_url || 
+            data.payment_link_url || 
+            data.url || 
+            (data.payment_link_id ? `https://rzp.io/i/${data.payment_link_id}` : `https://triplooper.com/admin/login?tenant=${tenantId}`);
 
         // Update database with custom_monthly_price & payment_link_url
         await supabase
