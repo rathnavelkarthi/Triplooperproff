@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, Plus, ChevronDown, MoreVertical, X, LogOut, FileText, Printer, AlertOctagon, Star } from 'lucide-react';
+import { Search, Filter, Plus, ChevronDown, MoreVertical, X, LogOut, FileText, Printer, AlertOctagon, Star, MessageCircle } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useCRM, Reservation } from '../../context/CRMDataContext';
 import { useAuth } from '../../context/AuthContext';
 import InvoicePrintTemplate, { InvoiceData } from '../../components/crm/InvoicePrintTemplate';
@@ -9,6 +10,7 @@ import { printInvoice } from '../../components/crm/invoiceUtils';
 import { usePlanLimits } from '../../lib/planLimits';
 import UpgradeModal from '../../components/crm/UpgradeModal';
 import { supabase } from '../../lib/supabaseClient';
+import { sendWhatsAppConfirmation } from '../../lib/whatsapp';
 
 type StatusFilter = 'All' | 'Confirmed' | 'Checked In' | 'Checked Out' | 'Pending' | 'Cancelled' | 'No Show';
 
@@ -380,13 +382,45 @@ export default function Reservations() {
                             </>
                           )}
 
-                          <div className="border-t border-gray-100" />
+                           <div className="border-t border-gray-100" />
                           <button
                             onClick={() => handleGenerateBill(res)}
                             className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
                           >
                             <FileText size={14} className="text-gray-400" />
                             Generate Bill
+                          </button>
+
+                          <button
+                            onClick={async () => {
+                              setActiveMenuId(null);
+                              if (!res.guest_phone) {
+                                toast.error('No guest phone number available for WhatsApp.');
+                                return;
+                              }
+                              toast.info('Sending WhatsApp message via Evolution API...');
+                              const resMsg = await sendWhatsAppConfirmation({
+                                guestName: res.guest,
+                                guestPhone: res.guest_phone,
+                                roomType: res.room,
+                                roomNumber: res.room_id ? String(res.room_id) : undefined,
+                                checkIn: res.checkIn,
+                                checkOut: res.checkOut,
+                                reservationId: res.id,
+                                businessName: tenant?.business_name || 'Our Hotel',
+                                guestToken: (res as any).guest_token || undefined,
+                              }, tenant?.id || '');
+
+                              if (resMsg?.success) {
+                                toast.success(`WhatsApp confirmation sent to ${res.guest_phone}!`);
+                              } else {
+                                toast.error(resMsg?.reason || resMsg?.error || 'Failed to send WhatsApp message. Check connection status in WhatsApp Automations.');
+                              }
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-emerald-700 hover:bg-emerald-50 transition-colors flex items-center gap-2 font-medium"
+                          >
+                            <MessageCircle size={14} className="text-emerald-600" />
+                            Send WhatsApp Confirmation
                           </button>
 
                           {/* No Show action */}
