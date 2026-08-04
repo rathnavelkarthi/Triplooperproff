@@ -33,6 +33,13 @@ export default function BillingSetup() {
   const [paymentStep, setPaymentStep] = useState<'select' | 'authorizing' | 'success'>('select');
   const [selectedPayOption, setSelectedPayOption] = useState<'gpay' | 'card' | 'upi'>('gpay');
 
+  useEffect(() => {
+    if (!tenant) return;
+    if (tenant.payment_setup === true || tenant.plan === 'commission' || tenant.subscription_plan === 'subscription_custom') {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [tenant, navigate]);
+
   if (!tenant) return null;
 
   const getAmount = () => {

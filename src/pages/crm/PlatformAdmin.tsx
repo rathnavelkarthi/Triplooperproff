@@ -549,6 +549,7 @@ export default function PlatformAdmin() {
 
       const tenantPayload: Record<string, any> = {
         is_active: subInfo.isAccessAllowed,
+        payment_setup: true,
       };
 
       if (updates.plan !== undefined) {

@@ -372,7 +372,8 @@ export async function createAndSendCustomPaymentLink(
                 payment_link_id: data.payment_link_id,
                 subscription_plan: 'subscription_custom',
                 subscription_status: 'pending_payment',
-                subscription_expires_at: expiresAtToSet
+                subscription_expires_at: expiresAtToSet,
+                payment_setup: true
             })
             .eq('id', tenantId);
 

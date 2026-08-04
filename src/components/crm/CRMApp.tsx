@@ -37,6 +37,8 @@ import Expenses from '../../pages/crm/Expenses';
 import ProfitLoss from '../../pages/crm/ProfitLoss';
 import SavingsMargin from '../../pages/crm/SavingsMargin';
 
+import { getPropertySubscriptionDetails } from '../../lib/subscriptionUtils';
+
 // Business module
 import BusinessDashboard from '../../pages/crm/business/BusinessDashboard';
 import BusinessPropertyCreate from '../../pages/crm/business/BusinessPropertyCreate';
@@ -95,11 +97,22 @@ export default function CRMApp() {
     tenant.verification_status !== 'approved';
   const onVerificationRoute = location.pathname.startsWith('/admin/verification');
 
-  // Billing Setup gate: locked to /admin/billing-setup until payment is completed
+  const subInfo = tenant ? getPropertySubscriptionDetails(
+    tenant.plan,
+    (tenant as any).subscription_expires_at,
+    (tenant as any).manual_override,
+    (tenant as any).grace_period_days || 3,
+    tenant.is_active,
+    (tenant as any).created_at
+  ) : null;
+
+  // Billing Setup gate: locked to /admin/billing-setup ONLY if payment is NOT completed AND subscription is NOT active
   const needsBillingSetup =
     user.role !== 'PLATFORM_ADMIN' &&
     !!tenant &&
-    tenant.payment_setup === false;
+    tenant.payment_setup === false &&
+    (!subInfo || !subInfo.isAccessAllowed) &&
+    tenant.plan !== 'commission';
   const onBillingSetupRoute = location.pathname.startsWith('/admin/billing-setup');
 
   if (needsBillingSetup && !onBillingSetupRoute) {
