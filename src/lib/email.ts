@@ -1009,11 +1009,13 @@ export interface CustomSubscriptionEmailData {
 }
 
 function customSubscriptionEmailHtml(data: CustomSubscriptionEmailData): string {
+  const payUrl = data.paymentUrl || '';
+
   return baseTemplate({
     preheader: `Your Triplooper Monthly Subscription Offer — ₹${data.monthlyPrice}/mo (Tax Inclusive)`,
     businessName: data.businessName,
     ctaText: 'Pay & Activate Subscription Now',
-    ctaUrl: data.paymentUrl,
+    ctaUrl: payUrl,
     bodyContent: `
       ${heading(`Special Subscription Offer for ${data.businessName}`)}
       <p style="font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.6;">
@@ -1027,6 +1029,19 @@ function customSubscriptionEmailHtml(data: CustomSubscriptionEmailData): string 
       <p style="font-family:${ff};font-size:14px;color:${T.textSecondary};line-height:1.6;">
         Your subscription unlocks full access to <strong>Website (Direct Bookings)</strong>, <strong>Staff Management</strong>, <strong>WhatsApp Management</strong>, <strong>Room Management (Unlimited Rooms)</strong>, <strong>Channel Manager</strong>, and <strong>POS</strong>.
       </p>
+
+      ${payUrl ? `
+      <div style="text-align:center;margin:32px 0 16px 0;">
+        <a href="${payUrl}" target="_blank" style="background:${T.accent};color:${T.textOnAccent};font-family:${ff};font-size:15px;font-weight:600;text-decoration:none;display:inline-block;padding:16px 36px;border-radius:6px;letter-spacing:0.5px;">
+          Pay & Activate Subscription Now &rarr;
+        </a>
+      </div>
+      <div style="background:${T.bgMuted};padding:14px 18px;border-radius:6px;border:1px solid ${T.border};margin:16px 0;text-align:center;">
+        <span style="font-family:${ff};font-size:12px;color:${T.textTertiary};display:block;margin-bottom:6px;font-weight:500;">Payment Link URL:</span>
+        <a href="${payUrl}" target="_blank" style="font-family:${mono};font-size:13px;color:${T.blue};word-break:break-all;font-weight:600;text-decoration:underline;">${payUrl}</a>
+      </div>
+      ` : ''}
+
       <p style="font-family:${ff};font-size:12px;color:${T.textTertiary};line-height:1.5;margin-top:24px;">
         Need help or have questions? Contact support anytime at support@triplooper.com
       </p>
