@@ -41,7 +41,7 @@ export default function Invoices() {
     const checkOut = new Date(invoice.checkOut);
     const nights = Math.max(1, Math.floor((checkOut.getTime() - checkIn.getTime()) / 86400000));
     const roomPrice = invoice.roomPrice || invoice.amount || 5000;
-    const discount = invoice.discount || 500;
+    const discount = invoice.discount ?? 0;
     const taxableValue = Math.max(0, roomPrice - discount);
     const gst = invoice.gst || Math.round(taxableValue * 0.12);
     const total = taxableValue + gst;

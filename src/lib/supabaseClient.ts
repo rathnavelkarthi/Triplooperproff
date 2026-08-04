@@ -55,8 +55,15 @@ export function setSupabaseTokenGetter(getter: TokenGetter | null) {
 
 export async function getSupabaseToken(): Promise<string | null> {
     try {
-        if (!clerkTokenGetter) return null;
-        return (await clerkTokenGetter()) ?? null;
+        if (clerkTokenGetter) {
+            const token = await clerkTokenGetter();
+            if (token) return token;
+        }
+        const { data: { session } } = await supabaseAuth.auth.getSession();
+        if (session?.access_token) {
+            return session.access_token;
+        }
+        return null;
     } catch {
         return null;
     }

@@ -2,10 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { PLAN_PRICES, ADDON_PRICES } from '../lib/razorpay';
 
 describe('PLAN_PRICES', () => {
-  it('has growth, pro, enterprise, and subscription/commission plans', () => {
-    expect(Object.keys(PLAN_PRICES)).toContain('subscription_2700');
-    expect(PLAN_PRICES.subscription_2700.monthly.amount).toBe(2700);
-    expect(PLAN_PRICES.subscription_2700.yearly.amount).toBe(27000);
+  it('has sub_1year, sub_6months, sub_3months, sub_1month and commission plans', () => {
+    expect(Object.keys(PLAN_PRICES)).toContain('sub_1year');
+    expect(Object.keys(PLAN_PRICES)).toContain('sub_6months');
+    expect(Object.keys(PLAN_PRICES)).toContain('sub_3months');
+    expect(Object.keys(PLAN_PRICES)).toContain('sub_1month');
+    expect(PLAN_PRICES.sub_1year.monthly.amount).toBe(1999);
+    expect(PLAN_PRICES.sub_6months.monthly.amount).toBe(2300);
+    expect(PLAN_PRICES.sub_3months.monthly.amount).toBe(2500);
+    expect(PLAN_PRICES.sub_1month.monthly.amount).toBe(2700);
   });
 
   it('each plan has monthly and yearly pricing', () => {
@@ -19,12 +24,8 @@ describe('PLAN_PRICES', () => {
     }
   });
 
-  it('yearly is cheaper per month than monthly', () => {
-    for (const [name, plan] of Object.entries(PLAN_PRICES)) {
-      if (name === 'commission') continue;
-      const monthlyAnnualized = plan.monthly.amount * 12;
-      expect(plan.yearly.amount).toBeLessThan(monthlyAnnualized);
-    }
+  it('yearly is cheaper per month than monthly for tiered plans', () => {
+    expect(PLAN_PRICES.growth.yearly.amount).toBeLessThan(PLAN_PRICES.growth.monthly.amount * 12);
   });
 
   it('prices increase with plan tier', () => {

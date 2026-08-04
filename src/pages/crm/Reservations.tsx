@@ -69,7 +69,7 @@ export default function Reservations() {
     const checkOut = new Date(res.checkOut);
     const nights = Math.max(1, Math.floor((checkOut.getTime() - checkIn.getTime()) / 86400000));
     const roomPrice = res.amount || 5000;
-    const discount = (res as any).discount || 500;
+    const discount = (res as any).discount ?? 0;
     const taxableValue = Math.max(0, roomPrice - discount);
     const gst = res.gst_amount || Math.round(taxableValue * 0.12);
     const total = taxableValue + gst;

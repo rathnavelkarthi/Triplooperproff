@@ -278,45 +278,38 @@ export default function PricingPage() {
                     </div>
 
                     {/* PRICING PLANS GRID */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
                         
-                        {/* 1. Subscription Plan */}
-                        <div className="relative bg-white border-2 border-[#0E2A38] rounded-3xl p-8 shadow-xl flex flex-col justify-between space-y-6 overflow-hidden transform lg:-translate-y-2">
-                            <div className="absolute top-0 right-6 -translate-y-1/2 bg-[#ef4d23] text-white font-extrabold text-[9px] uppercase tracking-widest px-4 py-1 rounded-full shadow-md">
-                                Popular
+                        {/* 1. 1 YEAR (MOST POPULAR) */}
+                        <div className="relative bg-[#0b0c16] text-white border-2 border-purple-500 rounded-3xl p-6 shadow-2xl flex flex-col justify-between space-y-6 overflow-hidden transform lg:-translate-y-2">
+                            <div className="absolute top-0 right-6 -translate-y-1/2 bg-purple-600 text-white font-extrabold text-[9px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+                                ★ Most Popular
                             </div>
                             
                             <div className="space-y-4 text-left font-sans">
                                 <div>
-                                    <span className="text-xs font-bold uppercase tracking-widest text-[#ef4d23] bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">Complete PMS Suite</span>
-                                    <h3 className="text-xl font-bold text-[#0E2A38] tracking-tight mt-3">Full Subscription Plan</h3>
-                                    <p className="text-xs text-neutral-500 mt-1 font-light leading-relaxed">
-                                        All-in-one software for hotel operations, booking engine, guest check-in, and billing.
-                                    </p>
-                                </div>
-
-                                <div className="pt-2">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-4xl font-extrabold text-[#0E2A38] tracking-tight">₹27,000</span>
-                                        <span className="text-sm text-neutral-500 font-medium">/ year</span>
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-purple-400">1 YEAR</h3>
+                                    <div className="flex items-baseline gap-1 mt-2">
+                                        <span className="text-4xl font-black text-white tracking-tight">₹1,999</span>
+                                        <span className="text-xs text-gray-400">/ mo</span>
                                     </div>
-                                    <p className="text-[11px] text-emerald-600 font-bold mt-1">2 Months FREE on annual payment (₹2,700 / mo)</p>
-                                    <p className="text-[11px] text-[#ef4d23] font-semibold mt-0.5">+ 12% commission per booking</p>
+                                    <p className="text-[11px] text-gray-400 mt-1 font-semibold">+18% GST · Billed Yearly</p>
+                                    <span className="inline-block mt-2 text-[10px] bg-purple-950 text-purple-300 font-bold px-2.5 py-0.5 rounded-full border border-purple-800">Save More</span>
+                                    <p className="text-[11px] text-amber-400 font-semibold mt-1">+ 12% commission on bookings</p>
                                 </div>
                                 
-                                <div className="h-px bg-neutral-100 my-4" />
+                                <div className="h-px bg-white/10 my-4" />
 
-                                <h4 className="text-xs font-bold text-[#0E2A38] uppercase tracking-wide">Included Core Features:</h4>
-                                <ul className="space-y-2.5 text-xs text-neutral-600 font-light">
+                                <ul className="space-y-2 text-xs text-gray-300 font-light">
                                     {[
-                                        "Custom Website & Direct Booking Engine",
-                                        "Guest Check-In Portal & Aadhaar Verification",
-                                        "GST Invoicing & Billing Folios",
-                                        "Unlimited Rooms & Staff Members",
-                                        "Modular Add-ons available in Dashboard",
+                                        "All Software Features Included",
+                                        "Custom Website & Direct Engine",
+                                        "OTA Channel Manager Sync",
+                                        "Restaurant POS & Dining POS",
+                                        "WhatsApp Automations",
                                     ].map((f, i) => (
                                         <li key={i} className="flex gap-2 items-center">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-[#ef4d23]" />
+                                            <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                                             <span>{f}</span>
                                         </li>
                                     ))}
@@ -326,63 +319,132 @@ export default function PricingPage() {
                             <div className="pt-4">
                                 <a
                                     href="/signup"
-                                    className="w-full bg-[#ef4d23] hover:bg-[#d63f1a] text-white font-bold py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md text-center text-sm"
+                                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md text-center text-sm"
                                 >
-                                    <span>Get Started</span>
+                                    <span>Subscribe Now</span>
                                 </a>
                             </div>
                         </div>
 
-                        {/* 3. Commission-Only */}
-                        <div className="relative bg-white border border-neutral-200 rounded-3xl p-8 shadow-lg flex flex-col justify-between space-y-6 overflow-hidden">
+                        {/* 2. 6 MONTHS */}
+                        <div className="relative bg-[#0b0c16] text-white border border-blue-500/50 rounded-3xl p-6 shadow-xl flex flex-col justify-between space-y-6 overflow-hidden">
                             <div className="space-y-4 text-left font-sans">
                                 <div>
-                                    <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">Commission Method</span>
-                                    <h3 className="text-xl font-bold text-[#0E2A38] tracking-tight mt-3">Commission Only</h3>
-                                    <p className="text-xs text-neutral-500 mt-1 font-light leading-relaxed">
-                                        For hotels wanting zero upfront costs. Pay only when you earn booking revenue.
-                                    </p>
-                                </div>
-
-                                <div className="pt-2">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-4xl font-extrabold text-[#0E2A38] tracking-tight">₹0</span>
-                                        <span className="text-sm text-neutral-500 font-medium">/ year</span>
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-blue-400">6 MONTHS</h3>
+                                    <div className="flex items-baseline gap-1 mt-2">
+                                        <span className="text-4xl font-black text-white tracking-tight">₹2,300</span>
+                                        <span className="text-xs text-gray-400">/ mo</span>
                                     </div>
-                                    <p className="text-[11px] text-emerald-600 font-semibold mt-1">12% commission per booking</p>
+                                    <p className="text-[11px] text-gray-400 mt-1 font-semibold">+18% GST · Billed Half-Yearly</p>
+                                    <p className="text-[11px] text-amber-400 font-semibold mt-2">+ 12% commission on bookings</p>
                                 </div>
                                 
-                                <div className="h-px bg-neutral-100 my-4" />
+                                <div className="h-px bg-white/10 my-4" />
 
-                                <h4 className="text-xs font-bold text-[#0E2A38] uppercase tracking-wide">Included Features:</h4>
-                                <ul className="space-y-2.5 text-xs text-neutral-600 font-light">
+                                <ul className="space-y-2 text-xs text-gray-300 font-light">
                                     {[
-                                        "Custom Website & Booking Engine",
-                                        "Guest Portal with Aadhaar Check-In",
-                                        "WhatsApp Booking Automations",
-                                        "GST Billing & Invoice Folios",
-                                        "Unlimited Rooms & Staff",
-                                        "No Setup or Yearly Fee",
-                                        "No Channel Manager Sync (Disabled)",
-                                        "No Restaurant POS & Dining (Disabled)",
-                                    ].map((f, i) => {
-                                        const isRed = f.includes("Disabled");
-                                        return (
-                                            <li key={i} className={`flex gap-2 items-center ${isRed ? 'opacity-50' : ''}`}>
-                                                <div className={`w-1.5 h-1.5 rounded-full ${isRed ? 'bg-red-500' : 'bg-emerald-600'}`} />
-                                                <span className={isRed ? 'line-through' : ''}>{f}</span>
-                                            </li>
-                                        );
-                                    })}
+                                        "All Software Features Included",
+                                        "Custom Website & Direct Engine",
+                                        "OTA Channel Manager Sync",
+                                        "Restaurant POS & Dining POS",
+                                        "WhatsApp Automations",
+                                    ].map((f, i) => (
+                                        <li key={i} className="flex gap-2 items-center">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                            <span>{f}</span>
+                                        </li>
+                                    ))}
                                 </ul>
                             </div>
 
                             <div className="pt-4">
                                 <a
                                     href="/signup"
-                                    className="w-full bg-[#0E2A38] hover:bg-[#ef4d23] text-white font-bold py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md text-center text-sm"
+                                    className="w-full border border-blue-500 text-blue-400 hover:bg-blue-600 hover:text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-center text-sm"
                                 >
-                                    <span>Get Started Free</span>
+                                    <span>Get Started</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* 3. 3 MONTHS */}
+                        <div className="relative bg-[#0b0c16] text-white border border-cyan-500/50 rounded-3xl p-6 shadow-xl flex flex-col justify-between space-y-6 overflow-hidden">
+                            <div className="space-y-4 text-left font-sans">
+                                <div>
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-cyan-400">3 MONTHS</h3>
+                                    <div className="flex items-baseline gap-1 mt-2">
+                                        <span className="text-4xl font-black text-white tracking-tight">₹2,500</span>
+                                        <span className="text-xs text-gray-400">/ mo</span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 mt-1 font-semibold">+18% GST · Billed Quarterly</p>
+                                    <p className="text-[11px] text-amber-400 font-semibold mt-2">+ 12% commission on bookings</p>
+                                </div>
+                                
+                                <div className="h-px bg-white/10 my-4" />
+
+                                <ul className="space-y-2 text-xs text-gray-300 font-light">
+                                    {[
+                                        "All Software Features Included",
+                                        "Custom Website & Direct Engine",
+                                        "OTA Channel Manager Sync",
+                                        "Restaurant POS & Dining POS",
+                                        "WhatsApp Automations",
+                                    ].map((f, i) => (
+                                        <li key={i} className="flex gap-2 items-center">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                                            <span>{f}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="pt-4">
+                                <a
+                                    href="/signup"
+                                    className="w-full border border-cyan-500 text-cyan-400 hover:bg-cyan-600 hover:text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-center text-sm"
+                                >
+                                    <span>Choose Plan</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* 4. 1 MONTH */}
+                        <div className="relative bg-[#0b0c16] text-white border border-amber-500/50 rounded-3xl p-6 shadow-xl flex flex-col justify-between space-y-6 overflow-hidden">
+                            <div className="space-y-4 text-left font-sans">
+                                <div>
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-amber-400">1 MONTH</h3>
+                                    <div className="flex items-baseline gap-1 mt-2">
+                                        <span className="text-4xl font-black text-white tracking-tight">₹2,700</span>
+                                        <span className="text-xs text-gray-400">/ mo</span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 mt-1 font-semibold">+18% GST · Billed Monthly</p>
+                                    <p className="text-[11px] text-amber-400 font-semibold mt-2">+ 12% commission on bookings</p>
+                                </div>
+                                
+                                <div className="h-px bg-white/10 my-4" />
+
+                                <ul className="space-y-2 text-xs text-gray-300 font-light">
+                                    {[
+                                        "All Software Features Included",
+                                        "Custom Website & Direct Engine",
+                                        "OTA Channel Manager Sync",
+                                        "Restaurant POS & Dining POS",
+                                        "WhatsApp Automations",
+                                    ].map((f, i) => (
+                                        <li key={i} className="flex gap-2 items-center">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                            <span>{f}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="pt-4">
+                                <a
+                                    href="/signup"
+                                    className="w-full border border-amber-500 text-amber-400 hover:bg-amber-600 hover:text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-center text-sm"
+                                >
+                                    <span>Start Today</span>
                                 </a>
                             </div>
                         </div>

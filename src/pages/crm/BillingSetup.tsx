@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   CreditCard, Shield, BadgeCheck, Check, Building2,
   Zap, UtensilsCrossed, AlertTriangle, ArrowRight, Loader2,
-  Smartphone, Lock, KeyRound, Globe, Wifi, CheckCircle2, X
+  Smartphone, Lock, KeyRound, Globe, Wifi, CheckCircle2, X, Wallet
 } from 'lucide-react';
 import { initiatePayment } from '../../lib/razorpay';
 
@@ -26,9 +26,8 @@ export default function BillingSetup() {
   const { tenant, user, refreshTenant, logout } = useAuth();
   const navigate = useNavigate();
   
-  const isTestingMode = import.meta.env.DEV || window.location.search.includes('test=true') || window.location.hostname === 'localhost';
   const [method, setMethod] = useState<'subscription' | 'commission'>('subscription');
-  const [roomTier, setRoomTier] = useState<'small' | 'large' | 'test'>('test');
+  const [selectedPlan, setSelectedPlan] = useState<'sub_1year' | 'sub_6months' | 'sub_3months' | 'sub_1month'>('sub_1year');
   const [loading, setLoading] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentStep, setPaymentStep] = useState<'select' | 'authorizing' | 'success'>('select');
@@ -38,8 +37,10 @@ export default function BillingSetup() {
 
   const getAmount = () => {
     if (method === 'commission') return 0;
-    if (roomTier === 'test') return 1;
-    return roomTier === 'small' ? 15000 : 21000;
+    if (selectedPlan === 'sub_1year') return Math.round(23988 * 1.18);
+    if (selectedPlan === 'sub_6months') return Math.round(13800 * 1.18);
+    if (selectedPlan === 'sub_3months') return Math.round(7500 * 1.18);
+    return Math.round(2700 * 1.18);
   };
 
   const handleActivate = () => {
@@ -55,9 +56,7 @@ export default function BillingSetup() {
 
     setPaymentStep('authorizing');
 
-    const finalPlan = method === 'commission' 
-      ? 'commission' 
-      : (roomTier === 'test' ? 'subscription_test' : (roomTier === 'small' ? 'subscription_small' : 'subscription_large'));
+    const finalPlan = method === 'commission' ? 'commission' : selectedPlan;
 
     try {
       const result = await initiatePayment(
@@ -73,144 +72,157 @@ export default function BillingSetup() {
         toast.success('Billing profile & Auto-Pay activated successfully!');
         
         setTimeout(async () => {
-          await refreshTenant();
-          navigate('/admin/dashboard');
+          window.location.href = '/admin';
         }, 1500);
       } else {
-        if (result.error !== 'Payment cancelled') {
-          toast.error(result.error || 'Payment failed');
-        }
         setPaymentStep('select');
-        setShowCheckout(false);
+        toast.error(result.error || 'Payment failed. Please try again.');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to complete payment.');
       setPaymentStep('select');
-      setShowCheckout(false);
+      toast.error(err.message || 'Payment initiation failed.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
-      
-      {/* Header Info */}
-      <div className="text-center max-w-xl mx-auto mb-8 space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0E2A38]/5 border border-[#0E2A38]/10 text-xs font-semibold text-[#0E2A38]">
-          <Shield size={13} /> Secure Onboarding Gate
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-between p-4 sm:p-8 font-sans">
+      <div className="max-w-4xl mx-auto w-full space-y-8 my-auto">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 bg-[#0E2A38] text-white text-xs font-bold px-3 py-1 rounded-full">
+            <Shield size={14} /> Official Triplooper Billing Setup
+          </div>
+          <h1 className="text-3xl font-extrabold text-[#0E2A38] tracking-tight">
+            Activate Your Property Dashboard
+          </h1>
+          <p className="text-xs text-gray-500 max-w-md mx-auto">
+            Complete payment setup to activate your dashboard. Choose your preferred package and link your Auto-Pay mandate for the 12% monthly commission.
+          </p>
         </div>
-        <h1 className="text-3xl font-extrabold text-[#0E2A38] tracking-tight">Configure Your Billing & Auto-Pay</h1>
-        <p className="text-sm text-gray-500">
-          Complete payment setup to activate your dashboard. Choose your preferred package and link your Auto-Pay mandate for the 12% monthly commission.
-        </p>
-      </div>
 
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-        
-        {/* Option 1: Subscription Method */}
-        <div 
-          onClick={() => setMethod('subscription')}
-          className={`cursor-pointer bg-white rounded-3xl p-8 border-2 transition-all flex flex-col justify-between relative shadow-sm hover:shadow-md ${
-            method === 'subscription' ? 'border-[#0E2A38] ring-4 ring-[#0E2A38]/5' : 'border-gray-200'
-          }`}
-        >
-          {method === 'subscription' && (
-            <div className="absolute top-4 right-4 bg-[#0E2A38] text-white p-1 rounded-full">
-              <Check size={16} />
-            </div>
-          )}
-          
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-[#C9A646]">
-                <Zap size={22} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+          {/* Option 1: Subscription Method */}
+          <div 
+            onClick={() => setMethod('subscription')}
+            className={`cursor-pointer bg-white rounded-3xl p-8 border-2 transition-all flex flex-col justify-between relative shadow-sm hover:shadow-md ${
+              method === 'subscription' ? 'border-[#0E2A38] ring-4 ring-[#0E2A38]/5' : 'border-gray-200'
+            }`}
+          >
+            {method === 'subscription' && (
+              <div className="absolute top-4 right-4 bg-[#0E2A38] text-white p-1 rounded-full">
+                <Check size={16} />
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-[#0E2A38]">Subscription Plan</h3>
-                <p className="text-xs text-gray-400">One-time yearly fee + 12% commission</p>
+            )}
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#0E2A38]/5 flex items-center justify-center text-[#0E2A38]">
+                  <Wallet size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-[#0E2A38]">Subscription Plan</h3>
+                  <p className="text-xs text-gray-400">All features included + 12% commission</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-2xl space-y-3">
+                <p className="text-xs font-bold text-[#0E2A38] uppercase tracking-wider">Select Billing Duration</p>
+                <div className="grid gap-2 grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setSelectedPlan('sub_1year'); setMethod('subscription'); }}
+                    className={`p-3 rounded-xl border text-center transition-all relative ${
+                      selectedPlan === 'sub_1year' && method === 'subscription'
+                        ? 'bg-[#0E2A38] text-white border-transparent'
+                        : 'bg-white text-[#0E2A38] border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-purple-600 text-white text-[8px] font-bold uppercase px-2 py-0.5 rounded-full">Most Popular</span>
+                    <p className="text-sm font-bold mt-1">1 YEAR</p>
+                    <p className="text-[11px] opacity-70">₹1,999 / mo</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setSelectedPlan('sub_6months'); setMethod('subscription'); }}
+                    className={`p-3 rounded-xl border text-center transition-all ${
+                      selectedPlan === 'sub_6months' && method === 'subscription'
+                        ? 'bg-[#0E2A38] text-white border-transparent'
+                        : 'bg-white text-[#0E2A38] border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="text-sm font-bold">6 MONTHS</p>
+                    <p className="text-[11px] opacity-70">₹2,300 / mo</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setSelectedPlan('sub_3months'); setMethod('subscription'); }}
+                    className={`p-3 rounded-xl border text-center transition-all ${
+                      selectedPlan === 'sub_3months' && method === 'subscription'
+                        ? 'bg-[#0E2A38] text-white border-transparent'
+                        : 'bg-white text-[#0E2A38] border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="text-sm font-bold">3 MONTHS</p>
+                    <p className="text-[11px] opacity-70">₹2,500 / mo</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setSelectedPlan('sub_1month'); setMethod('subscription'); }}
+                    className={`p-3 rounded-xl border text-center transition-all ${
+                      selectedPlan === 'sub_1month' && method === 'subscription'
+                        ? 'bg-[#0E2A38] text-white border-transparent'
+                        : 'bg-white text-[#0E2A38] border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="text-sm font-bold">1 MONTH</p>
+                    <p className="text-[11px] opacity-70">₹2,700 / mo</p>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Access Inclusions:</p>
+                <ul className="space-y-2.5 text-xs text-gray-500 font-medium">
+                  <li className="flex items-center gap-2">
+                    <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
+                    <span>Custom Property Website & Booking Engine</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
+                    <span className="font-bold text-[#0E2A38]">OTA Channel Manager Included</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
+                    <span className="font-bold text-[#0E2A38]">Restaurant POS & Dining Included</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
+                    <span>Aadhaar Guest Verification & Reports</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-[#C9A646]">
+                    <Zap size={13} className="shrink-0" />
+                    <span>Pay 12% commission on bookings monthly</span>
+                  </li>
+                </ul>
               </div>
             </div>
 
-            <div className="p-4 bg-gray-50 rounded-2xl space-y-3">
-              <p className="text-xs font-bold text-[#0E2A38] uppercase tracking-wider">Select Property Room Count</p>
-              <div className="grid gap-3 grid-cols-3">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setRoomTier('test'); setMethod('subscription'); }}
-                  className={`p-3 rounded-xl border text-center transition-all ${
-                    roomTier === 'test' && method === 'subscription'
-                      ? 'bg-[#0E2A38] text-white border-transparent'
-                      : 'bg-white text-[#0E2A38] border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <p className="text-sm font-bold">Test Plan</p>
-                  <p className="text-[11px] opacity-70">₹1 / year</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setRoomTier('small'); setMethod('subscription'); }}
-                  className={`p-3 rounded-xl border text-center transition-all ${
-                    roomTier === 'small' && method === 'subscription'
-                      ? 'bg-[#0E2A38] text-white border-transparent'
-                      : 'bg-white text-[#0E2A38] border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <p className="text-sm font-bold">Max 10 Rooms</p>
-                  <p className="text-[11px] opacity-70">₹15,000 / year</p>
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setRoomTier('large'); setMethod('subscription'); }}
-                  className={`p-3 rounded-xl border text-center transition-all ${
-                    roomTier === 'large' && method === 'subscription'
-                      ? 'bg-[#0E2A38] text-white border-transparent'
-                      : 'bg-white text-[#0E2A38] border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <p className="text-sm font-bold">11+ Rooms</p>
-                  <p className="text-[11px] opacity-70">₹21,000 / year</p>
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Access Inclusions:</p>
-              <ul className="space-y-2.5 text-xs text-gray-500 font-medium">
-                <li className="flex items-center gap-2">
-                  <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
-                  <span>Custom Property Website & Booking Engine</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
-                  <span className="font-bold text-[#0E2A38]">OTA Channel Manager Included</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
-                  <span className="font-bold text-[#0E2A38]">Restaurant POS & Tables Included</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <BadgeCheck size={14} className="text-emerald-500 shrink-0" />
-                  <span>Aadhaar Guest Verification & Reports</span>
-                </li>
-                <li className="flex items-center gap-2 text-[#C9A646]">
-                  <Zap size={13} className="shrink-0" />
-                  <span>Pay 12% commission on bookings monthly</span>
-                </li>
-              </ul>
+            <div className="pt-6 border-t border-gray-100 mt-6 flex items-baseline justify-between">
+              <span className="text-xs text-gray-400 font-semibold">Subscription Fee</span>
+              <span className="text-lg font-black text-[#0E2A38]">
+                {selectedPlan === 'sub_1year' && '₹1,999/mo + 18% GST'}
+                {selectedPlan === 'sub_6months' && '₹2,300/mo + 18% GST'}
+                {selectedPlan === 'sub_3months' && '₹2,500/mo + 18% GST'}
+                {selectedPlan === 'sub_1month' && '₹2,700/mo + 18% GST'}
+              </span>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-100 mt-6 flex items-baseline justify-between">
-            <span className="text-xs text-gray-400 font-semibold">Subscription Fee</span>
-            <span className="text-2xl font-black text-[#0E2A38]">
-              ₹{roomTier === 'test' ? '1' : (roomTier === 'small' ? '15,000' : '21,000')} <span className="text-xs text-gray-400 font-normal">/ year</span>
-            </span>
-          </div>
-        </div>
-
-        {/* Option 2: Commission Method */}
-        <div 
-          onClick={() => setMethod('commission')}
+          {/* Option 2: Commission Method */}
+          <div 
+            onClick={() => setMethod('commission')}
           className={`cursor-pointer bg-white rounded-3xl p-8 border-2 transition-all flex flex-col justify-between relative shadow-sm hover:shadow-md ${
             method === 'commission' ? 'border-[#0E2A38] ring-4 ring-[#0E2A38]/5' : 'border-gray-200'
           }`}
@@ -278,6 +290,7 @@ export default function BillingSetup() {
         </div>
 
       </div>
+    </div>
 
       {/* Action Buttons */}
       <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">

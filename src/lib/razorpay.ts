@@ -4,14 +4,17 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const PLAN_PRICES: Record<string, Record<string, { amount: number; display: string }>> = {
+    sub_1year: { monthly: { amount: 1999, display: '₹1,999/mo' }, yearly: { amount: 23988, display: '₹23,988/yr' } },
+    sub_6months: { monthly: { amount: 2300, display: '₹2,300/mo' }, yearly: { amount: 13800, display: '₹13,800' } },
+    sub_3months: { monthly: { amount: 2500, display: '₹2,500/mo' }, yearly: { amount: 7500, display: '₹7,500' } },
+    sub_1month: { monthly: { amount: 2700, display: '₹2,700/mo' }, yearly: { amount: 2700, display: '₹2,700' } },
+    commission: { monthly: { amount: 0, display: '₹0' }, yearly: { amount: 0, display: '₹0' } },
     growth: { monthly: { amount: 2499, display: '₹2,499' }, yearly: { amount: 23999, display: '₹23,999' } },
     pro: { monthly: { amount: 4999, display: '₹4,999' }, yearly: { amount: 47999, display: '₹47,999' } },
     enterprise: { monthly: { amount: 9999, display: '₹9,999' }, yearly: { amount: 95999, display: '₹95,999' } },
     subscription_2700: { monthly: { amount: 2700, display: '₹2,700' }, yearly: { amount: 27000, display: '₹27,000' } },
     subscription_small: { monthly: { amount: 1500, display: '₹1,500' }, yearly: { amount: 15000, display: '₹15,000' } },
     subscription_large: { monthly: { amount: 2100, display: '₹2,100' }, yearly: { amount: 21000, display: '₹21,000' } },
-    subscription_test: { monthly: { amount: 1, display: '₹1' }, yearly: { amount: 1, display: '₹1' } },
-    commission: { monthly: { amount: 0, display: '₹0' }, yearly: { amount: 0, display: '₹0' } }
 };
 
 export const ADDON_PRICES: Record<string, { amount: number; yearlyAmount: number; display: string; name: string }> = {

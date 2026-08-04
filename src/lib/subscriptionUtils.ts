@@ -20,6 +20,11 @@ export interface PropertySubscription {
 }
 
 export const PLAN_NAMES: Record<string, string> = {
+  sub_1year: '1 Year Plan (₹1,999/mo + 18% GST)',
+  sub_6months: '6 Months Plan (₹2,300/mo + 18% GST)',
+  sub_3months: '3 Months Plan (₹2,500/mo + 18% GST)',
+  sub_1month: '1 Month Plan (₹2,700/mo + 18% GST)',
+  commission: '12% Commission Only',
   starter: 'Starter Plan',
   growth: 'Growth Plan',
   pro: 'Pro Plan',
@@ -27,8 +32,6 @@ export const PLAN_NAMES: Record<string, string> = {
   subscription_2700: 'Subscription (₹2,700/mo)',
   subscription_small: 'Subscription (Max 10 Rooms)',
   subscription_large: 'Subscription (Unlimited Rooms)',
-  subscription_test: 'Subscription (Test Plan - ₹1)',
-  commission: '12% Commission Only',
 };
 
 /**

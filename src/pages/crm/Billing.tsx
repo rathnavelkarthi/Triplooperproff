@@ -61,24 +61,38 @@ export default function Billing() {
     };
  
     const getPlanDetails = () => {
-        if (tenant?.plan === 'subscription_test') {
+        if (tenant?.plan === 'sub_1year') {
             return {
-                name: 'Subscription (Test Plan - ₹1)',
-                price: '₹1 / year',
-                desc: 'Access to all features (Testing Mode). 12% monthly commission on booking earnings.',
+                name: '1 Year Subscription Plan',
+                price: '₹1,999 / month (+18% GST)',
+                desc: 'Access to all features. Billed yearly at ₹23,988 + 18% GST. 12% monthly commission on booking earnings.',
                 autoPay: true,
             };
-        } else if (tenant?.plan === 'subscription_small') {
+        } else if (tenant?.plan === 'sub_6months') {
             return {
-                name: 'Subscription (Max 10 Rooms)',
-                price: '₹15,000 / year',
-                desc: 'Access to all features. 12% monthly commission on booking earnings.',
+                name: '6 Months Subscription Plan',
+                price: '₹2,300 / month (+18% GST)',
+                desc: 'Access to all features. Billed half-yearly at ₹13,800 + 18% GST. 12% monthly commission on booking earnings.',
                 autoPay: true,
             };
-        } else if (tenant?.plan === 'subscription_large') {
+        } else if (tenant?.plan === 'sub_3months') {
             return {
-                name: 'Subscription (Unlimited Rooms)',
-                price: '₹21,000 / year',
+                name: '3 Months Subscription Plan',
+                price: '₹2,500 / month (+18% GST)',
+                desc: 'Access to all features. Billed quarterly at ₹7,500 + 18% GST. 12% monthly commission on booking earnings.',
+                autoPay: true,
+            };
+        } else if (tenant?.plan === 'sub_1month') {
+            return {
+                name: '1 Month Subscription Plan',
+                price: '₹2,700 / month (+18% GST)',
+                desc: 'Access to all features. Billed monthly at ₹2,700 + 18% GST. 12% monthly commission on booking earnings.',
+                autoPay: true,
+            };
+        } else if (tenant?.plan === 'subscription_small' || tenant?.plan === 'subscription_large' || tenant?.plan === 'subscription_2700') {
+            return {
+                name: 'Full Subscription Plan',
+                price: 'Subscription Active',
                 desc: 'Access to all features. 12% monthly commission on booking earnings.',
                 autoPay: true,
             };
@@ -244,7 +258,7 @@ export default function Billing() {
             {/* Bill/Invoice Modal */}
             {selectedRes && (() => {
                 const roomPrice = selectedRes.amount || 5000;
-                const discount = selectedRes.discount || 500;
+                const discount = selectedRes.discount ?? 0;
                 const commissionableAmount = Math.max(0, roomPrice - discount);
                 const gstAmount = Math.round(commissionableAmount * 0.12);
                 const totalBookingAmount = commissionableAmount + gstAmount;

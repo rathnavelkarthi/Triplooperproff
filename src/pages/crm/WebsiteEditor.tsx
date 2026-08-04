@@ -8,6 +8,10 @@ import {
     EyeOff, ExternalLink, Loader2, Check, Sparkles, X, UtensilsCrossed, Clock, Camera,
     Palette, Sliders
 } from 'lucide-react';
+import {
+    parseGoogleMapsUrl, buildMapsSearchUrl,
+    isShortGoogleMapsLink, isLocalPlusCodeWithoutLocality
+} from '../../lib/maps';
 
 // --- Types ---
 type SiteSettings = Record<string, string>;
@@ -784,24 +788,60 @@ export default function WebsiteEditor() {
                                 </div>
 
                                 <div className="border-t border-gray-100 pt-5">
-                                    <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Google Maps Embed Link or Address</label>
-                                    <p className="text-[11px] text-gray-400 mb-2">To display live Google Maps inside your site: Open Google Maps &rarr; Search your hotel &rarr; Click <strong>Share</strong> &rarr; Select <strong>Embed a map</strong> &rarr; Copy HTML and paste it here.</p>
-                                    <input
-                                        type="text"
+                                    <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Google Maps Embed Link, Plus Code or Address</label>
+                                    <p className="text-[11px] text-gray-400 mb-2">Paste a Google Maps <strong>Embed</strong> code, a Plus Code (e.g. <code>9PR3+63 Ooty</code>), a full address, or <code>lat,lng</code>. The preview below updates instantly.</p>
+                                    <textarea
+                                        rows={2}
                                         value={settings.googleMapsUrl || ''}
-                                        onChange={e => {
-                                            let val = e.target.value;
-                                            if (val.includes('<iframe')) {
-                                                const match = val.match(/src=["']([^"']+)["']/);
-                                                if (match && match[1]) {
-                                                    val = match[1];
-                                                }
-                                            }
-                                            updateSetting('googleMapsUrl', val);
-                                        }}
-                                        placeholder="Paste Embed HTML (<iframe src=...) or Embed URL"
-                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none transition-all"
+                                        onChange={e => updateSetting('googleMapsUrl', e.target.value)}
+                                        placeholder="Paste Embed HTML, Embed URL, Plus Code or address"
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-y focus:ring-2 focus:ring-[#0E2A38]/10 focus:border-[#0E2A38]/30 outline-none transition-all"
                                     />
+
+                                    {/* Live map preview — same parser the public site uses, so what
+                                        is shown here is exactly what visitors will get. */}
+                                    {(() => {
+                                        const raw = (settings.googleMapsUrl || '').trim();
+                                        if (!raw) return null;
+
+                                        if (isShortGoogleMapsLink(raw)) {
+                                            return (
+                                                <p className="mt-2 text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 leading-relaxed">
+                                                    Short links (<code>maps.app.goo.gl</code>) cannot be embedded. Open the link in Google Maps, then use <strong>Share &rarr; Embed a map</strong>, or paste the Plus Code / address instead.
+                                                </p>
+                                            );
+                                        }
+
+                                        const previewUrl = parseGoogleMapsUrl(raw, settings.contactAddress);
+                                        if (!previewUrl) {
+                                            return (
+                                                <p className="mt-2 text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 leading-relaxed">
+                                                    This does not look like a location Google Maps can display. Try a Plus Code, a full address, or an Embed code.
+                                                </p>
+                                            );
+                                        }
+
+                                        return (
+                                            <div className="mt-2">
+                                                <div className="h-[160px] rounded-lg overflow-hidden border border-gray-200">
+                                                    <iframe
+                                                        key={previewUrl}
+                                                        title="Map preview"
+                                                        src={previewUrl}
+                                                        className="w-full h-full border-0"
+                                                        loading="lazy"
+                                                        referrerPolicy="no-referrer-when-downgrade"
+                                                    />
+                                                </div>
+                                                {isLocalPlusCodeWithoutLocality(raw) && !settings.contactAddress && (
+                                                    <p className="mt-1.5 text-[10px] text-amber-700 leading-relaxed">
+                                                        Short Plus Codes need a town to be accurate. Add your town to the code (e.g. <code>{raw} Ooty</code>) or fill in the contact address above.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+
                                     <div className="mt-2 p-2.5 bg-gray-50 border border-gray-150 rounded-lg space-y-1">
                                         <p className="text-[10px] font-semibold text-gray-600">💡 Free 1-Click Embed Guide:</p>
                                         <ol className="text-[10px] text-gray-500 list-decimal pl-3.5 space-y-0.5">
@@ -811,7 +851,7 @@ export default function WebsiteEditor() {
                                         </ol>
                                     </div>
                                     {settings.googleMapsUrl && (
-                                        <a href={settings.googleMapsUrl.startsWith('http') ? settings.googleMapsUrl : `https://www.google.com/maps/search/${encodeURIComponent(settings.googleMapsUrl)}`}
+                                        <a href={buildMapsSearchUrl(settings.googleMapsUrl)}
                                             target="_blank" rel="noopener noreferrer"
                                             className="mt-2 inline-flex items-center gap-1 text-[11px] text-[#0E2A38] hover:underline font-medium">
                                             <MapPin size={11} /> Open location search on Google Maps

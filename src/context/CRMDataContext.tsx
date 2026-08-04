@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, getSupabaseToken } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 import { mapReservationStatus, mapPaymentStatus, mapUIToDBStatus } from '../lib/booking';
 import { sendBookingConfirmation, sendBookingCancelled, sendBookingStatusChange, sendCheckInEmail, sendCheckOutEmail, triggerBookingEmails } from '../lib/email';
@@ -390,6 +390,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         // (same id), then AuthContext can sign the staff member in and resolve
         // their tenant/role. The old create_staff_user RPC could not create an
         // auth user from SQL, so staff had no way to log in.
+        const token = await getSupabaseToken();
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const { data, error } = await supabase.functions.invoke('create-staff', {
             body: {
                 email: member.email.toLowerCase().trim(),
@@ -400,6 +406,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                 status: member.status || 'Active',
                 tenant_id: tenantId,
             },
+            headers,
         });
 
         // Edge function returns { error } in the body for handled failures.
@@ -408,7 +415,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
             if (!msg && error) {
                 if ('context' in error && (error as any).context) {
                     try {
-                        const errBody = await (error as any).context.json();
+                        const errBody = await (error as any).context.clone().json();
                         if (errBody?.error) msg = errBody.error;
                     } catch (_) {}
                 }
@@ -438,15 +445,22 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         // still occupies the email (so it can never be re-added). The delete-staff
         // edge function removes the auth user AND the staff row atomically with
         // the service role, scoped to the caller's tenant.
+        const token = await getSupabaseToken();
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const { data, error } = await supabase.functions.invoke('delete-staff', {
             body: { staff_id: id, tenant_id: tid() },
+            headers,
         });
         if (error || (data && data.error)) {
             let msg = data?.error;
             if (!msg && error) {
                 if ('context' in error && (error as any).context) {
                     try {
-                        const errBody = await (error as any).context.json();
+                        const errBody = await (error as any).context.clone().json();
                         if (errBody?.error) msg = errBody.error;
                     } catch (_) {}
                 }

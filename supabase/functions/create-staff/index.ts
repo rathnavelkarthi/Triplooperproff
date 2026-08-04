@@ -87,7 +87,7 @@ serve(async (req) => {
       'rathnavelkarthi1@gmail.com',
       'admin@triplooper.com'
     ];
-    const callerEmail = claims?.email as string | undefined;
+    const callerEmail = (claims?.email || claims?.primary_email_address) as string | undefined;
     const isPlatformAdmin = callerEmail && PLATFORM_ADMIN_EMAILS.some(e => e.toLowerCase() === callerEmail.toLowerCase());
 
     const { data: callerLink } = await supabaseAdmin
@@ -98,6 +98,8 @@ serve(async (req) => {
       .maybeSingle();
     const { data: ownedTenant } = await supabaseAdmin
       .from('tenants').select('id').eq('id', tenant_id).eq('owner_id', callerId).maybeSingle();
+    const { data: tenantByEmail } = callerEmail ? await supabaseAdmin
+      .from('tenants').select('id').eq('id', tenant_id).eq('custom_email', callerEmail).maybeSingle() : { data: null };
     const { data: callerStaff } = await supabaseAdmin
       .from('staff')
       .select('role')
@@ -106,7 +108,7 @@ serve(async (req) => {
       .maybeSingle();
 
     const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'BUSINESS_ADMIN', 'MANAGER']);
-    const isAuthorized = isPlatformAdmin || !!ownedTenant || callerLink?.is_owner ||
+    const isAuthorized = isPlatformAdmin || !!ownedTenant || !!tenantByEmail || callerLink?.is_owner ||
       (callerLink?.role && ADMIN_ROLES.has(String(callerLink.role).toUpperCase())) ||
       (callerStaff?.role && ADMIN_ROLES.has(String(callerStaff.role).toUpperCase()));
     if (!isAuthorized) {

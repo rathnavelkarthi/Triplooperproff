@@ -36,8 +36,16 @@ serve(async (req) => {
     let amount = 0;
     if (custom_amount && typeof custom_amount === 'number' && custom_amount > 0) {
       amount = Math.round(custom_amount * 100);
+    } else if (plan === 'sub_1year') {
+      amount = Math.round(23988 * 1.18 * 100);
+    } else if (plan === 'sub_6months') {
+      amount = Math.round(13800 * 1.18 * 100);
+    } else if (plan === 'sub_3months') {
+      amount = Math.round(7500 * 1.18 * 100);
+    } else if (plan === 'sub_1month') {
+      amount = Math.round(2700 * 1.18 * 100);
     } else if (plan === 'subscription_2700') {
-      amount = billing_cycle === 'yearly' ? 2700000 : 270000; // ₹27,000 yearly (10 mos paid) or ₹2,700 monthly
+      amount = billing_cycle === 'yearly' ? 2700000 : 27000;
     } else if (plan === 'addon_channel_manager') {
       amount = billing_cycle === 'yearly' ? 1500000 : 150000;
     } else if (plan === 'addon_website') {
@@ -59,9 +67,7 @@ serve(async (req) => {
     } else if (plan === 'subscription_small') {
       amount = billing_cycle === 'yearly' ? 1500000 : 150000;
     } else if (plan === 'subscription_large') {
-      amount = billing_cycle === 'yearly' ? 2100000 : 210000;
-    } else if (plan === 'subscription_test') {
-      amount = 100; // ₹1 for testing
+      amount = billing_cycle === 'yearly' ? 2100000 : 21000;
     } else if (plan === 'commission') {
       amount = 100; // ₹1 authorization charge for mandate setup
     } else if (plan.startsWith('addon_')) {

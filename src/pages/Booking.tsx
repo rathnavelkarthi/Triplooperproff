@@ -98,7 +98,7 @@ export default function Booking() {
         source: 'Website',
         status: 'Confirmed',
         payment: 'Paid',
-        amount: totalAmount,
+        amount: baseAmount,
         gst_amount: gstAmount,
       });
 

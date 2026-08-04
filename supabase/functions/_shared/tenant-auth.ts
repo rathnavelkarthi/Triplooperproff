@@ -43,7 +43,7 @@ export async function authorizeTenant(
   const callerId = claims?.sub as string | undefined;
   if (!callerId) return { ok: false, status: 401, error: "Invalid or expired token" };
 
-  const callerEmail = claims?.email as string | undefined;
+  const callerEmail = (claims?.email || claims?.primary_email_address) as string | undefined;
   const isPlatformAdmin = !!callerEmail &&
     PLATFORM_ADMIN_EMAILS.some((e) => e.toLowerCase() === callerEmail.toLowerCase());
 
@@ -52,11 +52,13 @@ export async function authorizeTenant(
     .eq("user_id", callerId).eq("tenant_id", tenantId).maybeSingle();
   const { data: ownedTenant } = await supabaseAdmin
     .from("tenants").select("id").eq("id", tenantId).eq("owner_id", callerId).maybeSingle();
+  const { data: tenantByEmail } = callerEmail ? await supabaseAdmin
+    .from("tenants").select("id").eq("id", tenantId).eq("custom_email", callerEmail).maybeSingle() : { data: null };
   const { data: callerStaff } = await supabaseAdmin
     .from("staff").select("role")
     .eq("id", callerId).eq("tenant_id", tenantId).maybeSingle();
 
-  const authorized = isPlatformAdmin || !!ownedTenant || callerLink?.is_owner ||
+  const authorized = isPlatformAdmin || !!ownedTenant || !!tenantByEmail || callerLink?.is_owner ||
     (callerLink?.role && ADMIN_ROLES.has(String(callerLink.role).toUpperCase())) ||
     (callerStaff?.role && ADMIN_ROLES.has(String(callerStaff.role).toUpperCase()));
 

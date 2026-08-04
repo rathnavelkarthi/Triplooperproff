@@ -49,3 +49,32 @@ describe('mapUIToDBStatus', () => {
     expect(mapUIToDBStatus('  Confirmed  ')).toBe('CONFIRMED');
   });
 });
+
+describe('discountCalculation', () => {
+  it('defaults discount to 0 when undefined or null', () => {
+    const res: any = { amount: 2000 };
+    const discount = res.discount ?? 0;
+    const taxableValue = Math.max(0, res.amount - discount);
+    const gst = res.gst_amount || Math.round(taxableValue * 0.12);
+    const total = taxableValue + gst;
+
+    expect(discount).toBe(0);
+    expect(taxableValue).toBe(2000);
+    expect(gst).toBe(240);
+    expect(total).toBe(2240);
+  });
+
+  it('applies discount when provided', () => {
+    const res: any = { amount: 2000, discount: 300 };
+    const discount = res.discount ?? 0;
+    const taxableValue = Math.max(0, res.amount - discount);
+    const gst = res.gst_amount || Math.round(taxableValue * 0.12);
+    const total = taxableValue + gst;
+
+    expect(discount).toBe(300);
+    expect(taxableValue).toBe(1700);
+    expect(gst).toBe(204);
+    expect(total).toBe(1904);
+  });
+});
+

@@ -15,6 +15,7 @@ import {
 import { toast } from 'sonner';
 import { sendWhatsAppConfirmation } from '../lib/whatsapp';
 import { triggerBookingEmails } from '../lib/email';
+import { parseGoogleMapsUrl, buildMapsSearchUrl } from '../lib/maps';
 
 // --- Types ---
 type Room = {
@@ -45,51 +46,6 @@ type SiteData = { tenant: TenantData; rooms: Room[]; testimonials: Testimonial[]
 const amenityIcons: Record<string, React.ElementType> = {
     wifi: Wifi, parking: Car, coffee: Coffee, pool: Waves, 'free wifi': Wifi, 'car park': Car
 };
-
-// --- Google Maps URL parser ---
-export function parseGoogleMapsUrl(input: string): string {
-    if (!input) return '';
-    let trimmed = input.trim();
-    if (!trimmed) return '';
-
-    // 1. If user pasted full iframe HTML snippet, extract src attribute
-    if (trimmed.includes('<iframe')) {
-        const match = trimmed.match(/src=["']([^"']+)["']/);
-        if (match && match[1]) {
-            trimmed = match[1];
-        }
-    }
-
-    // 2. Official Google Maps Embed URL (google.com/maps/embed) -> 100% allowed by Google in IFrames!
-    if (trimmed.includes('google.com/maps/embed')) {
-        return trimmed;
-    }
-
-    // 3. If Google Maps API key is configured in environment, use Google Maps Embed API v1
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
-    if (apiKey) {
-        let cleanQuery = trimmed;
-        if (cleanQuery.includes('+')) {
-            cleanQuery = cleanQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,4}\s*,?\s*/i, '').trim();
-        }
-        return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(cleanQuery || 'Ooty, Tamil Nadu')}`;
-    }
-
-    // 4. Otherwise, format plain address / search term for standard map embed
-    let cleanQuery = trimmed;
-    if (cleanQuery.includes('+')) {
-        cleanQuery = cleanQuery.replace(/^[A-Z0-9]{4}\+[A-Z0-9]{2,4}\s*,?\s*/i, '').trim();
-    }
-    if (cleanQuery.startsWith('http')) {
-        try {
-            const urlObj = new URL(cleanQuery);
-            const q = urlObj.searchParams.get('q');
-            if (q) cleanQuery = q;
-        } catch {}
-    }
-
-    return `https://maps.google.com/maps?q=${encodeURIComponent(cleanQuery || 'Ooty, Tamil Nadu')}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-}
 
 // --- Star rating ---
 function Stars({ count }: { count: number }) {
@@ -1527,11 +1483,14 @@ export default function TenantSite() {
                     <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm h-[300px] md:h-[400px]">
                         {(() => {
                             const raw = googleMapsUrl || contactAddress || tenant?.business_name || '';
-                            const mapUrl = parseGoogleMapsUrl(raw);
+                            // A bare local Plus Code ("9PR3+63") needs a locality to
+                            // resolve, so hand the parser the address as context.
+                            const mapUrl = parseGoogleMapsUrl(raw, contactAddress || tenant?.business_name);
 
                             if (mapUrl) {
                                 return (
                                     <iframe
+                                        key={mapUrl}
                                         title="Location Map"
                                         className="w-full h-full border-0"
                                         loading="lazy"
@@ -1542,8 +1501,6 @@ export default function TenantSite() {
                                 );
                             }
 
-                            const searchAddr = encodeURIComponent(contactAddress || tenant?.business_name || 'Ooty, Tamil Nadu');
-
                             return (
                                 <div className="w-full h-full bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 flex flex-col items-center justify-center p-6 text-center">
                                     <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3.5 shadow-inner">
@@ -1552,7 +1509,7 @@ export default function TenantSite() {
                                     <h4 className="font-bold text-gray-900 text-lg mb-1">{tenant?.business_name || 'Property Location'}</h4>
                                     <p className="text-xs text-gray-500 max-w-sm mb-5 leading-relaxed">{contactAddress || googleMapsUrl || 'Ooty, Tamil Nadu'}</p>
                                     <a
-                                        href={`https://www.google.com/maps/search/?api=1&query=${searchAddr}`}
+                                        href={buildMapsSearchUrl(googleMapsUrl || contactAddress || tenant?.business_name || '')}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-xl hover:bg-primary-hover transition-all shadow-md hover:scale-[1.02]"
