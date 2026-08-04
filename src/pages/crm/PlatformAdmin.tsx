@@ -1126,16 +1126,28 @@ export default function PlatformAdmin() {
                                            </div>
                                            <button
                                              onClick={() => handleSendPaymentLink(p.id, u.email, p.business_name)}
-                                             disabled={sendingLinkFor === p.id}
-                                             className="px-2.5 py-1.5 bg-[#0E2A38] hover:bg-[#163a4d] text-white text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 disabled:opacity-50 cursor-pointer"
-                                             title="Generate Razorpay payment link & email owner"
+                                             disabled={sendingLinkFor === p.id || subInfo.isAccessAllowed}
+                                             className={`px-2.5 py-1.5 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 border ${
+                                               sendingLinkFor === p.id
+                                                 ? 'bg-[#0E2A38] text-white opacity-50 cursor-not-allowed border-transparent'
+                                                 : subInfo.isAccessAllowed
+                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 cursor-not-allowed opacity-90'
+                                                 : 'bg-[#0E2A38] hover:bg-[#163a4d] text-white border-transparent cursor-pointer'
+                                             }`}
+                                             title={
+                                               subInfo.isAccessAllowed
+                                                 ? `Subscription is active (${subInfo.statusLabel}). Payment link button is turned off until subscription expires.`
+                                                 : "Generate Razorpay payment link & email owner"
+                                             }
                                            >
                                              {sendingLinkFor === p.id ? (
                                                <Loader2 size={11} className="animate-spin" />
+                                             ) : subInfo.isAccessAllowed ? (
+                                               <CheckCircle2 size={11} className="text-emerald-600" />
                                              ) : (
                                                <Send size={11} />
                                              )}
-                                             Send Link
+                                             {subInfo.isAccessAllowed ? 'Sub Active' : (p.payment_link_url ? 'Resend Link' : 'Send Link')}
                                            </button>
                                          </div>
                                        </div>
