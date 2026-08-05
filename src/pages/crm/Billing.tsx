@@ -445,7 +445,7 @@ export default function Billing() {
                             </div>
                             <h3 className="text-lg font-bold text-[#0E2A38]">Confirm Plan Upgrade</h3>
                             <p className="text-xs text-gray-400">
-                                You are about to upgrade to the **{upgradePlan === 'subscription_small' ? 'Subscription (Max 10 Rooms)' : (upgradePlan === 'subscription_test' ? 'Subscription (Test Plan - ₹1)' : 'Subscription (Unlimited Rooms)')}** plan.
+                                You are about to upgrade to the **{upgradePlan === 'subscription_small' ? 'Subscription (Standard Plan)' : (upgradePlan === 'subscription_test' ? 'Subscription (Test Plan - ₹1)' : 'Subscription (Unlimited Rooms)')}** plan.
                             </p>
                         </div>
 

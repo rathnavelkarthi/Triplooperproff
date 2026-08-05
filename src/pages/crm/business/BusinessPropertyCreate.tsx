@@ -141,8 +141,8 @@ export default function BusinessPropertyCreate() {
               name: `${propName} Group` || 'My Hospitality Business',
               owner_id: user.id,
               contact_email: user.email,
-              max_properties: 5,
-              max_rooms_per_property: 15
+              max_properties: 50,
+              max_rooms_per_property: 100
             })
             .select('*')
             .single();

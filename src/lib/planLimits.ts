@@ -35,7 +35,7 @@ const PLAN_LABELS: Record<string, string> = {
     pro: 'Pro',
     enterprise: 'Enterprise',
     subscription_2700: 'Subscription (₹2,700/mo)',
-    subscription_small: 'Subscription (Max 10 Rooms)',
+    subscription_small: 'Subscription (Standard Plan)',
     subscription_large: 'Subscription (Unlimited Rooms)',
 };
 
@@ -52,7 +52,7 @@ export function usePlanLimits() {
     const { tenant } = useAuth();
     const { rooms, reservations, menuItems, restaurantTables, staff, foodOrders } = useCRM();
 
-    const planKey = tenant?.plan || 'commission';
+    const planKey = tenant?.subscription_plan || tenant?.plan || 'commission';
     const plan = PLAN_LABELS[planKey] || planKey;
     const limits = PLAN_LIMITS[planKey] || PLAN_LIMITS.commission;
 

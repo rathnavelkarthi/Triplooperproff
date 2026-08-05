@@ -32,7 +32,7 @@ export const PLAN_NAMES: Record<string, string> = {
   pro: 'Pro Plan',
   enterprise: 'Enterprise Plan',
   subscription_2700: 'Subscription (₹2,700/mo)',
-  subscription_small: 'Subscription (Max 10 Rooms)',
+  subscription_small: 'Subscription (Standard Plan)',
   subscription_large: 'Subscription (Unlimited Rooms)',
 };
 
@@ -52,15 +52,19 @@ export function getPropertySubscriptionDetails(
 ): PropertySubscription {
   const currentPlan = plan || 'starter';
 
-  // If no explicit expiration date is passed, but the property is on a monthly subscription plan,
-  // infer the 30-day expiration window from creation date or current timestamp.
+  // Infer default expiration window if no explicit expiration date is passed in DB
   const isSubscriptionPlan = currentPlan === 'subscription_custom' || 
                              currentPlan === 'subscription' || 
                              currentPlan.startsWith('sub_') || 
                              currentPlan.startsWith('subscription_');
 
+  let defaultDays = 30;
+  if (currentPlan === 'sub_1year') defaultDays = 365;
+  else if (currentPlan === 'sub_6months') defaultDays = 180;
+  else if (currentPlan === 'sub_3months') defaultDays = 90;
+
   const resolvedExpiresAt = expiresAt || (isSubscriptionPlan 
-    ? new Date((createdAt ? new Date(createdAt).getTime() : Date.now()) + 30 * 24 * 60 * 60 * 1000).toISOString() 
+    ? new Date((createdAt ? new Date(createdAt).getTime() : Date.now()) + defaultDays * 24 * 60 * 60 * 1000).toISOString() 
     : null);
 
   const now = new Date();

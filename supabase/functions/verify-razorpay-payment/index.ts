@@ -86,9 +86,7 @@ serve(async (req) => {
     const durationDays = billing_cycle === 'yearly' ? 365 : 30;
     const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
 
-    const maxRoomsVal = plan === 'commission'
-      ? 9999
-      : (plan === 'subscription_small' ? 10 : 9999);
+    const maxRoomsVal = 9999;
 
     const { error: updateError } = await supabaseAdmin
       .from('tenants')
