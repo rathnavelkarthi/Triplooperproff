@@ -13,12 +13,12 @@ export const PLAN_LIMITS: Record<string, Record<ResourceType, number>> = {
     sub_3months: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     sub_1month: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     commission: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
-    starter: { rooms: 5, reservations: 20, menu_items: 10, tables: 5, staff: 2, food_orders: 20 },
-    growth: { rooms: 30, reservations: UNLIMITED, menu_items: 50, tables: 20, staff: 5, food_orders: UNLIMITED },
-    pro: { rooms: 75, reservations: UNLIMITED, menu_items: 200, tables: 50, staff: 15, food_orders: UNLIMITED },
+    starter: { rooms: UNLIMITED, reservations: 20, menu_items: 10, tables: 5, staff: 2, food_orders: 20 },
+    growth: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: 50, tables: 20, staff: 5, food_orders: UNLIMITED },
+    pro: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: 200, tables: 50, staff: 15, food_orders: UNLIMITED },
     enterprise: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     subscription_2700: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
-    subscription_small: { rooms: 10, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
+    subscription_small: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
     subscription_large: { rooms: UNLIMITED, reservations: UNLIMITED, menu_items: UNLIMITED, tables: UNLIMITED, staff: UNLIMITED, food_orders: UNLIMITED },
 };
 

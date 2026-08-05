@@ -144,10 +144,10 @@ export default function PricingPage() {
         <div className="min-h-screen bg-black text-white" style={{ fontFamily: "'Inter', sans-serif" }}>
             <Helmet>
                 <title>Pricing - Trip Looper | Free to Start, Plans from ₹2,499/mo</title>
-                <meta name="description" content="Simple, transparent pricing for hotel and restaurant management. Start free with up to 5 rooms. Growth, Pro, and Enterprise plans for every property size." />
+                <meta name="description" content="Simple, transparent pricing for hotel and restaurant management. Start free with unlimited rooms. Growth, Pro, and Enterprise plans for every property size." />
                 <link rel="canonical" href="https://triplooper.com/pricing" />
                 <meta property="og:title" content="Trip Looper Pricing - Free to Start, Plans from ₹2,499/mo" />
-                <meta property="og:description" content="Simple, transparent pricing. Start free with up to 5 rooms. Growth, Pro, and Enterprise plans for every property size." />
+                <meta property="og:description" content="Simple, transparent pricing. Start free with unlimited rooms. Growth, Pro, and Enterprise plans for every property size." />
                 <meta property="og:url" content="https://triplooper.com/pricing" />
                 <meta property="og:type" content="website" />
             </Helmet>
@@ -273,7 +273,7 @@ export default function PricingPage() {
                             Simple pricing. Start free.
                         </h2>
                         <p className="text-sm font-medium text-neutral-500">
-                            One platform. Complete hotel and restaurant operations. Start free with up to 5 rooms.
+                            One platform. Complete hotel and restaurant operations. Start free with unlimited rooms.
                         </p>
                     </div>
 

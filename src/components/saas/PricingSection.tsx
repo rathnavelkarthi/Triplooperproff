@@ -24,7 +24,7 @@ const tiers: Tier[] = [
         isFree: true,
         features: [
             'Basic Booking Page',
-            'Up to 5 Rooms',
+            'Unlimited Rooms',
             'Calendar View',
             '20 Bookings/month',
             'Email Support',

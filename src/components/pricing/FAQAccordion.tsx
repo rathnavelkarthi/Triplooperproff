@@ -9,8 +9,8 @@ interface FAQ {
 
 const faqs: FAQ[] = [
     {
-        question: "Is there a free plan?",
-        answer: "Yes! Our Starter plan is completely free — up to 5 rooms, 20 bookings per month, and a basic booking page. No credit card required. Upgrade anytime as you grow."
+        question: "Is there a free trial?",
+        answer: "Yes! Our Starter plan is completely free — with unlimited rooms, 20 bookings per month, and a basic booking page. No credit card required. Upgrade anytime as you grow."
     },
     {
         question: "Is there a setup fee?",

@@ -63,7 +63,7 @@ export default function SaaSHome() {
                         "@type": "Offer",
                         "price": "0",
                         "priceCurrency": "INR",
-                        "description": "Free Starter plan with up to 5 rooms"
+                        "description": "Free Starter plan with unlimited rooms"
                     },
                     "publisher": {
                         "@type": "Organization",
@@ -399,7 +399,7 @@ export default function SaaSHome() {
                                 Start Free
                             </Link>
                             <ul className="space-y-3 text-sm flex-1" style={{ color: C.textMuted }}>
-                                {['1 Property, 5 Rooms', 'Basic booking page', '20 bookings / month'].map(f => (
+                                {['1 Property, Unlimited Rooms', 'Basic booking page', '20 bookings / month'].map(f => (
                                     <li key={f} className="flex gap-2.5"><CheckCircle2 size={15} className="shrink-0 mt-0.5" style={{ color: '#2E7D32' }} />{f}</li>
                                 ))}
                             </ul>

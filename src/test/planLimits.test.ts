@@ -6,9 +6,9 @@ describe('PLAN_LIMITS', () => {
     expect(Object.keys(PLAN_LIMITS)).toContain('subscription_2700');
   });
 
-  it('starter has strict limits', () => {
+  it('starter has unlimited rooms and strict non-room limits', () => {
     const s = PLAN_LIMITS.starter;
-    expect(s.rooms).toBe(5);
+    expect(s.rooms).toBe(Infinity);
     expect(s.reservations).toBe(20);
     expect(s.menu_items).toBe(10);
     expect(s.tables).toBe(5);
@@ -25,14 +25,14 @@ describe('PLAN_LIMITS', () => {
   });
 
   it('growth limits are higher than starter', () => {
-    const resources: ResourceType[] = ['rooms', 'menu_items', 'tables', 'staff'];
+    const resources: ResourceType[] = ['menu_items', 'tables', 'staff'];
     for (const r of resources) {
       expect(PLAN_LIMITS.growth[r]).toBeGreaterThan(PLAN_LIMITS.starter[r]);
     }
   });
 
   it('pro limits are higher than growth', () => {
-    const resources: ResourceType[] = ['rooms', 'menu_items', 'tables', 'staff'];
+    const resources: ResourceType[] = ['menu_items', 'tables', 'staff'];
     for (const r of resources) {
       expect(PLAN_LIMITS.pro[r]).toBeGreaterThan(PLAN_LIMITS.growth[r]);
     }
