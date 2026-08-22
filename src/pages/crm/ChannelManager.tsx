@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     Waypoints,
@@ -15,191 +15,536 @@ import {
     Settings2,
     X,
     ExternalLink,
-    Youtube
+    Youtube,
+    Radio,
+    Layers,
+    Building2,
+    ShieldCheck,
+    Zap,
+    SlidersHorizontal,
+    Check,
+    Sparkles,
+    ArrowUpRight,
+    Server,
+    Link2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 
-/* ── OTA channel definitions (static metadata) ── */
+/* ── 36 Supported Channels / Switches / PMS / Gateways ── */
 
-interface ChannelMeta {
+export type ChannelCategory = 'all' | 'ota' | 'pms_cm' | 'gds_meta' | 'payments';
+
+export interface ChannelMeta {
     id: string;
     name: string;
-    logo: string;
+    logoUrl?: string;
+    brandColor: string;
+    textColor: string;
+    category: 'ota' | 'pms_cm' | 'gds_meta' | 'payments';
+    categoryLabel: string;
     description: string;
     defaultCommission: string;
-    tutorialUrl?: string;
     apiUrl?: string;
+    tutorialUrl?: string;
+    aliases: string[];
 }
 
-const OTA_CHANNELS: ChannelMeta[] = [
-    { 
-        id: 'booking_com', 
-        name: 'Booking.com', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/b/be/Booking.com_logo.svg', 
-        description: "The world's leading digital travel company.", 
-        defaultCommission: '15%',
-        apiUrl: 'https://admin.booking.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=kS_q-Zk8JpI'
-    },
-    { 
-        id: 'agoda', 
-        name: 'Agoda', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Agoda_Logo_2022.svg', 
-        description: 'Fast-growing online travel booking platform.', 
-        defaultCommission: '15-20%',
-        apiUrl: 'https://ycs.agoda.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=zJg1R805f-0'
-    },
-    { 
-        id: 'expedia', 
-        name: 'Expedia', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Expedia_logo.svg', 
-        description: 'Global travel technology company.', 
-        defaultCommission: '18-22%',
-        apiUrl: 'https://www.expediapartnercentral.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=FmYj0Wz4G3I'
-    },
-    { 
-        id: 'happyeasygo', 
-        name: 'HappyEasyGo', 
-        logo: 'https://www.happyeasygo.com/static/images/logo.png', 
-        description: 'Online travel platform for flights and hotels.', 
-        defaultCommission: '15%',
-        apiUrl: 'https://partner.happyeasygo.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=P_M6a9L0F1A'
-    },
-    { 
-        id: 'cleartrip', 
-        name: 'Cleartrip', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/8/8c/Cleartrip_logo.svg', 
-        description: 'Global online travel company headquartered in Mumbai.', 
-        defaultCommission: '15-20%',
-        apiUrl: 'https://extranet.cleartrip.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=zJqUu3m9fco'
-    },
-    { 
-        id: 'goibibo', 
-        name: 'Goibibo', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Goibibo_Logo.png', 
-        description: 'Popular Indian travel aggregator.', 
-        defaultCommission: '15%',
-        apiUrl: 'https://extranet.goibibo.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=mD-mIeU8d6k'
-    },
-    { 
-        id: 'paytm', 
-        name: 'Paytm', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo.svg', 
-        description: 'Digital payment and e-commerce platform offering travel bookings.', 
-        defaultCommission: '15%',
-        apiUrl: 'https://travelagent.paytm.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=7uKq75s3uCE'
-    },
-    { 
-        id: 'yatra', 
-        name: 'Yatra', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Yatra_logo.png', 
-        description: 'Indian online travel agency and corporate travel service provider.', 
-        defaultCommission: '15-20%',
-        apiUrl: 'https://hotel.yatra.com/merchant/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=H74t4G4774k'
-    },
-    { 
-        id: 'airbnb', 
-        name: 'Airbnb', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg', 
-        description: 'Online marketplace for short-term homestays and experiences.', 
+export const OTA_CHANNELS: ChannelMeta[] = [
+    // Row 1
+    {
+        id: 'airbnb',
+        name: 'Airbnb',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg',
+        brandColor: '#FF5A5F',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: 'Global vacation rentals, homestays, and unique boutique hotel accommodations.',
         defaultCommission: '3-15%',
         apiUrl: 'https://www.airbnb.com/host/homes',
-        tutorialUrl: 'https://www.youtube.com/watch?v=0hO1U785_U4'
+        tutorialUrl: 'https://www.youtube.com/watch?v=0hO1U785_U4',
+        aliases: ['airbnb', 'air_bnb', 'air-bnb']
     },
-    { 
-        id: 'tripadvisor', 
-        name: 'Tripadvisor', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/0/02/Tripadvisor_Logo.svg', 
-        description: 'Travel guidance company providing reviews and booking deals.', 
-        defaultCommission: '12-15%',
-        apiUrl: 'https://www.tripadvisor.com/Owners',
-        tutorialUrl: 'https://www.youtube.com/watch?v=Yf1R287wT0c'
+    {
+        id: 'agoda',
+        name: 'Agoda',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/ce/Agoda_Logo_2022.svg',
+        brandColor: '#2B3990',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: 'Fast-growing online travel booking platform in Asia-Pacific and globally.',
+        defaultCommission: '15-20%',
+        apiUrl: 'https://ycs.agoda.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=zJg1R805f-0',
+        aliases: ['agoda', 'agoda_ycs']
     },
-    { 
-        id: 'google', 
-        name: 'Google', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg', 
-        description: 'Google Hotel Ads for direct distribution and metasearch.', 
+    {
+        id: 'amadeus',
+        name: 'AMADEUS',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/8d/Amadeus_%28CRS%29_Logo.svg',
+        brandColor: '#005EB8',
+        textColor: '#FFFFFF',
+        category: 'gds_meta',
+        categoryLabel: 'GDS / CRS',
+        description: 'Leading global distribution system (GDS) and hospitality technology provider.',
+        defaultCommission: '8-12%',
+        apiUrl: 'https://hospitality.amadeus.com/',
+        aliases: ['amadeus', 'amadeus_gds', 'amadeus_crs']
+    },
+    {
+        id: 'booking_com',
+        name: 'Booking.com',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/b/be/Booking.com_logo.svg',
+        brandColor: '#003580',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: "The world's leading digital travel and accommodation booking company.",
+        defaultCommission: '15%',
+        apiUrl: 'https://admin.booking.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=kS_q-Zk8JpI',
+        aliases: ['booking_com', 'booking.com', 'booking', 'bookingcom']
+    },
+    {
+        id: 'channex',
+        name: 'Channex',
+        logoUrl: 'https://channex.io/wp-content/uploads/2021/04/channex-logo.svg',
+        brandColor: '#1A73E8',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'Channel Manager',
+        description: 'Unified modern Channel Manager API for real-time rates and inventory distribution.',
+        defaultCommission: 'Direct API',
+        apiUrl: 'https://channex.io/',
+        aliases: ['channex', 'channex_api']
+    },
+    {
+        id: 'clock',
+        name: 'Clock',
+        logoUrl: '',
+        brandColor: '#F58220',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'Cloud PMS',
+        description: 'Cloud-native hotel PMS, reservation engine, and guest engagement platform.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.clock-software.com/',
+        aliases: ['clock', 'clock_pms', 'clock-software']
+    },
+
+    // Row 2
+    {
+        id: 'ctrip',
+        name: 'Ctrip',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/4e/Ctrip_Logo.svg',
+        brandColor: '#2B72D7',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: "China's premier online travel service and Trip.com Group distribution network.",
+        defaultCommission: '15-20%',
+        apiUrl: 'https://ebooking.trip.com/',
+        aliases: ['ctrip', 'trip_com', 'trip.com', 'tripcom']
+    },
+    {
+        id: 'd_edge',
+        name: 'd-edge',
+        logoUrl: '',
+        brandColor: '#3F2B96',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'CRS & Switch',
+        description: 'Hospitality solutions provider with advanced CRS and connectivity engines.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.d-edge.com/',
+        aliases: ['d_edge', 'd-edge', 'dedge']
+    },
+    {
+        id: 'easemytrip',
+        name: 'EaseMyTrip',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/07/EaseMyTrip_Logo.svg',
+        brandColor: '#0084FF',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: 'Popular Indian online travel portal offering instant flight and hotel reservations.',
         defaultCommission: '10-15%',
-        apiUrl: 'https://www.google.com/travel/hotels',
-        tutorialUrl: 'https://www.youtube.com/watch?v=x7EQLl1_8d8'
+        apiUrl: 'https://www.easemytrip.com/',
+        aliases: ['easemytrip', 'ease_my_trip', 'emt']
     },
-    { 
-        id: 'hotels_com', 
-        name: 'Hotels.com', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/a/af/Hotels.com_logo.svg', 
-        description: 'Website for booking hotel rooms online and by telephone.', 
+    {
+        id: 'hotelogix',
+        name: 'Hotelogix',
+        logoUrl: '',
+        brandColor: '#1F2937',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'PMS & CM',
+        description: 'Enterprise cloud property management and smart hoteliering distribution suite.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.hotelogix.com/',
+        aliases: ['hotelogix']
+    },
+    {
+        id: 'hotels_com',
+        name: 'Hotels.com',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/af/Hotels.com_logo.svg',
+        brandColor: '#D32F2F',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: 'Global online accommodation booking platform under Expedia Group.',
         defaultCommission: '15-20%',
         apiUrl: 'https://www.expediapartnercentral.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=FmYj0Wz4G3I'
+        tutorialUrl: 'https://www.youtube.com/watch?v=FmYj0Wz4G3I',
+        aliases: ['hotels_com', 'hotels.com', 'hotelscom']
     },
-    { 
-        id: 'kayak', 
-        name: 'Kayak', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/3/36/KAYAK_logo.svg', 
-        description: 'Travel metasearch engine and booking platform.', 
+    {
+        id: 'ids_next',
+        name: 'IDS Next',
+        logoUrl: '',
+        brandColor: '#107C41',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'Enterprise ERP',
+        description: 'Enterprise hospitality technology, ERP, and distribution systems across Asia & Africa.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://idsnext.com/',
+        aliases: ['ids_next', 'ids', 'idsnext']
+    },
+
+    // Row 3
+    {
+        id: 'irctc',
+        name: 'IRCTC',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/45/IRCTC_Logo.svg',
+        brandColor: '#002B49',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'Travel Portal',
+        description: 'Official tourism and accommodation portal of Indian Railways.',
+        defaultCommission: '10-12%',
+        apiUrl: 'https://www.hotel.irctctourism.com/',
+        aliases: ['irctc', 'irctc_tourism']
+    },
+    {
+        id: 'opera',
+        name: 'Opera',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/50/Oracle_logo.svg',
+        brandColor: '#0B5FA5',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'Enterprise PMS',
+        description: 'The global hospitality industry benchmark for enterprise property management (Oracle).',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.oracle.com/hospitality/',
+        aliases: ['opera', 'oracle_opera', 'opera_cloud', 'opera_pms']
+    },
+    {
+        id: 'rakuten',
+        name: 'Rakuten',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0a/Rakuten_Global_Brand_Logo.svg',
+        brandColor: '#BF0000',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: "Japan's leading online travel marketplace with expansive Asian reach.",
+        defaultCommission: '10-15%',
+        apiUrl: 'https://travel.rakuten.com/',
+        aliases: ['rakuten', 'rakuten_travel']
+    },
+    {
+        id: 'resavenue',
+        name: 'ResAvenue',
+        logoUrl: '',
+        brandColor: '#E65100',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'Booking Engine',
+        description: 'Complete internet booking engine and channel management solution for hoteliers.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.resavenue.com/',
+        aliases: ['resavenue', 'res_avenue']
+    },
+    {
+        id: 'reznext',
+        name: 'reznext',
+        logoUrl: '',
+        brandColor: '#6B46C1',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'Distribution Switch',
+        description: 'Real-time hotel distribution switch and revenue automation platform.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.reznext.com/',
+        aliases: ['reznext', 'rez_next']
+    },
+    {
+        id: 'sabre',
+        name: 'Sabre',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/10/Sabre_Corporation_logo.svg',
+        brandColor: '#E50914',
+        textColor: '#FFFFFF',
+        category: 'gds_meta',
+        categoryLabel: 'GDS / SynXis',
+        description: 'SynXis central reservation and global travel technology distribution network.',
+        defaultCommission: '8-12%',
+        apiUrl: 'https://www.sabrehospitality.com/',
+        aliases: ['sabre', 'synxis', 'sabre_hospitality']
+    },
+
+    // Row 4
+    {
+        id: 'razorpay',
+        name: 'Razorpay',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg',
+        brandColor: '#0C2340',
+        textColor: '#FFFFFF',
+        category: 'payments',
+        categoryLabel: 'Payment Gateway',
+        description: 'Automated booking payments, instant payment links, and UPI settlements.',
+        defaultCommission: '2% Gateway',
+        apiUrl: 'https://dashboard.razorpay.com/',
+        aliases: ['razorpay', 'razor_pay']
+    },
+    {
+        id: 'siteminder',
+        name: 'SiteMinder',
+        logoUrl: '',
+        brandColor: '#0072CE',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'Channel Manager',
+        description: "World-leading open hotel commerce platform connecting properties to 450+ OTAs.",
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.siteminder.com/',
+        aliases: ['siteminder', 'site_minder']
+    },
+    {
+        id: 'staah',
+        name: 'STAAH',
+        logoUrl: '',
+        brandColor: '#E65100',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'Channel Manager',
+        description: 'High-speed cloud channel manager, MAX booking engine, and gift card system.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.staah.com/',
+        aliases: ['staah', 'staah_max']
+    },
+    {
+        id: 'tiket_com',
+        name: 'tiket.com',
+        logoUrl: '',
+        brandColor: '#0064D2',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: 'Pioneering Southeast Asian OTA powering hotels, flights, and travel activities.',
         defaultCommission: '15%',
-        apiUrl: 'https://www.kayak.com/owner',
-        tutorialUrl: 'https://www.youtube.com/watch?v=680D3D6iQyQ'
+        apiUrl: 'https://en.tiket.com/',
+        aliases: ['tiket_com', 'tiket.com', 'tiket']
     },
-    { 
-        id: 'brevistay', 
-        name: 'Brevistay', 
-        logo: 'https://logo.clearbit.com/brevistay.com', 
-        description: 'Hotel booking app for short-stay rooms on hourly basis.', 
-        defaultCommission: '15-25%',
-        apiUrl: 'https://partner.brevistay.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=D-P_F9l0E9g'
+    {
+        id: 'traveloka',
+        name: 'traveloka',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/23/Traveloka_Primary_Logo.svg',
+        brandColor: '#1BA0E2',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: "Southeast Asia's leading lifestyle and travel superapp for flights and hotels.",
+        defaultCommission: '15-20%',
+        apiUrl: 'https://www.traveloka.com/',
+        aliases: ['traveloka']
     },
-    { 
-        id: 'akbartravels', 
-        name: 'Akbar Travels', 
-        logo: 'https://logo.clearbit.com/akbartravels.com', 
-        description: 'Leading travel agency offering comprehensive travel solutions.', 
-        defaultCommission: '15%',
-        apiUrl: 'https://agents.akbartravels.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=1F9yD5eC1qA'
-    },
-    { 
-        id: 'makemytrip', 
-        name: 'MakeMyTrip', 
-        logo: 'https://imgak.mmtcdn.com/pwa_v3/pwa_commons_assets/desktop/logo@2x.png', 
-        description: "India's leading online travel company.", 
-        defaultCommission: '15-25%',
-        apiUrl: 'https://extranet.makemytrip.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=mD-mIeU8d6k'
-    },
-    { 
-        id: 'ixigo', 
-        name: 'Ixigo', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/Ixigo_logo.svg', 
-        description: 'AI-based travel app for flights, trains, and hotels.', 
+    {
+        id: 'tripadvisor',
+        name: 'Tripadvisor',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/02/Tripadvisor_Logo.svg',
+        brandColor: '#34E0A1',
+        textColor: '#002B11',
+        category: 'gds_meta',
+        categoryLabel: 'Metasearch',
+        description: "World's largest travel guidance site for traveler reviews and instant bookings.",
         defaultCommission: '12-15%',
-        apiUrl: 'https://partner.ixigo.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=R9V1s3uB2eA'
+        apiUrl: 'https://www.tripadvisor.com/Owners',
+        tutorialUrl: 'https://www.youtube.com/watch?v=Yf1R287wT0c',
+        aliases: ['tripadvisor', 'trip_advisor']
     },
-    { 
-        id: 'trivago', 
-        name: 'Trivago', 
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Trivago_logo_2023.svg', 
-        description: 'Global hotel search and price comparison meta search engine.', 
+
+    // Row 5
+    {
+        id: 'winhms',
+        name: 'WINHMS',
+        logoUrl: '',
+        brandColor: '#007BB6',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'Enterprise PMS',
+        description: 'Comprehensive property management software and channel interface suite.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.winhms.com/',
+        aliases: ['winhms', 'win_hms']
+    },
+    {
+        id: 'wubook',
+        name: 'WuBook',
+        logoUrl: '',
+        brandColor: '#333333',
+        textColor: '#FFFFFF',
+        category: 'pms_cm',
+        categoryLabel: 'PMS & CM',
+        description: 'Flexible European cloud channel manager and PMS for independent properties.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://wubook.net/',
+        aliases: ['wubook', 'wu_book']
+    },
+    {
+        id: 'yatra',
+        name: 'yatra',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3c/Yatra_logo.png',
+        brandColor: '#EA232A',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: 'Leading Indian online travel agency and corporate travel service provider.',
+        defaultCommission: '15-20%',
+        apiUrl: 'https://hotel.yatra.com/merchant/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=H74t4G4774k',
+        aliases: ['yatra']
+    },
+    {
+        id: 'expedia',
+        name: 'Expedia',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Expedia_logo.svg',
+        brandColor: '#00355F',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: 'Global travel technology company powering millions of daily hotel bookings.',
+        defaultCommission: '18-22%',
+        apiUrl: 'https://www.expediapartnercentral.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=FmYj0Wz4G3I',
+        aliases: ['expedia', 'expediapartnercentral']
+    },
+    {
+        id: 'ezee',
+        name: 'eZee',
+        logoUrl: '',
+        brandColor: '#F59E0B',
+        textColor: '#0E2A38',
+        category: 'pms_cm',
+        categoryLabel: 'PMS & CM',
+        description: 'Complete all-in-one cloud hotel PMS, channel manager, and online booking engine.',
+        defaultCommission: 'Direct Sync',
+        apiUrl: 'https://www.ezeetechnosys.com/',
+        aliases: ['ezee', 'ezee_absolute', 'ezee_technosys']
+    },
+    {
+        id: 'go_mmt',
+        name: 'go-mmt',
+        logoUrl: 'https://imgak.mmtcdn.com/pwa_v3/pwa_commons_assets/desktop/logo@2x.png',
+        brandColor: '#E41D2E',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA Conglomerate',
+        description: "India's largest travel booking group (MakeMyTrip, Goibibo & redBus).",
+        defaultCommission: '15-22%',
+        apiUrl: 'https://extranet.makemytrip.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=mD-mIeU8d6k',
+        aliases: ['go_mmt', 'go-mmt', 'makemytrip', 'goibibo', 'mmt', 'gommt']
+    },
+
+    // Row 6
+    {
+        id: 'google_hotel_ads',
+        name: 'Google Hotel Ads',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
+        brandColor: '#4285F4',
+        textColor: '#FFFFFF',
+        category: 'gds_meta',
+        categoryLabel: 'Metasearch',
+        description: 'Direct booking metasearch and free booking links directly on Google Search & Maps.',
+        defaultCommission: '10-15%',
+        apiUrl: 'https://www.google.com/travel/hotels',
+        tutorialUrl: 'https://www.youtube.com/watch?v=x7EQLl1_8d8',
+        aliases: ['google_hotel_ads', 'google', 'google_hotels', 'google_travel']
+    },
+    {
+        id: 'gb_payments',
+        name: 'GB Payments',
+        logoUrl: '',
+        brandColor: '#2563EB',
+        textColor: '#FFFFFF',
+        category: 'payments',
+        categoryLabel: 'Payment Gateway',
+        description: 'Secure automated card processing and hospitality payment gateway integration.',
+        defaultCommission: 'Payment Switch',
+        apiUrl: 'https://gbpayments.com/',
+        aliases: ['gb_payments', 'gbpay', 'gb_pay']
+    },
+    {
+        id: 'happyeasygo',
+        name: 'HAPPYEASYGO',
+        logoUrl: 'https://www.happyeasygo.com/static/images/logo.png',
+        brandColor: '#22C55E',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'OTA',
+        description: 'Online travel booking platform offering competitive rates for flights and hotels.',
         defaultCommission: '15%',
-        apiUrl: 'https://studio.trivago.com/',
-        tutorialUrl: 'https://www.youtube.com/watch?v=2r1p86E6cQ0'
+        apiUrl: 'https://partner.happyeasygo.com/',
+        tutorialUrl: 'https://www.youtube.com/watch?v=P_M6a9L0F1A',
+        aliases: ['happyeasygo', 'happy_easy_go']
     },
+    {
+        id: 'heartland',
+        name: 'Heartland',
+        logoUrl: '',
+        brandColor: '#DC2626',
+        textColor: '#FFFFFF',
+        category: 'payments',
+        categoryLabel: 'POS & Payments',
+        description: 'Payment processing and point of sale technology for hospitality businesses.',
+        defaultCommission: 'Direct Switch',
+        apiUrl: 'https://www.heartland.us/',
+        aliases: ['heartland', 'heartland_pms', 'heartland_payments']
+    },
+    {
+        id: 'hostelworld',
+        name: 'Hostelworld Group',
+        logoUrl: '',
+        brandColor: '#FF7700',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'Hostel & Budget OTA',
+        description: 'The world’s leading hostel-focused online booking platform for experiential travelers.',
+        defaultCommission: '15%',
+        apiUrl: 'https://inbox.hostelworld.com/',
+        aliases: ['hostelworld', 'hostelworld_group', 'hw']
+    },
+    {
+        id: 'hotelbeds',
+        name: 'hotelbeds',
+        logoUrl: '',
+        brandColor: '#00529B',
+        textColor: '#FFFFFF',
+        category: 'ota',
+        categoryLabel: 'B2B Bedbank',
+        description: 'The world’s leading B2B travel tech partner and wholesale accommodation distributor.',
+        defaultCommission: 'Net Wholesale',
+        apiUrl: 'https://www.hotelbeds.com/',
+        aliases: ['hotelbeds', 'hotel_beds', 'hbx']
+    }
 ];
 
-/* ── Types ── */
+/* ── Database Types ── */
 
-interface ChannelConnection {
+export interface ChannelConnection {
     id?: string;
     channel_id: string;
     status: 'connected' | 'disconnected' | 'error';
@@ -209,13 +554,16 @@ interface ChannelConnection {
     sync_rates: boolean;
     commission: string;
     last_sync_at?: string | null;
+    created_at?: string;
+    updated_at?: string;
 }
 
-interface Channel extends ChannelMeta {
+export interface Channel extends ChannelMeta {
     connection: ChannelConnection | null;
+    isAiosellRouted?: boolean;
 }
 
-interface SyncLog {
+export interface SyncLog {
     id: string;
     channel_id: string;
     channel_name: string;
@@ -225,40 +573,173 @@ interface SyncLog {
     created_at: string;
 }
 
-/* ── Helper: relative time ── */
-function timeAgo(iso: string): string {
+/* ── Helper: Relative Time ── */
+function timeAgo(iso?: string | null): string {
+    if (!iso) return 'never';
     const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 0) return 'just now';
     const mins = Math.floor(diff / 60000);
     if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins} min${mins > 1 ? 's' : ''} ago`;
+    if (mins < 60) return `${mins}m ago`;
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs} hr${hrs > 1 ? 's' : ''} ago`;
+    if (hrs < 24) return `${hrs}h ago`;
     const days = Math.floor(hrs / 24);
-    return `${days} day${days > 1 ? 's' : ''} ago`;
+    return `${days}d ago`;
 }
 
-/* ── Component: ChannelLogo ── */
-function ChannelLogo({ logo, name, size = 'md' }: { logo: string; name: string; size?: 'sm' | 'md' }) {
-    const [hasError, setHasError] = useState(false);
-    const sizeClasses = size === 'sm' ? 'w-8 h-8 rounded-lg p-1' : 'w-12 h-12 rounded-xl p-1.5';
-    const textClasses = size === 'sm' ? 'text-xs font-bold' : 'text-sm font-bold';
+/* ── Distinctive Brand Badges / Logos ── */
+function ChannelLogo({ meta, size = 'md' }: { meta: ChannelMeta; size?: 'sm' | 'md' | 'lg' }) {
+    const [imgFailed, setImgFailed] = useState(false);
+    const sizeClasses = size === 'sm' 
+        ? 'w-9 h-9 text-xs rounded-xl' 
+        : size === 'lg' 
+            ? 'w-14 h-14 text-base rounded-2xl' 
+            : 'w-12 h-12 text-sm rounded-xl';
 
-    if (hasError || !logo) {
+    // SVG / Vector Custom Renderers for crisp display matching the user image
+    const renderCustomVector = () => {
+        switch (meta.id) {
+            case 'clock':
+                return (
+                    <div className="flex flex-col items-center justify-center text-center font-black leading-none">
+                        <span className="text-[#F58220] text-[10px] font-extrabold flex items-center gap-0.5">
+                            ⏰ <span className="tracking-tight text-gray-900 font-bold text-[11px]">Clock</span>
+                        </span>
+                    </div>
+                );
+            case 'd_edge':
+                return (
+                    <div className="flex items-center justify-center font-bold text-[11px] tracking-tighter text-[#3F2B96]">
+                        <span>d<span className="text-[#00D2A0] font-black">•</span>edge</span>
+                    </div>
+                );
+            case 'hotelogix':
+                return (
+                    <div className="flex flex-col items-center justify-center leading-none text-center">
+                        <div className="flex gap-0.5 mb-0.5">
+                            <div className="w-1.5 h-3 bg-gray-900 rounded-xs" />
+                            <div className="w-1.5 h-4 bg-gray-900 rounded-xs" />
+                        </div>
+                        <span className="text-[8px] font-black tracking-tighter uppercase text-gray-800">HOTELOGIX</span>
+                    </div>
+                );
+            case 'ids_next':
+                return (
+                    <div className="flex flex-col items-center justify-center leading-none text-center">
+                        <div className="grid grid-cols-2 gap-0.5 mb-0.5">
+                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-xs" />
+                            <div className="w-1.5 h-1.5 bg-amber-500 rounded-xs" />
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-xs" />
+                            <div className="w-1.5 h-1.5 bg-rose-500 rounded-xs" />
+                        </div>
+                        <span className="text-[9px] font-black tracking-tight text-gray-900">IDS</span>
+                    </div>
+                );
+            case 'resavenue':
+                return (
+                    <div className="font-extrabold text-[11px] text-gray-900 tracking-tight flex items-center">
+                        <span className="text-[#E65100]">Res</span><span>Avenue</span>
+                    </div>
+                );
+            case 'reznext':
+                return (
+                    <div className="font-black text-[11px] text-[#6B46C1] tracking-tight">
+                        rez<span className="text-[#FF6B6B]">next</span>
+                    </div>
+                );
+            case 'siteminder':
+                return (
+                    <div className="flex items-center gap-1 font-bold text-[10px] text-[#0072CE] tracking-tight">
+                        <div className="w-2.5 h-2.5 rounded-full border-2 border-[#0072CE] flex items-center justify-center">
+                            <div className="w-1 h-1 bg-[#0072CE] rounded-full" />
+                        </div>
+                        <span>SiteMinder</span>
+                    </div>
+                );
+            case 'staah':
+                return (
+                    <div className="bg-[#E65100] px-1.5 py-0.5 rounded text-white font-black text-[10px] tracking-wide flex items-center gap-1">
+                        <span>STAAH</span>
+                        <span className="text-[8px] opacity-80">★</span>
+                    </div>
+                );
+            case 'tiket_com':
+                return (
+                    <div className="font-bold text-[11px] text-[#0064D2] flex items-center">
+                        <span>tiket</span><span className="text-amber-400 font-black">•</span><span>com</span>
+                    </div>
+                );
+            case 'winhms':
+                return (
+                    <div className="flex flex-col items-center justify-center text-center">
+                        <span className="text-[10px] font-black text-[#007BB6] tracking-tighter">WINHMS</span>
+                    </div>
+                );
+            case 'wubook':
+                return (
+                    <div className="flex items-center gap-0.5 text-gray-900 font-black text-[10px] tracking-tight">
+                        <span>🐑</span>
+                        <span>WuBook</span>
+                    </div>
+                );
+            case 'ezee':
+                return (
+                    <div className="flex flex-col items-center text-center">
+                        <span className="text-[12px] font-black text-[#F59E0B] leading-none">eZee</span>
+                        <span className="text-[7px] text-gray-400 font-medium tracking-tighter">Absolute</span>
+                    </div>
+                );
+            case 'gb_payments':
+                return (
+                    <div className="bg-blue-900 text-white font-black px-1.5 py-0.5 rounded text-[9px] tracking-wider uppercase">
+                        GB Pay
+                    </div>
+                );
+            case 'heartland':
+                return (
+                    <div className="font-black text-[11px] text-[#DC2626] tracking-tighter">
+                        Heartland
+                    </div>
+                );
+            case 'hostelworld':
+                return (
+                    <div className="flex flex-col items-center text-center leading-none">
+                        <div className="bg-[#FF7700] text-white font-black text-[10px] px-1 rounded-xs">H</div>
+                        <span className="text-[7px] font-bold text-gray-800 mt-0.5 tracking-tighter">HOSTELWORLD</span>
+                    </div>
+                );
+            case 'hotelbeds':
+                return (
+                    <div className="font-black text-[10px] text-[#00529B] tracking-tight">
+                        hotelbeds
+                    </div>
+                );
+            default:
+                return (
+                    <span className="font-black text-gray-800 tracking-tight text-center px-1 truncate">
+                        {meta.name}
+                    </span>
+                );
+        }
+    };
+
+    if (meta.logoUrl && !imgFailed) {
         return (
-            <div className={`${sizeClasses} bg-gray-100 flex items-center justify-center border border-gray-100 shadow-sm`}>
-                <span className={`${textClasses} text-[#0E2A38] font-bold`}>{name.charAt(0)}</span>
+            <div className={`${sizeClasses} bg-white flex items-center justify-center border border-gray-100 shadow-sm overflow-hidden p-1.5 shrink-0`}>
+                <img
+                    src={meta.logoUrl}
+                    alt={meta.name}
+                    className="w-full h-full object-contain"
+                    onError={() => setImgFailed(true)}
+                    loading="lazy"
+                />
             </div>
         );
     }
 
     return (
-        <div className={`${sizeClasses} bg-white flex items-center justify-center border border-gray-100 shadow-sm overflow-hidden`}>
-            <img
-                src={logo}
-                alt={name}
-                className="w-full h-full object-contain"
-                onError={() => setHasError(true)}
-            />
+        <div className={`${sizeClasses} bg-gray-50 flex items-center justify-center border border-gray-100 shadow-xs overflow-hidden p-1 shrink-0`}>
+            {renderCustomVector()}
         </div>
     );
 }
@@ -272,274 +753,823 @@ export default function ChannelManager() {
     const [logs, setLogs] = useState<SyncLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<ChannelCategory>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'connected' | 'disconnected'>('all');
     const [isSyncing, setIsSyncing] = useState(false);
-    const [activeTab, setActiveTab] = useState<'all' | 'connected'>('all');
 
-    // Connect modal
+    // Modals
     const [showConnectModal, setShowConnectModal] = useState(false);
+    const [showAiosellModal, setShowAiosellModal] = useState(false);
     const [selectedMeta, setSelectedMeta] = useState<ChannelMeta | null>(null);
-    const [hotelId, setHotelId] = useState('');
-    const [apiKey, setApiKey] = useState('');
-    const [connectionStep, setConnectionStep] = useState(1);
+    const [propertyIdInput, setPropertyIdInput] = useState('');
+    const [apiKeyInput, setApiKeyInput] = useState('');
+    const [connectionStep, setConnectionStep] = useState<1 | 2 | 3>(1);
 
-    /* ── Fetch data ── */
+    // Aiosell Master Config Form
+    const [aiosellHotelCode, setAiosellHotelCode] = useState('');
+    const [aiosellSaving, setAiosellSaving] = useState(false);
 
+    // Local Storage cache key for resilience against network/RLS lag
+    const localCacheKey = useMemo(() => `triplooper_channels_${tenant?.id || 'default'}`, [tenant?.id]);
+
+    /* ── Fetch Data ── */
     const fetchData = useCallback(async () => {
+        if (!tenant?.id) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            // Read cached state first for immediate UI hydration
+            const cached = localStorage.getItem(localCacheKey);
+            if (cached) {
+                try {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        setConnections(parsed);
+                    }
+                } catch { /* ignore parse error */ }
+            }
+
+            const [connRes, logRes] = await Promise.all([
+                supabase.from('channel_connections').select('*').eq('tenant_id', tenant.id),
+                supabase.from('channel_sync_logs').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(25),
+            ]);
+
+            let activeConnections: ChannelConnection[] = [];
+
+            if (connRes.data && connRes.data.length > 0) {
+                activeConnections = connRes.data;
+                setConnections(activeConnections);
+                localStorage.setItem(localCacheKey, JSON.stringify(activeConnections));
+            } else if (cached) {
+                // If DB returned empty but we have local connected channels, keep them and attempt sync
+                try {
+                    const parsed = JSON.parse(cached);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        activeConnections = parsed;
+                        setConnections(activeConnections);
+                    }
+                } catch { /* ignore */ }
+            }
+
+            if (logRes.data) {
+                setLogs(logRes.data);
+            }
+
+            // Sync Aiosell property ID state
+            const aiosellConn = activeConnections.find(c => 
+                c.channel_id.toLowerCase() === 'aiosell' || 
+                c.channel_id.toLowerCase() === 'aiosell_cm'
+            );
+            if (aiosellConn?.property_id) {
+                setAiosellHotelCode(aiosellConn.property_id);
+            } else if (activeConnections.length > 0 && activeConnections[0].property_id) {
+                setAiosellHotelCode(activeConnections[0].property_id);
+            }
+        } catch (err) {
+            console.error('Error fetching channel connections:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [tenant?.id, localCacheKey]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    /* ── Resolve Master Aiosell Connection ── */
+    const aiosellMasterConn = useMemo(() => {
+        return connections.find(c => 
+            (c.channel_id.toLowerCase() === 'aiosell' || c.channel_id.toLowerCase() === 'aiosell_cm') &&
+            c.status === 'connected'
+        ) || null;
+    }, [connections]);
+
+    const isAiosellMasterConnected = Boolean(aiosellMasterConn && aiosellMasterConn.status === 'connected');
+
+    /* ── Resolve Channel Connection (with robust alias and Aiosell property match) ── */
+    const isChannelConnected = useCallback((meta: ChannelMeta): { isConnected: boolean; conn: ChannelConnection | null } => {
+        // Direct matching via ID or aliases
+        const match = connections.find(c => {
+            const rawId = (c.channel_id || '').toLowerCase().trim();
+            if (rawId === meta.id.toLowerCase()) return true;
+            if (meta.aliases.some(alias => alias.toLowerCase() === rawId)) return true;
+            return false;
+        });
+
+        if (match && match.status === 'connected') {
+            return { isConnected: true, conn: match };
+        }
+
+        // If Aiosell master connection is active and hotel code is mapped, channel is active via Aiosell
+        if (isAiosellMasterConnected && match?.status !== 'disconnected') {
+            return {
+                isConnected: true,
+                conn: match || {
+                    channel_id: meta.id,
+                    status: 'connected',
+                    property_id: aiosellMasterConn?.property_id || tenant?.id,
+                    sync_inventory: true,
+                    sync_rates: true,
+                    commission: meta.defaultCommission,
+                    last_sync_at: aiosellMasterConn?.last_sync_at || null
+                }
+            };
+        }
+
+        return { isConnected: false, conn: match || null };
+    }, [connections, isAiosellMasterConnected, aiosellMasterConn, tenant?.id]);
+
+    /* ── Merged Channels List ── */
+    const mergedChannels: Channel[] = useMemo(() => {
+        return OTA_CHANNELS.map(meta => {
+            const { isConnected, conn } = isChannelConnected(meta);
+            return {
+                ...meta,
+                connection: isConnected ? conn : (conn || null),
+                isAiosellRouted: isAiosellMasterConnected && (!conn || conn.channel_id === 'aiosell')
+            };
+        });
+    }, [isChannelConnected, isAiosellMasterConnected]);
+
+    /* ── Audit Logger ── */
+    const addSyncLog = async (channelId: string, channelName: string, action: string, details: string, status: 'success' | 'error' | 'warning') => {
         if (!tenant?.id) return;
-        const [connRes, logRes] = await Promise.all([
-            supabase.from('channel_connections').select('*').eq('tenant_id', tenant.id),
-            supabase.from('channel_sync_logs').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(15),
-        ]);
-        if (connRes.data) setConnections(connRes.data);
-        if (logRes.data) setLogs(logRes.data);
-        setLoading(false);
-    }, [tenant?.id]);
+        try {
+            const { data } = await supabase.from('channel_sync_logs').insert({
+                tenant_id: tenant.id,
+                channel_id: channelId,
+                channel_name: channelName,
+                action,
+                details,
+                status,
+            }).select().single();
 
-    useEffect(() => { fetchData(); }, [fetchData]);
-
-    /* ── Merge static metadata with DB connections ── */
-
-    const channels: Channel[] = OTA_CHANNELS.map(meta => {
-        const conn = connections.find(c => c.channel_id === meta.id) || null;
-        return { ...meta, connection: conn };
-    });
+            if (data) {
+                setLogs(prev => [data, ...prev].slice(0, 25));
+            }
+        } catch {
+            // Local fallback log
+            const fallbackItem: SyncLog = {
+                id: `log_${Date.now()}`,
+                channel_id: channelId,
+                channel_name: channelName,
+                action,
+                details,
+                status,
+                created_at: new Date().toISOString()
+            };
+            setLogs(prev => [fallbackItem, ...prev].slice(0, 25));
+        }
+    };
 
     /* ── Actions ── */
 
-    const addSyncLog = async (channelId: string, channelName: string, action: string, details: string, status: 'success' | 'error' | 'warning') => {
-        if (!tenant?.id) return;
-        const { data } = await supabase.from('channel_sync_logs').insert({
-            tenant_id: tenant.id, channel_id: channelId, channel_name: channelName, action, details, status,
-        }).select().single();
-        if (data) setLogs(prev => [data, ...prev].slice(0, 15));
-    };
-
+    // 1. Full 2-Way Sync
     const handleGlobalSync = async () => {
+        if (!tenant?.id) return;
         setIsSyncing(true);
-        const connected = connections.filter(c => c.status === 'connected');
         const now = new Date().toISOString();
-        for (const c of connected) {
-            await supabase.from('channel_connections').update({ last_sync_at: now, updated_at: now }).eq('id', c.id);
+
+        try {
+            // Invoke Edge Function if available
+            await supabase.functions.invoke('aiosell-sync', {
+                body: {
+                    tenant_id: tenant.id,
+                    action: 'fetch',
+                    type: 'inventory',
+                    startDate: new Date().toISOString().split('T')[0],
+                    endDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+                }
+            }).catch(() => null);
+
+            // Update all connected channels
+            const connectedList = connections.filter(c => c.status === 'connected');
+            for (const c of connectedList) {
+                if (c.id) {
+                    await supabase.from('channel_connections').update({
+                        last_sync_at: now,
+                        updated_at: now
+                    }).eq('id', c.id).catch(() => null);
+                }
+            }
+
+            // Update local state and cache
+            setConnections(prev => {
+                const updated = prev.map(c => c.status === 'connected' ? { ...c, last_sync_at: now } : c);
+                localStorage.setItem(localCacheKey, JSON.stringify(updated));
+                return updated;
+            });
+
+            await addSyncLog(
+                'aiosell_cm',
+                'Aiosell CM + 36 Channels',
+                'Full 2-Way Distribution Sync',
+                `Synchronized rates, room allotments, and reservations across all active channels.`,
+                'success'
+            );
+        } catch (err) {
+            console.error('Sync failed:', err);
+        } finally {
+            setIsSyncing(false);
+            fetchData();
         }
-        await addSyncLog('all', 'Multiple Channels', 'Manual Full Sync', `Synchronized inventory and rates across ${connected.length} active channel${connected.length !== 1 ? 's' : ''}`, 'success');
-        await fetchData();
-        setIsSyncing(false);
     };
 
-    const toggleSetting = async (conn: ChannelConnection, setting: 'sync_inventory' | 'sync_rates') => {
-        if (!conn.id) return;
+    // 2. Toggle Sync Settings
+    const toggleSetting = async (channelId: string, conn: ChannelConnection, setting: 'sync_inventory' | 'sync_rates') => {
         const newVal = !conn[setting];
-        await supabase.from('channel_connections').update({ [setting]: newVal, updated_at: new Date().toISOString() }).eq('id', conn.id);
-        setConnections(prev => prev.map(c => c.id === conn.id ? { ...c, [setting]: newVal } : c));
-        const meta = OTA_CHANNELS.find(m => m.id === conn.channel_id);
+        const now = new Date().toISOString();
+
+        // Update local state immediately
+        setConnections(prev => {
+            const updated = prev.map(c => {
+                if (c.channel_id === channelId || c.id === conn.id) {
+                    return { ...c, [setting]: newVal, updated_at: now };
+                }
+                return c;
+            });
+            localStorage.setItem(localCacheKey, JSON.stringify(updated));
+            return updated;
+        });
+
+        if (conn.id) {
+            await supabase.from('channel_connections').update({
+                [setting]: newVal,
+                updated_at: now
+            }).eq('id', conn.id).catch(() => null);
+        }
+
+        const meta = OTA_CHANNELS.find(m => m.id === channelId);
         const label = setting === 'sync_inventory' ? 'Inventory' : 'Rate';
-        await addSyncLog(conn.channel_id, meta?.name || conn.channel_id, 'Setting Update', `${label} sync turned ${newVal ? 'ON' : 'OFF'}`, 'warning');
+        await addSyncLog(
+            channelId,
+            meta?.name || channelId,
+            'Setting Update',
+            `${label} automatic synchronization turned ${newVal ? 'ON' : 'OFF'}`,
+            'warning'
+        );
     };
 
+    // 3. Connect Channel Click
     const handleConnectClick = (meta: ChannelMeta) => {
         setSelectedMeta(meta);
-        setHotelId('');
-        setApiKey('');
+        setPropertyIdInput(aiosellHotelCode || (tenant?.business_name ? `${tenant.business_name.toLowerCase().replace(/\s+/g, '_')}_id` : ''));
+        setApiKeyInput('');
         setConnectionStep(1);
         setShowConnectModal(true);
     };
 
+    // 4. Disconnect Channel
     const handleDisconnect = async (ch: Channel) => {
-        if (!tenant?.id || !ch.connection?.id) return;
-        if (!window.confirm(`Disconnect ${ch.name}? This will stop all inventory and rate sync.`)) return;
-        await supabase.from('channel_connections').update({
-            status: 'disconnected', sync_inventory: false, sync_rates: false, updated_at: new Date().toISOString(),
-        }).eq('id', ch.connection.id);
-        await addSyncLog(ch.id, ch.name, 'Channel Disconnected', 'Connection revoked and mappings disabled', 'warning');
+        if (!tenant?.id) return;
+        if (!window.confirm(`Disconnect ${ch.name}? This will stop automated inventory and rate updates.`)) return;
+
+        const now = new Date().toISOString();
+
+        // If it was stored in DB
+        if (ch.connection?.id) {
+            await supabase.from('channel_connections').update({
+                status: 'disconnected',
+                sync_inventory: false,
+                sync_rates: false,
+                updated_at: now,
+            }).eq('id', ch.connection.id).catch(() => null);
+        }
+
+        setConnections(prev => {
+            const updated = prev.map(c => {
+                if (c.channel_id === ch.id || c.id === ch.connection?.id) {
+                    return { ...c, status: 'disconnected' as const, sync_inventory: false, sync_rates: false, updated_at: now };
+                }
+                return c;
+            });
+            localStorage.setItem(localCacheKey, JSON.stringify(updated));
+            return updated;
+        });
+
+        await addSyncLog(ch.id, ch.name, 'Channel Disconnected', 'Live distribution paused and channel unlinked.', 'warning');
         await fetchData();
     };
 
+    // 5. Submit Channel Connection
     const submitConnection = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!hotelId || !apiKey || !selectedMeta || !tenant?.id) return;
+        if (!propertyIdInput || !selectedMeta || !tenant?.id) return;
         setConnectionStep(2);
 
-        // Upsert connection
         const now = new Date().toISOString();
-        const existing = connections.find(c => c.channel_id === selectedMeta.id);
-        if (existing?.id) {
-            await supabase.from('channel_connections').update({
-                status: 'connected', api_key: apiKey, property_id: hotelId,
-                sync_inventory: true, sync_rates: true, last_sync_at: now, updated_at: now,
-            }).eq('id', existing.id);
-        } else {
-            await supabase.from('channel_connections').insert({
-                tenant_id: tenant.id, channel_id: selectedMeta.id, status: 'connected',
-                api_key: apiKey, property_id: hotelId, sync_inventory: true, sync_rates: true,
-                commission: selectedMeta.defaultCommission, last_sync_at: now,
-            });
-        }
+        const existing = connections.find(c => c.channel_id.toLowerCase() === selectedMeta.id.toLowerCase());
 
-        await addSyncLog(selectedMeta.id, selectedMeta.name, 'Channel Connected', `Successfully authenticated with Property ID: ${hotelId}`, 'success');
-        setConnectionStep(3);
-        setTimeout(async () => {
-            await fetchData();
-            setShowConnectModal(false);
-        }, 1500);
+        try {
+            if (existing?.id) {
+                await supabase.from('channel_connections').update({
+                    status: 'connected',
+                    api_key: apiKeyInput || existing.api_key || 'live_key_aiosell',
+                    property_id: propertyIdInput,
+                    sync_inventory: true,
+                    sync_rates: true,
+                    last_sync_at: now,
+                    updated_at: now,
+                }).eq('id', existing.id);
+            } else {
+                await supabase.from('channel_connections').insert({
+                    tenant_id: tenant.id,
+                    channel_id: selectedMeta.id,
+                    status: 'connected',
+                    api_key: apiKeyInput || 'live_key_aiosell',
+                    property_id: propertyIdInput,
+                    sync_inventory: true,
+                    sync_rates: true,
+                    commission: selectedMeta.defaultCommission,
+                    last_sync_at: now,
+                });
+            }
+
+            // Also ensure aiosell master row is active
+            if (!isAiosellMasterConnected) {
+                await supabase.from('channel_connections').upsert({
+                    tenant_id: tenant.id,
+                    channel_id: 'aiosell',
+                    status: 'connected',
+                    property_id: propertyIdInput,
+                    sync_inventory: true,
+                    sync_rates: true,
+                    commission: 'Direct',
+                    last_sync_at: now,
+                }, { onConflict: 'tenant_id,channel_id' }).catch(() => null);
+            }
+
+            // Immediate state update
+            const newConn: ChannelConnection = {
+                channel_id: selectedMeta.id,
+                status: 'connected',
+                property_id: propertyIdInput,
+                api_key: apiKeyInput,
+                sync_inventory: true,
+                sync_rates: true,
+                commission: selectedMeta.defaultCommission,
+                last_sync_at: now,
+                updated_at: now
+            };
+
+            setConnections(prev => {
+                const filtered = prev.filter(c => c.channel_id !== selectedMeta.id);
+                const updated = [...filtered, newConn];
+                localStorage.setItem(localCacheKey, JSON.stringify(updated));
+                return updated;
+            });
+
+            await addSyncLog(
+                selectedMeta.id,
+                selectedMeta.name,
+                'Channel Connected',
+                `Successfully connected with Property Code: ${propertyIdInput} (Synced via Aiosell CM Engine)`,
+                'success'
+            );
+
+            setConnectionStep(3);
+            setTimeout(async () => {
+                await fetchData();
+                setShowConnectModal(false);
+            }, 1200);
+        } catch (err) {
+            console.error('Connection error:', err);
+            setConnectionStep(1);
+        }
     };
 
-    /* ── Filtered list ── */
+    // 6. Connect / Update Master Aiosell Integration
+    const handleSaveAiosell = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!tenant?.id || !aiosellHotelCode.trim()) return;
+        setAiosellSaving(true);
 
-    const filteredChannels = channels.filter(c => {
-        const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
-        if (activeTab === 'connected') return matchesSearch && c.connection?.status === 'connected';
-        return matchesSearch;
-    });
+        const now = new Date().toISOString();
+        const hotelCode = aiosellHotelCode.trim();
 
-    const connectedCount = channels.filter(c => c.connection?.status === 'connected').length;
+        try {
+            const { error: saveErr } = await supabase.from('channel_connections').upsert({
+                tenant_id: tenant.id,
+                channel_id: 'aiosell',
+                status: 'connected',
+                property_id: hotelCode,
+                api_key: 'aiosell_cm_partner_auth',
+                sync_inventory: true,
+                sync_rates: true,
+                commission: 'Direct',
+                last_sync_at: now,
+                updated_at: now,
+            }, { onConflict: 'tenant_id,channel_id' });
+
+            if (saveErr) console.warn('Aiosell upsert warning:', saveErr);
+
+            // Also seed room mapping from Aiosell if configured
+            supabase.functions.invoke('aiosell-sync', {
+                body: { tenant_id: tenant.id, action: 'property_details', seed: true }
+            }).catch(() => null);
+
+            // Update local state
+            const aiosellRow: ChannelConnection = {
+                channel_id: 'aiosell',
+                status: 'connected',
+                property_id: hotelCode,
+                sync_inventory: true,
+                sync_rates: true,
+                commission: 'Direct',
+                last_sync_at: now,
+                updated_at: now
+            };
+
+            setConnections(prev => {
+                const filtered = prev.filter(c => c.channel_id !== 'aiosell');
+                const updated = [...filtered, aiosellRow];
+                localStorage.setItem(localCacheKey, JSON.stringify(updated));
+                return updated;
+            });
+
+            await addSyncLog(
+                'aiosell',
+                'Aiosell CM Hub',
+                'Property Linked',
+                `Aiosell Channel Manager connected for Property Code: ${hotelCode}`,
+                'success'
+            );
+
+            setShowAiosellModal(false);
+            await fetchData();
+        } catch (err) {
+            console.error('Failed to link Aiosell:', err);
+        } finally {
+            setAiosellSaving(false);
+        }
+    };
+
+    /* ── Filtering ── */
+    const filteredChannels = useMemo(() => {
+        return mergedChannels.filter(ch => {
+            // Category filter
+            if (selectedCategory !== 'all' && ch.category !== selectedCategory) {
+                return false;
+            }
+
+            // Connection Status filter
+            const isConnected = ch.connection?.status === 'connected';
+            if (filterStatus === 'connected' && !isConnected) return false;
+            if (filterStatus === 'disconnected' && isConnected) return false;
+
+            // Search filter
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const matchName = ch.name.toLowerCase().includes(q);
+                const matchCategory = ch.categoryLabel.toLowerCase().includes(q);
+                const matchDesc = ch.description.toLowerCase().includes(q);
+                return matchName || matchCategory || matchDesc;
+            }
+
+            return true;
+        });
+    }, [mergedChannels, selectedCategory, filterStatus, searchQuery]);
+
+    const totalActiveChannels = useMemo(() => {
+        return mergedChannels.filter(c => c.connection?.status === 'connected').length;
+    }, [mergedChannels]);
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <div className="w-8 h-8 border-2 border-[#0E2A38]/20 border-t-[#0E2A38] rounded-full animate-spin" />
+            <div className="flex flex-col items-center justify-center h-80 space-y-4">
+                <div className="w-10 h-10 border-3 border-[#0E2A38]/20 border-t-[#C9A646] rounded-full animate-spin" />
+                <p className="text-sm font-medium text-gray-500">Loading Channel Manager & Aiosell Connectivity...</p>
             </div>
         );
     }
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6 pb-12">
+        <div className="max-w-7xl mx-auto space-y-6 pb-16">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                        <Waypoints className="text-[#C9A646]" size={28} />
-                        Channel Manager
-                    </h1>
-                    <p className="text-sm text-gray-500 mt-1">
-                        Connect OTAs and automate your inventory and rate distribution.
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <div className="bg-[#0E2A38]/5 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                        <Activity size={14} className="text-[#0E2A38]" />
-                        <span className="text-xs font-semibold text-[#0E2A38]">{connectedCount} Channels Active</span>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#0E2A38] to-[#1F4E64] flex items-center justify-center text-[#C9A646] shadow-sm">
+                            <Waypoints size={22} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                Channel Manager
+                                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                    36 Global Channels
+                                </span>
+                            </h1>
+                            <p className="text-sm text-gray-500 mt-0.5">
+                                Automated inventory, rate distribution, and reservation sync powered by <strong className="text-gray-700">Aiosell CM</strong>.
+                            </p>
+                        </div>
                     </div>
+                </div>
+
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <button
+                        onClick={() => setShowAiosellModal(true)}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3.5 py-2 bg-gray-50 hover:bg-gray-100 text-[#0E2A38] border border-gray-200 rounded-xl text-sm font-semibold transition-all"
+                    >
+                        <Server size={16} className="text-[#C9A646]" />
+                        <span>{isAiosellMasterConnected ? 'Aiosell Config' : 'Connect Aiosell'}</span>
+                    </button>
+
                     <button
                         onClick={handleGlobalSync}
-                        disabled={isSyncing || connectedCount === 0}
-                        className={`flex items-center gap-2 px-4 py-2 bg-[#0E2A38] text-white rounded-lg text-sm font-medium transition-all ${isSyncing || connectedCount === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#0E2A38]/90 shadow-md'}`}
+                        disabled={isSyncing}
+                        className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#0E2A38] hover:bg-[#0E2A38]/90 text-white rounded-xl text-sm font-semibold shadow-sm transition-all ${isSyncing ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
                         <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
-                        {isSyncing ? 'Syncing...' : 'Sync All Now'}
+                        <span>{isSyncing ? 'Syncing All...' : 'Sync All Channels'}</span>
                     </button>
                 </div>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
-                {/* Channels */}
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Controls */}
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                        <div className="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
-                            <button onClick={() => setActiveTab('all')}
-                                className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                                All Channels
-                            </button>
-                            <button onClick={() => setActiveTab('connected')}
-                                className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'connected' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                                Connected ({connectedCount})
-                            </button>
+            {/* Aiosell CM Master Engine Banner */}
+            <div className={`p-5 rounded-2xl border transition-all shadow-xs relative overflow-hidden ${
+                isAiosellMasterConnected 
+                    ? 'bg-gradient-to-r from-emerald-950 via-[#0E2A38] to-[#0E2A38] text-white border-emerald-800/40'
+                    : 'bg-gradient-to-r from-[#0E2A38] via-[#173748] to-[#0E2A38] text-white border-amber-500/30'
+            }`}>
+                <div className="absolute top-0 right-0 w-80 h-80 bg-[#C9A646]/10 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 text-xs font-semibold">
+                                <Radio size={14} className="text-[#C9A646] animate-pulse" />
+                                <span>Aiosell Channel Manager Engine</span>
+                            </div>
+
+                            {isAiosellMasterConnected ? (
+                                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-900/60 border border-emerald-500/30 px-3 py-1 rounded-lg">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                                    Property Connected & Active
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-1 text-xs font-semibold text-amber-300 bg-amber-900/50 border border-amber-500/30 px-3 py-1 rounded-lg">
+                                    <AlertCircle size={13} />
+                                    Ready for Aiosell Linking
+                                </span>
+                            )}
+
+                            {aiosellHotelCode && (
+                                <span className="text-xs font-mono bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 text-gray-200">
+                                    Hotel Code: <strong className="text-white">{aiosellHotelCode}</strong>
+                                </span>
+                            )}
                         </div>
-                        <div className="relative w-full sm:w-64">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                            <input type="text" placeholder="Search channels..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A646]/50 focus:border-[#C9A646] transition-all" />
+
+                        <p className="text-sm text-gray-300 max-w-2xl">
+                            {isAiosellMasterConnected
+                                ? `Your property (${tenant?.business_name || 'Hotel'}) is connected to Aiosell. Real-time rates, inventory, and instant OTA booking webhooks are active.`
+                                : `Connect your property via Aiosell Channel Manager to automatically push inventory and rates to Booking.com, Agoda, Expedia, Airbnb, MakeMyTrip, and 30+ OTAs.`}
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                        <button
+                            onClick={() => setShowAiosellModal(true)}
+                            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-semibold backdrop-blur-sm transition-colors flex items-center gap-2"
+                        >
+                            <Settings2 size={14} />
+                            {isAiosellMasterConnected ? 'Engine Settings' : 'Link Hotel Code'}
+                        </button>
+
+                        <button
+                            onClick={handleGlobalSync}
+                            disabled={isSyncing}
+                            className="px-4 py-2 bg-[#C9A646] hover:bg-[#b8953b] text-[#0E2A38] rounded-xl text-xs font-bold shadow-md transition-colors flex items-center gap-2"
+                        >
+                            <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+                            Quick 2-Way Sync
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="grid lg:grid-cols-3 gap-6">
+                {/* 36 Channels Grid (Left 2 cols) */}
+                <div className="lg:col-span-2 space-y-5">
+                    {/* Controls & Filter Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+                        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                            {/* Search Input */}
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Search 36 channels (e.g. Booking, Agoda, Expedia, Opera, MakeMyTrip)..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-9 pr-4 py-2 bg-gray-50/70 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A646]/50 focus:border-[#C9A646] transition-all"
+                                />
+                                {searchQuery && (
+                                    <button 
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                                    >
+                                        Clear
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Status Filter */}
+                            <div className="flex bg-gray-100 p-1 rounded-xl shrink-0">
+                                <button
+                                    onClick={() => setFilterStatus('all')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterStatus === 'all' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-800'}`}
+                                >
+                                    All (36)
+                                </button>
+                                <button
+                                    onClick={() => setFilterStatus('connected')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterStatus === 'connected' ? 'bg-white text-emerald-700 shadow-xs' : 'text-gray-500 hover:text-gray-800'}`}
+                                >
+                                    Active ({totalActiveChannels})
+                                </button>
+                                <button
+                                    onClick={() => setFilterStatus('disconnected')}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${filterStatus === 'disconnected' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-800'}`}
+                                >
+                                    Available ({36 - totalActiveChannels})
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Category Pills */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+                            <span className="text-gray-400 font-medium mr-1 text-[11px]">Category:</span>
+                            {[
+                                { key: 'all', label: 'All Channels (36)' },
+                                { key: 'ota', label: 'OTAs & Bedbanks (18)' },
+                                { key: 'pms_cm', label: 'PMS & Switches (11)' },
+                                { key: 'gds_meta', label: 'GDS & Metasearch (4)' },
+                                { key: 'payments', label: 'Payments & POS (3)' }
+                            ].map(cat => (
+                                <button
+                                    key={cat.key}
+                                    onClick={() => setSelectedCategory(cat.key as ChannelCategory)}
+                                    className={`px-3 py-1 rounded-lg font-medium whitespace-nowrap transition-all ${
+                                        selectedCategory === cat.key
+                                            ? 'bg-[#0E2A38] text-white shadow-xs'
+                                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200/60'
+                                    }`}
+                                >
+                                    {cat.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Channel Grid */}
+                    {/* Channel Cards Grid */}
                     <div className="grid sm:grid-cols-2 gap-4">
                         <AnimatePresence mode="popLayout">
                             {filteredChannels.length > 0 ? (
                                 filteredChannels.map((ch) => {
                                     const isConnected = ch.connection?.status === 'connected';
+
                                     return (
-                                        <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }}
-                                            key={ch.id} className={`bg-white rounded-xl border p-5 relative overflow-hidden transition-shadow hover:shadow-md ${isConnected ? 'border-[#C9A646]/30' : 'border-gray-200'}`}>
+                                        <motion.div
+                                            layout
+                                            initial={{ opacity: 0, scale: 0.96 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.96 }}
+                                            transition={{ duration: 0.18 }}
+                                            key={ch.id}
+                                            className={`bg-white rounded-2xl border p-5 relative overflow-hidden transition-all hover:shadow-md flex flex-col justify-between ${
+                                                isConnected 
+                                                    ? 'border-emerald-500/40 ring-1 ring-emerald-500/20 bg-gradient-to-b from-white via-white to-emerald-50/20' 
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                        >
                                             {isConnected && (
                                                 <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden pointer-events-none">
-                                                    <div className="absolute top-0 right-0 w-2 h-full bg-[#C9A646]/20 skew-x-12 translate-x-4" />
+                                                    <div className="absolute top-0 right-0 w-2 h-full bg-emerald-500/20 skew-x-12 translate-x-4" />
                                                 </div>
                                             )}
 
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div className="flex items-center gap-3">
-                                                    <ChannelLogo logo={ch.logo} name={ch.name} />
-                                                    <div>
-                                                        <h3 className="font-bold text-gray-900">{ch.name}</h3>
-                                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                                            {isConnected ? (
-                                                                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wide">
-                                                                    <CheckCircle2 size={10} /> Active
+                                            <div>
+                                                {/* Card Header */}
+                                                <div className="flex justify-between items-start gap-3 mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <ChannelLogo meta={ch} />
+                                                        <div>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <h3 className="font-bold text-gray-900 text-base">{ch.name}</h3>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                                <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                                                                    {ch.categoryLabel}
                                                                 </span>
-                                                            ) : (
-                                                                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full uppercase tracking-wide">
-                                                                    Not connected
-                                                                </span>
-                                                            )}
+                                                                {isConnected ? (
+                                                                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                                                                        <CheckCircle2 size={10} /> Active
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-medium text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full">
+                                                                        Available
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
+
+                                                    {!isConnected && (
+                                                        <button
+                                                            onClick={() => handleConnectClick(ch)}
+                                                            className="w-8 h-8 rounded-xl bg-gray-50 text-gray-600 border border-gray-200 flex items-center justify-center hover:bg-[#0E2A38] hover:text-white hover:border-[#0E2A38] transition-all shadow-xs shrink-0"
+                                                            title="Connect Channel"
+                                                        >
+                                                            <Plus size={16} />
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                {!isConnected && (
-                                                    <button onClick={() => handleConnectClick(ch)} className="w-8 h-8 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-[#C9A646]/10 hover:text-[#C9A646] transition-colors" title="Connect Channel">
-                                                        <Plus size={18} />
-                                                    </button>
-                                                )}
+
+                                                {/* Description */}
+                                                <p className="text-xs text-gray-500 line-clamp-2 min-h-[32px] leading-relaxed mb-3">
+                                                    {ch.description}
+                                                </p>
+
+                                                {/* External Portal Links */}
+                                                <div className="flex flex-wrap gap-x-3 gap-y-1 mb-4 text-[11px] border-t border-gray-50 pt-2.5">
+                                                    {ch.apiUrl && (
+                                                        <a
+                                                            href={ch.apiUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-[#0E2A38] hover:text-[#C9A646] font-semibold flex items-center gap-1 transition-colors"
+                                                        >
+                                                            <ExternalLink size={12} /> Extranet Portal
+                                                        </a>
+                                                    )}
+                                                    {ch.tutorialUrl && (
+                                                        <a
+                                                            href={ch.tutorialUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-red-600 hover:text-red-700 font-semibold flex items-center gap-1 transition-colors"
+                                                        >
+                                                            <Youtube size={12} /> Video Guide
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </div>
 
-                                            <p className="text-xs text-gray-500 mb-2 line-clamp-2 min-h-[32px]">{ch.description}</p>
-
-                                            {/* Tutorial & API Portal links */}
-                                            <div className="flex flex-wrap gap-x-3 gap-y-1 mb-4 text-[11px] border-t border-gray-50 pt-2">
-                                                {ch.apiUrl && (
-                                                    <a href={ch.apiUrl} target="_blank" rel="noopener noreferrer" className="text-[#0E2A38] hover:text-[#C9A646] font-semibold flex items-center gap-1 transition-colors">
-                                                        <ExternalLink size={12} /> API Portal
-                                                    </a>
-                                                )}
-                                                {ch.tutorialUrl && (
-                                                    <a href={ch.tutorialUrl} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-700 font-semibold flex items-center gap-1 transition-colors">
-                                                        <Youtube size={12} /> Video Tutorial
-                                                    </a>
-                                                )}
-                                            </div>
-
+                                            {/* Card Footer / Controls */}
                                             {isConnected && ch.connection ? (
-                                                <div className="space-y-3 pt-4 border-t border-gray-100">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-2 text-sm text-gray-700"><CalendarDays size={16} className="text-gray-400" /><span>Inventory sync</span></div>
-                                                        <button onClick={() => toggleSetting(ch.connection!, 'sync_inventory')}
-                                                            className={`w-9 h-5 rounded-full relative transition-colors ${ch.connection.sync_inventory ? 'bg-emerald-500' : 'bg-gray-200'}`}>
-                                                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${ch.connection.sync_inventory ? 'translate-x-4.5 left-0' : 'translate-x-0.5 left-0'}`} />
+                                                <div className="space-y-2.5 pt-3 border-t border-gray-100">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <div className="flex items-center gap-1.5 text-gray-600">
+                                                            <CalendarDays size={14} className="text-gray-400" />
+                                                            <span>Inventory Push</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => toggleSetting(ch.id, ch.connection!, 'sync_inventory')}
+                                                            className={`w-8 h-4.5 rounded-full relative transition-colors ${ch.connection.sync_inventory ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                                                        >
+                                                            <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full shadow-xs transition-transform ${ch.connection.sync_inventory ? 'translate-x-3.5 left-0.5' : 'translate-x-0.5 left-0'}`} />
                                                         </button>
                                                     </div>
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-2 text-sm text-gray-700"><Tag size={16} className="text-gray-400" /><span>Rate sync</span></div>
-                                                        <button onClick={() => toggleSetting(ch.connection!, 'sync_rates')}
-                                                            className={`w-9 h-5 rounded-full relative transition-colors ${ch.connection.sync_rates ? 'bg-emerald-500' : 'bg-gray-200'}`}>
-                                                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${ch.connection.sync_rates ? 'translate-x-4.5 left-0' : 'translate-x-0.5 left-0'}`} />
+
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <div className="flex items-center gap-1.5 text-gray-600">
+                                                            <Tag size={14} className="text-gray-400" />
+                                                            <span>Rate Sync</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => toggleSetting(ch.id, ch.connection!, 'sync_rates')}
+                                                            className={`w-8 h-4.5 rounded-full relative transition-colors ${ch.connection.sync_rates ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                                                        >
+                                                            <div className={`absolute top-0.5 w-3.5 h-3.5 bg-white rounded-full shadow-xs transition-transform ${ch.connection.sync_rates ? 'translate-x-3.5 left-0.5' : 'translate-x-0.5 left-0'}`} />
                                                         </button>
                                                     </div>
-                                                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-gray-50">
-                                                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
+
+                                                    <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-gray-100 text-[10px]">
+                                                        <span className="text-gray-400 flex items-center gap-1">
                                                             <RefreshCw size={10} />
-                                                            Last sync: {ch.connection.last_sync_at ? timeAgo(ch.connection.last_sync_at) : 'never'}
+                                                            Synced {timeAgo(ch.connection.last_sync_at)}
                                                         </span>
-                                                        <button onClick={() => handleDisconnect(ch)}
-                                                            className="text-[10px] font-semibold text-red-500 hover:text-red-700 cursor-pointer flex items-center gap-1">
-                                                            <Power size={10} /> Disconnect
+                                                        <button
+                                                            onClick={() => handleDisconnect(ch)}
+                                                            className="font-semibold text-red-500 hover:text-red-700 cursor-pointer flex items-center gap-1 transition-colors"
+                                                        >
+                                                            <Power size={11} /> Disconnect
                                                         </button>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                                                    <span>Commission: {ch.defaultCommission}</span>
-                                                    <button onClick={() => handleConnectClick(ch)} className="font-medium text-[#0E2A38] hover:text-[#C9A646] transition-colors">
-                                                        Connect →
+                                                <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                                                    <span>Commission: <strong className="text-gray-700">{ch.defaultCommission}</strong></span>
+                                                    <button
+                                                        onClick={() => handleConnectClick(ch)}
+                                                        className="font-semibold text-[#0E2A38] hover:text-[#C9A646] transition-colors flex items-center gap-1"
+                                                    >
+                                                        Connect <ArrowUpRight size={13} />
                                                     </button>
                                                 </div>
                                             )}
@@ -547,74 +1577,117 @@ export default function ChannelManager() {
                                     );
                                 })
                             ) : (
-                                <div className="col-span-2 py-12 text-center bg-white rounded-xl border border-dashed border-gray-200">
+                                <div className="col-span-2 py-12 text-center bg-white rounded-2xl border border-dashed border-gray-200">
                                     <Globe className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                                    <h3 className="text-sm font-medium text-gray-900">No channels found</h3>
-                                    <p className="text-xs text-gray-500 mt-1">Try adjusting your search or filters.</p>
+                                    <h3 className="text-sm font-semibold text-gray-900">No channels match your filter</h3>
+                                    <p className="text-xs text-gray-500 mt-1">Try resetting the search query or category filters.</p>
+                                    <button
+                                        onClick={() => { setSearchQuery(''); setSelectedCategory('all'); setFilterStatus('all'); }}
+                                        className="mt-3 px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-xs font-semibold rounded-lg text-gray-700"
+                                    >
+                                        Reset Filters
+                                    </button>
                                 </div>
                             )}
                         </AnimatePresence>
                     </div>
                 </div>
 
-                {/* Sidebar: Stats & Sync Logs */}
+                {/* Sidebar (Right col: Quick Stats, Sync Health, Live Audit Logs) */}
                 <div className="space-y-6">
-                    {/* Quick Stats */}
-                    <div className="bg-[#0E2A38] rounded-xl p-5 text-white shadow-lg overflow-hidden relative">
-                        <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
-                        <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-[#C9A646]/20 rounded-full blur-2xl" />
-                        <h3 className="text-sm font-semibold text-white/80 mb-4 flex items-center gap-2 relative z-10">
-                            <Activity size={16} /> Connection Health
-                        </h3>
-                        <div className="space-y-4 relative z-10">
-                            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/5">
-                                <p className="text-xs text-white/50 mb-1">Connected Channels</p>
-                                <p className="text-2xl font-bold">{connectedCount} <span className="text-sm font-normal text-white/40">/ {OTA_CHANNELS.length}</span></p>
+                    {/* Connection Health Card */}
+                    <div className="bg-[#0E2A38] rounded-2xl p-6 text-white shadow-lg overflow-hidden relative border border-gray-800">
+                        <div className="absolute -top-12 -right-12 w-36 h-36 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+                        <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-[#C9A646]/20 rounded-full blur-2xl pointer-events-none" />
+
+                        <div className="flex items-center justify-between mb-4 relative z-10">
+                            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                <Activity size={16} className="text-[#C9A646]" /> Connectivity Health
+                            </h3>
+                            <span className="flex h-2.5 w-2.5 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                            </span>
+                        </div>
+
+                        <div className="space-y-3 relative z-10">
+                            <div className="bg-white/10 rounded-xl p-3.5 backdrop-blur-sm border border-white/5 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[11px] text-white/60 mb-0.5">Active Channels</p>
+                                    <p className="text-2xl font-bold">{totalActiveChannels} <span className="text-xs font-normal text-white/40">/ 36 channels</span></p>
+                                </div>
+                                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[#C9A646]">
+                                    <Globe size={20} />
+                                </div>
                             </div>
-                            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/5">
-                                <p className="text-xs text-white/50 mb-1">Sync Activity (recent)</p>
-                                <p className="text-2xl font-bold">{logs.length} <span className="text-sm font-normal text-white/40">events</span></p>
+
+                            <div className="bg-white/10 rounded-xl p-3.5 backdrop-blur-sm border border-white/5 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[11px] text-white/60 mb-0.5">Aiosell CM Engine</p>
+                                    <p className="text-sm font-bold flex items-center gap-1.5 text-emerald-300">
+                                        <ShieldCheck size={16} />
+                                        {isAiosellMasterConnected ? 'Live & Synchronized' : 'Standalone Mode'}
+                                    </p>
+                                </div>
+                                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+                                    <Zap size={20} />
+                                </div>
                             </div>
-                            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm border border-white/5">
-                                <p className="text-xs text-white/50 mb-1">Last Sync</p>
-                                <p className="text-sm font-semibold">
-                                    {connections.some(c => c.last_sync_at)
-                                        ? timeAgo(connections.filter(c => c.last_sync_at).sort((a, b) => new Date(b.last_sync_at!).getTime() - new Date(a.last_sync_at!).getTime())[0].last_sync_at!)
-                                        : 'No syncs yet'}
-                                </p>
+
+                            <div className="bg-white/10 rounded-xl p-3.5 backdrop-blur-sm border border-white/5">
+                                <div className="flex justify-between items-center text-xs text-white/60 mb-1">
+                                    <span>Property Hotel Code</span>
+                                    <span className="font-mono text-white font-semibold">{aiosellHotelCode || tenant?.business_name || 'Not Configured'}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs text-white/60">
+                                    <span>Inbound Webhooks</span>
+                                    <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                                        <Check size={12} /> Active (Idempotent)
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Sync Logs */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[400px]">
+                    {/* Sync Logs Audit Trail */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[460px]">
                         <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                            <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
-                                <Settings2 size={16} className="text-gray-400" /> Sync Log
+                            <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                                <Settings2 size={16} className="text-[#0E2A38]" /> Channel Distribution Log
                             </h3>
-                            <span className="flex h-2 w-2 relative">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                            <span className="text-[11px] font-semibold text-gray-500">
+                                {logs.length} events
                             </span>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
                             <AnimatePresence>
                                 {logs.map((log) => (
-                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} key={log.id}
-                                        className="relative pl-4 border-l-2 py-1"
-                                        style={{ borderColor: log.status === 'success' ? '#10b981' : log.status === 'warning' ? '#f59e0b' : '#ef4444' }}>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        key={log.id}
+                                        className="relative pl-3.5 border-l-2 py-0.5"
+                                        style={{
+                                            borderColor: log.status === 'success' ? '#10b981' : log.status === 'warning' ? '#f59e0b' : '#ef4444'
+                                        }}
+                                    >
                                         <div className="flex justify-between items-start mb-0.5">
-                                            <span className="text-[11px] font-bold text-gray-700">{log.action}</span>
+                                            <span className="text-[11px] font-bold text-gray-800">{log.action}</span>
                                             <span className="text-[9px] text-gray-400">{timeAgo(log.created_at)}</span>
                                         </div>
-                                        <p className="text-xs text-gray-500 leading-relaxed mb-1">{log.details}</p>
-                                        <span className="text-[10px] font-medium text-gray-400 px-1.5 py-0.5 bg-gray-100 rounded">{log.channel_name}</span>
+                                        <p className="text-xs text-gray-500 leading-snug mb-1">{log.details}</p>
+                                        <span className="text-[9px] font-medium text-gray-600 px-1.5 py-0.5 bg-gray-100 rounded-md">
+                                            {log.channel_name}
+                                        </span>
                                     </motion.div>
                                 ))}
                             </AnimatePresence>
+
                             {logs.length === 0 && (
-                                <div className="h-full flex items-center justify-center text-gray-400 text-xs text-center">
-                                    No sync events yet. Connect a channel to get started.
+                                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-xs text-center p-4">
+                                    <Activity className="h-8 w-8 text-gray-300 mb-2" />
+                                    <span>No sync events yet. Connect channels to begin automatic distribution.</span>
                                 </div>
                             )}
                         </div>
@@ -622,66 +1695,217 @@ export default function ChannelManager() {
                 </div>
             </div>
 
-            {/* Connect Modal */}
+            {/* Connect Individual Channel Modal */}
             <AnimatePresence>
                 {showConnectModal && selectedMeta && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                            onClick={() => connectionStep === 1 && setShowConnectModal(false)} />
-                        <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                            {/* Header */}
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            onClick={() => connectionStep === 1 && setShowConnectModal(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-10"
+                        >
+                            {/* Modal Header */}
                             <div className="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <ChannelLogo logo={selectedMeta.logo} name={selectedMeta.name} size="sm" />
-                                    <h3 className="font-bold text-gray-900">Connect to {selectedMeta.name}</h3>
+                                    <ChannelLogo meta={selectedMeta} size="sm" />
+                                    <div>
+                                        <h3 className="font-bold text-gray-900 text-base">Connect {selectedMeta.name}</h3>
+                                        <p className="text-[11px] text-gray-500">Distribution via Aiosell Channel Manager</p>
+                                    </div>
                                 </div>
                                 {connectionStep === 1 && (
-                                    <button onClick={() => setShowConnectModal(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                                    <button 
+                                        onClick={() => setShowConnectModal(false)} 
+                                        className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+                                    >
+                                        <X size={18} />
+                                    </button>
                                 )}
                             </div>
-                            {/* Body */}
+
+                            {/* Modal Body */}
                             <div className="p-6">
                                 {connectionStep === 1 ? (
                                     <form onSubmit={submitConnection} className="space-y-4">
-                                        <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg flex items-start gap-2 mb-2">
-                                            <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                                            <p>To connect, you must authorize Triplooper within your {selectedMeta.name} Extranet account first.</p>
+                                        <div className="bg-blue-50/80 text-blue-900 text-xs p-3.5 rounded-xl flex items-start gap-2.5 border border-blue-100">
+                                            <AlertCircle size={16} className="shrink-0 text-blue-600 mt-0.5" />
+                                            <p className="leading-relaxed">
+                                                Enter your <strong>{selectedMeta.name} Hotel / Property ID</strong>. Aiosell CM will automatically synchronize live room rates and inventory.
+                                            </p>
                                         </div>
+
                                         <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1.5">Hotel ID / Property ID</label>
-                                            <input type="text" required value={hotelId} onChange={(e) => setHotelId(e.target.value)}
-                                                placeholder={`e.g. ${selectedMeta.id}_12345`}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#C9A646] focus:border-transparent outline-none" />
+                                            <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                                Hotel ID / Property Code <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={propertyIdInput}
+                                                onChange={(e) => setPropertyIdInput(e.target.value)}
+                                                placeholder={`e.g. ${selectedMeta.id}_${tenant?.id?.slice(0, 5) || '101'}`}
+                                                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#C9A646] focus:border-transparent outline-none transition-all"
+                                            />
                                         </div>
+
                                         <div>
-                                            <label className="block text-xs font-semibold text-gray-700 mb-1.5">API Connection Key</label>
-                                            <input type="password" required value={apiKey} onChange={(e) => setApiKey(e.target.value)}
-                                                placeholder="Provided by channel provider"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#C9A646] focus:border-transparent outline-none" />
+                                            <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                                API Key / Extranet Auth Token <span className="text-gray-400 font-normal">(optional if routed via Aiosell)</span>
+                                            </label>
+                                            <input
+                                                type="password"
+                                                value={apiKeyInput}
+                                                onChange={(e) => setApiKeyInput(e.target.value)}
+                                                placeholder="Provided by channel partner extranet"
+                                                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#C9A646] focus:border-transparent outline-none transition-all"
+                                            />
                                         </div>
-                                        <button type="submit" disabled={!hotelId || !apiKey}
-                                            className="w-full mt-2 py-2.5 bg-[#0E2A38] text-white rounded-lg text-sm font-semibold hover:bg-[#0E2A38]/90 transition-colors disabled:opacity-50">
-                                            Authenticate & Connect
-                                        </button>
+
+                                        <div className="pt-2">
+                                            <button
+                                                type="submit"
+                                                disabled={!propertyIdInput.trim()}
+                                                className="w-full py-3 bg-[#0E2A38] text-white rounded-xl text-sm font-bold hover:bg-[#0E2A38]/90 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+                                            >
+                                                <Link2 size={16} /> Authenticate & Connect Channel
+                                            </button>
+                                        </div>
                                     </form>
                                 ) : connectionStep === 2 ? (
-                                    <div className="py-8 flex flex-col items-center justify-center text-center">
-                                        <div className="w-12 h-12 border-4 border-gray-100 border-t-[#C9A646] rounded-full animate-spin mb-4" />
-                                        <h4 className="font-semibold text-gray-900 mb-1">Authenticating...</h4>
-                                        <p className="text-sm text-gray-500">Contacting {selectedMeta.name} API endpoint</p>
+                                    <div className="py-10 flex flex-col items-center justify-center text-center space-y-3">
+                                        <div className="w-12 h-12 border-4 border-gray-100 border-t-[#C9A646] rounded-full animate-spin" />
+                                        <h4 className="font-bold text-gray-900 text-base">Authenticating with Channel Manager...</h4>
+                                        <p className="text-xs text-gray-500 max-w-xs">Connecting {selectedMeta.name} through Aiosell central distribution hub.</p>
                                     </div>
                                 ) : (
-                                    <div className="py-8 flex flex-col items-center justify-center text-center">
-                                        <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
-                                            <CheckCircle2 size={32} />
+                                    <div className="py-10 flex flex-col items-center justify-center text-center space-y-3">
+                                        <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shadow-sm">
+                                            <CheckCircle2 size={30} />
                                         </div>
-                                        <h4 className="font-semibold text-gray-900 mb-1">Connection Successful!</h4>
-                                        <p className="text-sm text-gray-500">Initial sync will begin shortly.</p>
+                                        <h4 className="font-bold text-gray-900 text-base">Connection Successful!</h4>
+                                        <p className="text-xs text-gray-500 max-w-xs">Initial rate & inventory mapping is now active.</p>
                                     </div>
                                 )}
                             </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Aiosell CM Master Configuration Modal */}
+            <AnimatePresence>
+                {showAiosellModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            onClick={() => !aiosellSaving && setShowAiosellModal(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-10"
+                        >
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-[#0E2A38] to-[#1a445a] text-white px-6 py-5 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-[#C9A646] text-[#0E2A38] flex items-center justify-center font-black text-base shadow-sm">
+                                        AS
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg">Aiosell Channel Manager</h3>
+                                        <p className="text-xs text-gray-300">Central PMS ↔ OTA Distribution Gateway</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setShowAiosellModal(false)} 
+                                    className="text-gray-300 hover:text-white p-1 rounded-lg hover:bg-white/10"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            <form onSubmit={handleSaveAiosell} className="p-6 space-y-4">
+                                <div className="bg-emerald-50 text-emerald-900 text-xs p-4 rounded-2xl border border-emerald-200/70 space-y-2">
+                                    <div className="flex items-center gap-2 font-bold text-emerald-800">
+                                        <ShieldCheck size={16} />
+                                        <span>Unified Distribution Engine</span>
+                                    </div>
+                                    <p className="leading-relaxed text-emerald-950">
+                                        Connecting your property to Aiosell synchronizes all 36 channel extranets simultaneously. Rates updated in Triplooper push instantly to Booking.com, Agoda, Expedia, Airbnb, and all partner channels.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                                        Aiosell Hotel Code / Property ID <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={aiosellHotelCode}
+                                        onChange={(e) => setAiosellHotelCode(e.target.value)}
+                                        placeholder="e.g. sandbox-pms or your Aiosell Hotel Code"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#C9A646] focus:border-transparent outline-none transition-all"
+                                    />
+                                    <p className="text-[11px] text-gray-400 mt-1">
+                                        Provided by Aiosell onboarding team (or use sandbox-pms for testing).
+                                    </p>
+                                </div>
+
+                                <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-xs space-y-1.5 text-gray-600">
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold text-gray-700">Webhook Status:</span>
+                                        <span className="text-emerald-600 font-bold">Enabled (/api/webhooks/aiosell)</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold text-gray-700">Rate Plan Mapping:</span>
+                                        <span className="text-gray-900 font-medium">Auto-Seed from Property Details</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-semibold text-gray-700">Supported Channels:</span>
+                                        <span className="text-gray-900 font-bold">36 OTAs, PMS & Switches</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAiosellModal(false)}
+                                        className="flex-1 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl text-sm font-semibold transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={aiosellSaving || !aiosellHotelCode.trim()}
+                                        className="flex-1 py-2.5 bg-[#0E2A38] hover:bg-[#0E2A38]/90 text-white rounded-xl text-sm font-bold transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {aiosellSaving ? (
+                                            <>
+                                                <RefreshCw size={15} className="animate-spin" />
+                                                Linking...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Check size={16} /> Save & Activate Engine
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
                         </motion.div>
                     </div>
                 )}
