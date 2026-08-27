@@ -29,6 +29,7 @@ import {
     Link2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useCRM } from '../../context/CRMDataContext';
 import { supabase } from '../../lib/supabaseClient';
 
 /* ── 36 Supported Channels / Switches / PMS / Gateways ── */
@@ -748,6 +749,7 @@ function ChannelLogo({ meta, size = 'md' }: { meta: ChannelMeta; size?: 'sm' | '
 
 export default function ChannelManager() {
     const { tenant } = useAuth();
+    const { rooms } = useCRM();
 
     const [connections, setConnections] = useState<ChannelConnection[]>([]);
     const [logs, setLogs] = useState<SyncLog[]>([]);
@@ -947,7 +949,7 @@ export default function ChannelManager() {
             // Step 2: Pull this tenant's rooms with their current price
             const { data: roomsData } = await supabase
                 .from('rooms')
-                .select('id, price_per_night, is_available')
+                .select('id, name, type, price_per_night, is_available')
                 .eq('tenant_id', tenant.id)
                 .eq('is_available', true);
 
@@ -960,11 +962,18 @@ export default function ChannelManager() {
                     roomCodeMap.get(m.room_code)!.push(m);
                 }
 
-                // Inventory push: one unit per available room_code for next 90 days
-                const inventoryRooms = Array.from(roomCodeMap.keys()).map(rc => ({
-                    roomCode: rc,
-                    available: 1, // 1 unit per room type; adjust if multi-unit
-                }));
+                // Inventory push: count all physical rooms belonging to this room_code category
+                const inventoryRooms = Array.from(roomCodeMap.keys()).map(rc => {
+                    const matchingUnits = roomsData.filter(r =>
+                        (r.type || '').toLowerCase() === rc.toLowerCase() ||
+                        (r.name || '').toLowerCase().includes(rc.toLowerCase()) ||
+                        rc.toLowerCase().includes((r.type || '').toLowerCase())
+                    );
+                    return {
+                        roomCode: rc,
+                        available: matchingUnits.length > 0 ? matchingUnits.length : roomsData.length,
+                    };
+                });
 
                 if (inventoryRooms.length > 0) {
                     await supabase.functions.invoke('aiosell-push', {
@@ -2002,8 +2011,8 @@ export default function ChannelManager() {
                                             <p className="font-bold text-emerald-800">Property verified &amp; connected!</p>
                                             <p className="text-emerald-700 text-xs mt-0.5">
                                                 {aiosellVerifyResult.rooms > 0
-                                                    ? `${aiosellVerifyResult.rooms} room${aiosellVerifyResult.rooms !== 1 ? 's' : ''} · ${aiosellVerifyResult.rateplans} rate plan${aiosellVerifyResult.rateplans !== 1 ? 's' : ''} auto-mapped. Reservations, rates &amp; inventory are now live.`
-                                                    : `${aiosellVerifyResult.rateplans} mapping${aiosellVerifyResult.rateplans !== 1 ? 's' : ''} seeded. Live sync active.`
+                                                    ? `${aiosellVerifyResult.rooms} Room Type${aiosellVerifyResult.rooms !== 1 ? 's' : ''} (${rooms.length} physical room${rooms.length !== 1 ? 's' : ''} in inventory) · ${aiosellVerifyResult.rateplans} rate plan${aiosellVerifyResult.rateplans !== 1 ? 's' : ''} auto-mapped. All ${rooms.length} rooms are live for inventory distribution &amp; reservations.`
+                                                    : `${rooms.length || 'All'} rooms · ${aiosellVerifyResult.rateplans} mapping${aiosellVerifyResult.rateplans !== 1 ? 's' : ''} seeded. Live sync active.`
                                                 }
                                             </p>
                                         </div>
