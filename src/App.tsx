@@ -5,8 +5,6 @@ import { ClerkProvider } from '@clerk/react';
 import SaaSNavbar from './components/saas/SaaSNavbar';
 import SaaSFooter from './components/saas/SaaSFooter';
 
-// New Apple-inspired landing page
-const LandingPage = lazy(() => import('./pages/LandingPage'));
 import { AuthProvider } from './context/AuthContext';
 import { CRMProvider } from './context/CRMDataContext';
 import ScrollToTop from './components/ScrollToTop';
@@ -192,29 +190,55 @@ const clerkConfig = {
   }
 };
 
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return lazy(async () => {
+    const key = 'chunk_reload_retry';
+    try {
+      const component = await factory();
+      sessionStorage.removeItem(key);
+      return component;
+    } catch (error: any) {
+      const isChunkError =
+        error?.message?.includes('Failed to fetch dynamically imported module') ||
+        error?.message?.includes('Importing a module script failed') ||
+        error?.name === 'ChunkLoadError';
+
+      if (isChunkError && !sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1');
+        window.location.reload();
+        return new Promise(() => {});
+      }
+      throw error;
+    }
+  });
+}
+
 // Lazy load route components
-const SaaSHome = lazy(() => import('./pages/SaaSHome'));
-const PricingPage = lazy(() => import('./pages/PricingPage'));
-const Signup = lazy(() => import('./pages/Signup'));
-const TenantSite = lazy(() => import('./pages/TenantSite'));
-const RoomDetail = lazy(() => import('./pages/RoomDetail'));
-const Login = lazy(() => import('./pages/crm/Login'));
-const CRMApp = lazy(() => import('./components/crm/CRMApp'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const SSOCallback = lazy(() => import('./pages/SSOCallback'));
-const TableOrder = lazy(() => import('./pages/TableOrder'));
-const DriverRegister = lazy(() => import('./pages/driver/DriverRegister'));
-const DriverLogin = lazy(() => import('./pages/driver/DriverLogin'));
-const DriverDashboard = lazy(() => import('./pages/driver/DriverDashboard'));
+const LandingPage = lazyWithRetry(() => import('./pages/LandingPage'));
+const SaaSHome = lazyWithRetry(() => import('./pages/SaaSHome'));
+const PricingPage = lazyWithRetry(() => import('./pages/PricingPage'));
+const Signup = lazyWithRetry(() => import('./pages/Signup'));
+const TenantSite = lazyWithRetry(() => import('./pages/TenantSite'));
+const RoomDetail = lazyWithRetry(() => import('./pages/RoomDetail'));
+const Login = lazyWithRetry(() => import('./pages/crm/Login'));
+const CRMApp = lazyWithRetry(() => import('./components/crm/CRMApp'));
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
+const SSOCallback = lazyWithRetry(() => import('./pages/SSOCallback'));
+const TableOrder = lazyWithRetry(() => import('./pages/TableOrder'));
+const DriverRegister = lazyWithRetry(() => import('./pages/driver/DriverRegister'));
+const DriverLogin = lazyWithRetry(() => import('./pages/driver/DriverLogin'));
+const DriverDashboard = lazyWithRetry(() => import('./pages/driver/DriverDashboard'));
 
 // Guest portal
-const GuestLayout = lazy(() => import('./pages/guest/GuestLayout'));
-const GuestPortal = lazy(() => import('./pages/guest/GuestPortal'));
-const GuestFoodOrder = lazy(() => import('./pages/guest/GuestFoodOrder'));
-const GuestServices = lazy(() => import('./pages/guest/GuestServices'));
-const GuestBill = lazy(() => import('./pages/guest/GuestBill'));
-const GuestChat = lazy(() => import('./pages/guest/GuestChat'));
-const GuestAccount = lazy(() => import('./pages/GuestAccount'));
+const GuestLayout = lazyWithRetry(() => import('./pages/guest/GuestLayout'));
+const GuestPortal = lazyWithRetry(() => import('./pages/guest/GuestPortal'));
+const GuestFoodOrder = lazyWithRetry(() => import('./pages/guest/GuestFoodOrder'));
+const GuestServices = lazyWithRetry(() => import('./pages/guest/GuestServices'));
+const GuestBill = lazyWithRetry(() => import('./pages/guest/GuestBill'));
+const GuestChat = lazyWithRetry(() => import('./pages/guest/GuestChat'));
+const GuestAccount = lazyWithRetry(() => import('./pages/GuestAccount'));
 
 // Simple loading fallback
 const PageLoader = () => (

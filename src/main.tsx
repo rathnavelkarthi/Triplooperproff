@@ -9,8 +9,8 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
   defaults: '2026-05-30',
 });
 
-window.addEventListener("error", (e) => {
-  document.body.innerHTML += `<div style="color:red;z-index:9999;position:fixed;top:0;left:0;background:black">${e.message}<br>${e.error?.stack}</div>`;
+window.addEventListener('vite:preloadError', () => {
+  window.location.reload();
 });
 
 createRoot(document.getElementById('root')!).render(
