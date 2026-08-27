@@ -162,6 +162,42 @@ export default function RoomsCMS() {
                 toast.success('Room added successfully');
             }
             setIsModalOpen(false);
+
+            // Sync updated room base rate to Aiosell / OTAs if connected
+            if (tenant?.id && Number(formData.price_per_night) > 0) {
+                (async () => {
+                    try {
+                        const { data: mappings } = await supabase
+                            .from('aiosell_room_mappings')
+                            .select('room_code, rateplan_code, room_id')
+                            .eq('tenant_id', tenant.id);
+                        if (mappings && mappings.length > 0) {
+                            const targetMappings = editingRoomId
+                                ? mappings.filter(m => m.room_id === editingRoomId)
+                                : mappings;
+                            const activeMappings = targetMappings.length > 0 ? targetMappings : mappings;
+                            const today = new Date().toISOString().slice(0, 10);
+                            const in90 = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
+                            const rateEntries = activeMappings.map(m => ({
+                                roomCode: m.room_code,
+                                rateplanCode: m.rateplan_code,
+                                rate: Math.round(Number(formData.price_per_night)),
+                            }));
+                            if (rateEntries.length > 0) {
+                                await supabase.functions.invoke('aiosell-push', {
+                                    body: {
+                                        tenant_id: tenant.id,
+                                        action: 'rates',
+                                        updates: [{ startDate: today, endDate: in90, rates: rateEntries }],
+                                    }
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Aiosell room rate sync notice:', e);
+                    }
+                })();
+            }
         } catch (err: any) {
             console.error('Room save error:', err);
             toast.error(err?.message || 'Failed to save room. Please try again.');

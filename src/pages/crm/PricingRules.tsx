@@ -378,41 +378,59 @@ export default function PricingRules() {
                     throw new Error('No rooms found to sync. Add your rooms in Property Setup first.');
                 }
 
-                // 3. Build rate entries matching rooms to mappings
-                const rateEntries: Array<{ roomCode: string; rateplanCode: string; rate: number }> = [];
-                for (const m of mappings) {
-                    const room = rooms.find(r => r.id === m.room_id)
-                        || rooms.find(r => (r.type || '').toLowerCase() === m.room_code.toLowerCase())
-                        || rooms.find(r => (r.name || '').toLowerCase().includes(m.room_code.toLowerCase()))
-                        || rooms[0];
+                // 3. Build rate entries date-by-date using the active dailyRates from the calendar
+                const updates: Array<{
+                    startDate: string;
+                    endDate: string;
+                    rates: Array<{ roomCode: string; rateplanCode: string; rate: number }>;
+                }> = [];
 
-                    const baseRate = room?.price_per_night ?? 0;
-                    if (baseRate > 0) {
-                        rateEntries.push({
-                            roomCode: m.room_code,
-                            rateplanCode: m.rateplan_code,
-                            rate: baseRate,
+                for (const d of dates) {
+                    const dateStr = format(d, 'yyyy-MM-dd');
+                    const dayRates: Array<{ roomCode: string; rateplanCode: string; rate: number }> = [];
+
+                    for (const m of mappings) {
+                        const room = rooms.find(r => r.id === m.room_id)
+                            || rooms.find(r => (r.type || '').toLowerCase() === m.room_code.toLowerCase())
+                            || rooms.find(r => (r.name || '').toLowerCase().includes(m.room_code.toLowerCase()))
+                            || rooms[0];
+
+                        const rate = (room && dailyRates[room.id]?.[dateStr] !== undefined)
+                            ? Number(dailyRates[room.id][dateStr])
+                            : (room?.price_per_night ? Number(room.price_per_night) : 0);
+
+                        if (rate > 0) {
+                            dayRates.push({
+                                roomCode: m.room_code,
+                                rateplanCode: m.rateplan_code,
+                                rate: Math.round(rate),
+                            });
+                        }
+                    }
+
+                    if (dayRates.length > 0) {
+                        updates.push({
+                            startDate: dateStr,
+                            endDate: dateStr,
+                            rates: dayRates,
                         });
                     }
                 }
 
-                if (rateEntries.length === 0) throw new Error('No rates to push — set room prices first.');
-
-                const today = new Date().toISOString().slice(0, 10);
-                const in90 = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
+                if (updates.length === 0) throw new Error('No valid rates to push — set room prices first.');
 
                 const res = await supabase.functions.invoke('aiosell-push', {
                     body: {
                         tenant_id: tenant.id,
                         action: 'rates',
-                        updates: [{ startDate: today, endDate: in90, rates: rateEntries }],
+                        updates,
                     }
                 });
                 if (res.error) throw res.error;
             })(),
             {
-                loading: 'Pushing rates to Aiosell → Booking.com, Agoda & all OTAs...',
-                success: 'Rates synced to all channels!',
+                loading: 'Pushing daily rates to Aiosell → Booking.com, Agoda & all OTAs...',
+                success: 'Daily rates successfully synced to all channels!',
                 error: (e: any) => `Sync: ${e?.message ?? e}`,
             }
         );
@@ -749,7 +767,7 @@ export default function PricingRules() {
                                         {rooms.map(room => (
                                             <tr key={room.id} className="hover:bg-gray-50">
                                                 <td className="p-4 bg-white border-r border-gray-200 sticky left-0 z-10 font-medium text-gray-900">
-                                                    {room.name || room.type}
+                                                    {room.room_number ? `Room ${room.room_number} – ${room.name || room.type}` : (room.name || room.type)}
                                                     <div className="text-xs text-gray-400 font-normal mt-0.5">Base: ₹{room.price_per_night}</div>
                                                 </td>
                                                 {dates.map((date, i) => {
