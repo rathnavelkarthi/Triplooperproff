@@ -10,10 +10,15 @@ import posthog from 'posthog-js';
 export default function GuestPortal() {
   const { session, token } = useGuest();
   const navigate = useNavigate();
-  const [wifiPassword, setWifiPassword] = useState('Welcome@123');
-  const [checkoutTime, setCheckoutTime] = useState('11:00 AM');
-  const [supportPhone, setSupportPhone] = useState('+91 90427 37424');
-  const [hotelAbout, setHotelAbout] = useState('');
+  const [wifiPassword, setWifiPassword] = useState(session?.wifi_password || 'Welcome@123');
+  const [wifiNetwork, setWifiNetwork] = useState(session?.wifi_network || `${session?.business_name || 'Hotel'}_Guest`);
+  const [checkoutTime, setCheckoutTime] = useState(session?.checkout_time || '11:00 AM');
+  const [checkoutGuidelines, setCheckoutGuidelines] = useState(session?.checkout_guidelines || 'Drop key cards at front desk');
+  const [breakfastHours, setBreakfastHours] = useState(session?.breakfast_hours || '08:00 AM - 10:30 AM');
+  const [supportPhone, setSupportPhone] = useState(session?.property_phone || '+91 6383565691');
+  const [propertyAddress, setPropertyAddress] = useState(session?.property_address || '');
+  const [hotelAbout, setHotelAbout] = useState(session?.property_about || '');
+  const [googleMapsUrl, setGoogleMapsUrl] = useState(session?.google_maps_url || '');
 
   // Stays & Aadhaar Verification states
   const [stayHistory, setStayHistory] = useState<any[]>([]);
@@ -42,23 +47,43 @@ export default function GuestPortal() {
   useEffect(() => {
     if (!session?.tenant_id) return;
 
+    // Initialize from session if available
+    if (session.property_address) setPropertyAddress(session.property_address);
+    if (session.property_phone) setSupportPhone(session.property_phone);
+    if (session.property_about) setHotelAbout(session.property_about);
+    if (session.wifi_password) setWifiPassword(session.wifi_password);
+    if (session.wifi_network) setWifiNetwork(session.wifi_network);
+    if (session.breakfast_hours) setBreakfastHours(session.breakfast_hours);
+    if (session.checkout_guidelines) setCheckoutGuidelines(session.checkout_guidelines);
+    if (session.google_maps_url) setGoogleMapsUrl(session.google_maps_url);
+
     async function loadCMS() {
       try {
         const { data } = await supabase
-          .from('cms_settings')
+          .from('settings')
           .select('setting_key, setting_value')
           .eq('tenant_id', session.tenant_id);
 
         if (data) {
           const wifi = data.find(d => d.setting_key === 'wifiPassword');
+          const wifiNet = data.find(d => d.setting_key === 'wifiNetwork');
           const checkout = data.find(d => d.setting_key === 'checkoutTime');
-          const phone = data.find(d => d.setting_key === 'contactPhone');
+          const guidelines = data.find(d => d.setting_key === 'checkoutGuidelines');
+          const breakfast = data.find(d => d.setting_key === 'breakfastHours');
+          const phone = data.find(d => d.setting_key === 'contactPhone' || d.setting_key === 'phone');
+          const address = data.find(d => d.setting_key === 'contactAddress' || d.setting_key === 'address');
           const about = data.find(d => d.setting_key === 'aboutText');
+          const maps = data.find(d => d.setting_key === 'googleMapsUrl');
 
           if (wifi?.setting_value) setWifiPassword(wifi.setting_value);
+          if (wifiNet?.setting_value) setWifiNetwork(wifiNet.setting_value);
           if (checkout?.setting_value) setCheckoutTime(checkout.setting_value);
+          if (guidelines?.setting_value) setCheckoutGuidelines(guidelines.setting_value);
+          if (breakfast?.setting_value) setBreakfastHours(breakfast.setting_value);
           if (phone?.setting_value) setSupportPhone(phone.setting_value);
+          if (address?.setting_value) setPropertyAddress(address.setting_value);
           if (about?.setting_value) setHotelAbout(about.setting_value);
+          if (maps?.setting_value) setGoogleMapsUrl(maps.setting_value);
         }
       } catch (err) {
         console.error('Failed to load portal settings:', err);
@@ -633,7 +658,7 @@ export default function GuestPortal() {
           <div className="space-y-3 pt-2">
             <div className="flex justify-between items-center text-sm">
               <span className="text-zinc-500 font-medium">Wi-Fi Network</span>
-              <span className="font-semibold text-white select-all">{session.business_name}_Guest</span>
+              <span className="font-semibold text-white select-all">{wifiNetwork}</span>
             </div>
             
             <div className="flex justify-between items-center text-sm">
@@ -661,17 +686,33 @@ export default function GuestPortal() {
           <div className="space-y-3 pt-2">
             <div className="flex justify-between items-center text-sm">
               <span className="text-zinc-500 font-medium">Breakfast Hours</span>
-              <span className="font-semibold text-white">08:00 AM - 10:30 AM</span>
+              <span className="font-semibold text-white">{breakfastHours}</span>
             </div>
 
             <div className="flex justify-between items-center text-sm">
               <span className="text-zinc-500 font-medium">Checkout Guidelines</span>
-              <span className="font-semibold text-white">Drop key cards at front desk</span>
+              <span className="font-semibold text-white">{checkoutGuidelines}</span>
             </div>
 
-            <div className="flex items-center gap-2 text-sm pt-2 border-t border-zinc-800/40">
-              <MapPin size={14} className="text-zinc-500 shrink-0" />
-              <span className="text-zinc-400 line-clamp-1">{session.guest_location || 'Coastal Road, Pondicherry'}</span>
+            <div className="flex items-center justify-between gap-2 text-sm pt-2 border-t border-zinc-800/40">
+              <div className="flex items-center gap-2 text-zinc-400 min-w-0">
+                <MapPin size={14} className="text-emerald-400 shrink-0" />
+                <span className="truncate">{propertyAddress || session.property_address || `${session.business_name}`}</span>
+              </div>
+              {(googleMapsUrl || propertyAddress) && (
+                <a
+                  href={
+                    googleMapsUrl && (googleMapsUrl.startsWith('http://') || googleMapsUrl.startsWith('https://'))
+                      ? googleMapsUrl
+                      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(propertyAddress || session.business_name)}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold shrink-0 flex items-center gap-0.5 underline decoration-emerald-500/30"
+                >
+                  Map
+                </a>
+              )}
             </div>
           </div>
         </div>

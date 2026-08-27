@@ -32,6 +32,16 @@ export interface GuestSession {
   slot_type?: string | null;
   slot_start_time?: string | null;
   slot_end_time?: string | null;
+  property_address?: string | null;
+  property_phone?: string | null;
+  property_email?: string | null;
+  property_about?: string | null;
+  wifi_network?: string | null;
+  wifi_password?: string | null;
+  breakfast_hours?: string | null;
+  checkout_guidelines?: string | null;
+  checkout_time?: string | null;
+  google_maps_url?: string | null;
 }
 
 const GuestContext = createContext<{
