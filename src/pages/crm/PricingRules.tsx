@@ -335,19 +335,57 @@ export default function PricingRules() {
         if (!tenant?.id) return;
         toast.promise(
             (async () => {
-                const { data: mappings } = await supabase
+                // 1. Fetch room mappings
+                let { data: mappings } = await supabase
                     .from('aiosell_room_mappings')
                     .select('room_code, rateplan_code, room_id')
                     .eq('tenant_id', tenant.id);
 
+                // 2. If empty, check if hotel code is connected and auto-seed
                 if (!mappings || mappings.length === 0) {
-                    throw new Error('No Aiosell room mappings found. Link your Hotel Code first.');
+                    const { data: conn } = await supabase
+                        .from('channel_connections')
+                        .select('property_id')
+                        .eq('tenant_id', tenant.id)
+                        .eq('channel_id', 'aiosell')
+                        .maybeSingle();
+
+                    if (!conn?.property_id) {
+                        throw new Error('No Aiosell Hotel Code linked. Go to CRM > Channel Manager to enter your Hotel Code.');
+                    }
+
+                    // Auto-seed mappings for existing rooms
+                    if (rooms.length > 0) {
+                        const fallbackRows = rooms.map(room => ({
+                            tenant_id: tenant.id,
+                            room_id: room.id,
+                            room_code: (room.type || room.name || 'standard').toLowerCase().replace(/\s+/g, '-'),
+                            rateplan_code: `${(room.type || room.name || 'standard').toLowerCase().replace(/\s+/g, '-')}-ep`,
+                            rateplan_name: 'Rooms Only'
+                        }));
+                        await supabase.from('aiosell_room_mappings').upsert(fallbackRows, {
+                            onConflict: 'tenant_id,room_code,rateplan_code'
+                        });
+                        const refetched = await supabase
+                            .from('aiosell_room_mappings')
+                            .select('room_code, rateplan_code, room_id')
+                            .eq('tenant_id', tenant.id);
+                        mappings = refetched.data || [];
+                    }
                 }
 
-                // Build rate entries for today → 14 visible days, using current dailyRates
+                if (!mappings || mappings.length === 0) {
+                    throw new Error('No rooms found to sync. Add your rooms in Property Setup first.');
+                }
+
+                // 3. Build rate entries matching rooms to mappings
                 const rateEntries: Array<{ roomCode: string; rateplanCode: string; rate: number }> = [];
                 for (const m of mappings) {
-                    const room = rooms.find(r => r.id === m.room_id);
+                    const room = rooms.find(r => r.id === m.room_id)
+                        || rooms.find(r => (r.type || '').toLowerCase() === m.room_code.toLowerCase())
+                        || rooms.find(r => (r.name || '').toLowerCase().includes(m.room_code.toLowerCase()))
+                        || rooms[0];
+
                     const baseRate = room?.price_per_night ?? 0;
                     if (baseRate > 0) {
                         rateEntries.push({
@@ -375,7 +413,7 @@ export default function PricingRules() {
             {
                 loading: 'Pushing rates to Aiosell → Booking.com, Agoda & all OTAs...',
                 success: 'Rates synced to all channels!',
-                error: (e: any) => `Sync failed: ${e?.message ?? e}`,
+                error: (e: any) => `Sync: ${e?.message ?? e}`,
             }
         );
     };
@@ -415,7 +453,6 @@ export default function PricingRules() {
                     price_override: priceByRoom[room.id],
                 }));
 
-                // Remove duplicate null-room entries if all rooms selected
                 const deduped = bulkRoom === 'all'
                     ? [rulePayloads[0]]
                     : rulePayloads;
@@ -439,23 +476,54 @@ export default function PricingRules() {
                     return next;
                 });
 
-                // 4. Push updated rates to Aiosell → all OTAs
-                const { data: mappings } = await supabase
+                // 4. Push updated rates to Aiosell → all OTAs if connected
+                let { data: mappings } = await supabase
                     .from('aiosell_room_mappings')
                     .select('room_code, rateplan_code, room_id')
                     .eq('tenant_id', tenant.id);
 
+                if (!mappings || mappings.length === 0) {
+                    const { data: conn } = await supabase
+                        .from('channel_connections')
+                        .select('property_id')
+                        .eq('tenant_id', tenant.id)
+                        .eq('channel_id', 'aiosell')
+                        .maybeSingle();
+
+                    if (conn?.property_id && rooms.length > 0) {
+                        const fallbackRows = rooms.map(room => ({
+                            tenant_id: tenant.id,
+                            room_id: room.id,
+                            room_code: (room.type || room.name || 'standard').toLowerCase().replace(/\s+/g, '-'),
+                            rateplan_code: `${(room.type || room.name || 'standard').toLowerCase().replace(/\s+/g, '-')}-ep`,
+                            rateplan_name: 'Rooms Only'
+                        }));
+                        await supabase.from('aiosell_room_mappings').upsert(fallbackRows, {
+                            onConflict: 'tenant_id,room_code,rateplan_code'
+                        });
+                        const refetched = await supabase
+                            .from('aiosell_room_mappings')
+                            .select('room_code, rateplan_code, room_id')
+                            .eq('tenant_id', tenant.id);
+                        mappings = refetched.data || [];
+                    }
+                }
+
                 if (mappings && mappings.length > 0) {
                     const filteredMappings = bulkRoom === 'all'
                         ? mappings
-                        : mappings.filter(m => String(m.room_id) === bulkRoom);
+                        : mappings.filter(m => String(m.room_id) === bulkRoom || m.room_id === null);
 
                     const rateEntries = filteredMappings
-                        .map(m => ({
-                            roomCode: m.room_code,
-                            rateplanCode: m.rateplan_code,
-                            rate: priceByRoom[m.room_id] ?? (targetRooms[0] ? (targetRooms[0].price_per_night ?? 0) : 0),
-                        }))
+                        .map(m => {
+                            const matchedRoom = rooms.find(r => r.id === m.room_id) || targetRooms[0];
+                            const rate = (matchedRoom && priceByRoom[matchedRoom.id]) ? priceByRoom[matchedRoom.id] : (matchedRoom?.price_per_night ?? 0);
+                            return {
+                                roomCode: m.room_code,
+                                rateplanCode: m.rateplan_code,
+                                rate,
+                            };
+                        })
                         .filter(e => e.rate > 0);
 
                     if (rateEntries.length > 0) {
