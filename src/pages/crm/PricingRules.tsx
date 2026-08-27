@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { useCRM } from '../../context/CRMDataContext';
@@ -40,6 +40,14 @@ export default function PricingRules() {
     // Calendar State
     const [startDate, setStartDate] = useState(new Date());
     const [showBulkUpdate, setShowBulkUpdate] = useState(false);
+
+    // Bulk Update Form
+    const [bulkFrom, setBulkFrom] = useState(new Date().toISOString().slice(0, 10));
+    const [bulkTo, setBulkTo] = useState(new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10));
+    const [bulkRoom, setBulkRoom] = useState('all');
+    const [bulkStrategy, setBulkStrategy] = useState<'increase_pct' | 'decrease_pct' | 'fixed'>('increase_pct');
+    const [bulkValue, setBulkValue] = useState('15');
+    const [bulkApplying, setBulkApplying] = useState(false);
 
     // Dynamic Rule Modal State
     const [showRuleModal, setShowRuleModal] = useState(false);
@@ -323,15 +331,154 @@ export default function PricingRules() {
         }
     };
 
-    const saveRates = () => {
+    const saveRates = async () => {
+        if (!tenant?.id) return;
         toast.promise(
-            new Promise(resolve => setTimeout(resolve, 800)),
+            (async () => {
+                const { data: mappings } = await supabase
+                    .from('aiosell_room_mappings')
+                    .select('room_code, rateplan_code, room_id')
+                    .eq('tenant_id', tenant.id);
+
+                if (!mappings || mappings.length === 0) {
+                    throw new Error('No Aiosell room mappings found. Link your Hotel Code first.');
+                }
+
+                // Build rate entries for today → 14 visible days, using current dailyRates
+                const rateEntries: Array<{ roomCode: string; rateplanCode: string; rate: number }> = [];
+                for (const m of mappings) {
+                    const room = rooms.find(r => r.id === m.room_id);
+                    const baseRate = room?.price_per_night ?? 0;
+                    if (baseRate > 0) {
+                        rateEntries.push({
+                            roomCode: m.room_code,
+                            rateplanCode: m.rateplan_code,
+                            rate: baseRate,
+                        });
+                    }
+                }
+
+                if (rateEntries.length === 0) throw new Error('No rates to push — set room prices first.');
+
+                const today = new Date().toISOString().slice(0, 10);
+                const in90 = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
+
+                const res = await supabase.functions.invoke('aiosell-push', {
+                    body: {
+                        tenant_id: tenant.id,
+                        action: 'rates',
+                        updates: [{ startDate: today, endDate: in90, rates: rateEntries }],
+                    }
+                });
+                if (res.error) throw res.error;
+            })(),
             {
-                loading: 'Pushing rates to Channel Manager...',
-                success: 'Rates successfully synced to Booking.com, Agoda, and MakeMyTrip!',
-                error: 'Failed to sync rates'
+                loading: 'Pushing rates to Aiosell → Booking.com, Agoda & all OTAs...',
+                success: 'Rates synced to all channels!',
+                error: (e: any) => `Sync failed: ${e?.message ?? e}`,
             }
         );
+    };
+
+    const handleBulkApply = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!tenant?.id || !bulkFrom || !bulkTo || !bulkValue) return;
+        if (new Date(bulkTo) < new Date(bulkFrom)) {
+            toast.error('End date must be after start date.');
+            return;
+        }
+        setBulkApplying(true);
+
+        const val = parseFloat(bulkValue);
+        const targetRooms = bulkRoom === 'all' ? rooms : rooms.filter(r => String(r.id) === bulkRoom);
+
+        toast.promise(
+            (async () => {
+                // 1. Compute new prices for each target room
+                const priceByRoom: Record<number, number> = {};
+                for (const room of targetRooms) {
+                    const base = room.price_per_night || 0;
+                    let newPrice: number;
+                    if (bulkStrategy === 'increase_pct') newPrice = Math.round(base * (1 + val / 100));
+                    else if (bulkStrategy === 'decrease_pct') newPrice = Math.round(base * (1 - val / 100));
+                    else newPrice = Math.round(val);
+                    priceByRoom[room.id] = newPrice;
+                }
+
+                // 2. Upsert a room_pricing rule for the date range
+                const rulePayloads = targetRooms.map(room => ({
+                    tenant_id: tenant.id,
+                    room_id: bulkRoom === 'all' ? null : room.id,
+                    rule_type: 'bulk_override',
+                    start_date: bulkFrom,
+                    end_date: bulkTo,
+                    price_override: priceByRoom[room.id],
+                }));
+
+                // Remove duplicate null-room entries if all rooms selected
+                const deduped = bulkRoom === 'all'
+                    ? [rulePayloads[0]]
+                    : rulePayloads;
+
+                for (const payload of deduped) {
+                    const { error } = await supabase.from('room_pricing').insert(payload);
+                    if (error) throw error;
+                }
+
+                // 3. Update local dailyRates immediately for visual feedback
+                setDailyRates(prev => {
+                    const next = { ...prev };
+                    for (const room of targetRooms) {
+                        next[room.id] = { ...(next[room.id] || {}) };
+                        const start = new Date(bulkFrom);
+                        const end = new Date(bulkTo);
+                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                            next[room.id][d.toISOString().slice(0, 10)] = priceByRoom[room.id];
+                        }
+                    }
+                    return next;
+                });
+
+                // 4. Push updated rates to Aiosell → all OTAs
+                const { data: mappings } = await supabase
+                    .from('aiosell_room_mappings')
+                    .select('room_code, rateplan_code, room_id')
+                    .eq('tenant_id', tenant.id);
+
+                if (mappings && mappings.length > 0) {
+                    const filteredMappings = bulkRoom === 'all'
+                        ? mappings
+                        : mappings.filter(m => String(m.room_id) === bulkRoom);
+
+                    const rateEntries = filteredMappings
+                        .map(m => ({
+                            roomCode: m.room_code,
+                            rateplanCode: m.rateplan_code,
+                            rate: priceByRoom[m.room_id] ?? (targetRooms[0] ? (targetRooms[0].price_per_night ?? 0) : 0),
+                        }))
+                        .filter(e => e.rate > 0);
+
+                    if (rateEntries.length > 0) {
+                        await supabase.functions.invoke('aiosell-push', {
+                            body: {
+                                tenant_id: tenant.id,
+                                action: 'rates',
+                                updates: [{ startDate: bulkFrom, endDate: bulkTo, rates: rateEntries }],
+                            }
+                        });
+                    }
+                }
+
+                setShowBulkUpdate(false);
+                await fetchData();
+            })(),
+            {
+                loading: 'Applying bulk price change & pushing to Aiosell...',
+                success: `Rates updated (${bulkFrom} → ${bulkTo}) & pushed to all OTAs!`,
+                error: (e: any) => `Failed: ${e?.message ?? e}`,
+            }
+        );
+        setBulkApplying(false);
     };
 
     const handleSaveOccupancySettings = async () => {
@@ -866,69 +1013,82 @@ export default function PricingRules() {
                 </div>
             </div>
 
-            {/* Bulk Update Modal Simulation */}
+            {/* Bulk Update Rates Modal */}
             {showBulkUpdate && (
-                <div className="fixed inset-0 bg-[#0E2A38]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-8 shadow-2xl">
-                        <h3 className="text-2xl font-serif font-bold text-[#0E2A38] mb-2">Bulk Update Rates</h3>
-                        <p className="text-sm text-gray-500 mb-6">Select a date range and strategy to override prices across multiple room types.</p>
-
-                        <div className="space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        onClick={() => !bulkApplying && setShowBulkUpdate(false)}
+                    />
+                    <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden z-10">
+                        <div className="bg-gradient-to-r from-[#0E2A38] to-[#1a445a] text-white px-6 py-5 flex items-center justify-between">
+                            <div>
+                                <h3 className="font-bold text-lg">Bulk Update Rates</h3>
+                                <p className="text-xs text-gray-300 mt-0.5">Select a date range and strategy to override prices across multiple room types.</p>
+                            </div>
+                            {!bulkApplying && (
+                                <button onClick={() => setShowBulkUpdate(false)} className="text-gray-300 hover:text-white p-1 rounded-lg hover:bg-white/10">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                            )}
+                        </div>
+                        <form onSubmit={handleBulkApply} className="p-6 space-y-5">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">From Date</label>
-                                    <input type="date" className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:border-[var(--color-ocean-500)]" defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+                                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">From Date</label>
+                                    <input type="date" required value={bulkFrom} onChange={e => setBulkFrom(e.target.value)}
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A646] focus:ring-2 focus:ring-[#C9A646]/20" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">To Date</label>
-                                    <input type="date" className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:border-[var(--color-ocean-500)]" defaultValue={format(addDays(new Date(), 7), 'yyyy-MM-dd')} />
+                                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">To Date</label>
+                                    <input type="date" required value={bulkTo} onChange={e => setBulkTo(e.target.value)}
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A646] focus:ring-2 focus:ring-[#C9A646]/20" />
                                 </div>
                             </div>
-
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Target Room</label>
-                                <select className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:border-[var(--color-ocean-500)] bg-white">
+                                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Target Room</label>
+                                <select value={bulkRoom} onChange={e => setBulkRoom(e.target.value)}
+                                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#C9A646] focus:ring-2 focus:ring-[#C9A646]/20">
                                     <option value="all">All Room Types</option>
-                                    {rooms.map(r => <option key={r.id} value={r.id}>{r.name || r.type}</option>)}
+                                    {rooms.map(r => <option key={r.id} value={String(r.id)}>{r.name || r.type}</option>)}
                                 </select>
                             </div>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Strategy</label>
-                                    <select className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:border-[var(--color-ocean-500)] bg-white">
-                                        <option value="increase_percent">Increase By %</option>
-                                        <option value="decrease_percent">Decrease By %</option>
-                                        <option value="set_fixed">Set Fixed Rate</option>
+                                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Strategy</label>
+                                    <select value={bulkStrategy} onChange={e => setBulkStrategy(e.target.value as typeof bulkStrategy)}
+                                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-[#C9A646] focus:ring-2 focus:ring-[#C9A646]/20">
+                                        <option value="increase_pct">Increase By %</option>
+                                        <option value="decrease_pct">Decrease By %</option>
+                                        <option value="fixed">Set Fixed Rate</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Value</label>
+                                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Value</label>
                                     <div className="relative">
-                                        <input type="number" className="w-full border border-gray-200 rounded-xl p-3 pl-8 focus:outline-none focus:border-[var(--color-ocean-500)]" defaultValue="15" />
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">%</span>
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">{bulkStrategy === 'fixed' ? '₹' : '%'}</span>
+                                        <input type="number" required min="0" step="0.01" value={bulkValue} onChange={e => setBulkValue(e.target.value)}
+                                            className="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A646] focus:ring-2 focus:ring-[#C9A646]/20" />
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="flex justify-end gap-3 mt-8">
-                            <button
-                                onClick={() => setShowBulkUpdate(false)}
-                                className="px-5 py-2.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowBulkUpdate(false);
-                                    toast.success('Rates bulk updated successfully!');
-                                }}
-                                className="bg-[#C9A646] text-[#0E2A38] px-6 py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
-                            >
-                                Apply Changes
-                            </button>
-                        </div>
+                            <div className="flex items-start gap-2.5 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 text-xs text-emerald-800">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5 text-emerald-600" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                <span>Prices will be saved and <strong>instantly pushed to Booking.com, Agoda, Expedia &amp; all connected OTAs</strong> via Aiosell.</span>
+                            </div>
+                            <div className="flex gap-3 pt-1">
+                                <button type="button" onClick={() => setShowBulkUpdate(false)} disabled={bulkApplying}
+                                    className="flex-1 py-2.5 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-sm font-semibold transition-all">
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={bulkApplying || !bulkValue}
+                                    className="flex-1 py-2.5 bg-[#C9A646] hover:bg-[#b8953b] text-[#0E2A38] rounded-xl text-sm font-bold shadow-md transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                                    {bulkApplying
+                                        ? <><svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Applying...</>
+                                        : <>Apply Changes</>}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
@@ -1030,3 +1190,4 @@ export default function PricingRules() {
         </div>
     );
 }
+
