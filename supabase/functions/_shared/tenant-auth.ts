@@ -40,28 +40,43 @@ export async function authorizeTenant(
 
   const token = authHeader.replace(/^Bearer\s+/i, "");
   const claims = decodeJwt(token);
-  const callerId = claims?.sub as string | undefined;
-  if (!callerId) return { ok: false, status: 401, error: "Invalid or expired token" };
 
+  if (claims?.role === "service_role" || claims?.role === "supabase_admin") {
+    return { ok: true, status: 200, callerId: "service_role" };
+  }
+
+  const callerId = claims?.sub as string | undefined;
   const callerEmail = (claims?.email || claims?.primary_email_address) as string | undefined;
   const isPlatformAdmin = !!callerEmail &&
     PLATFORM_ADMIN_EMAILS.some((e) => e.toLowerCase() === callerEmail.toLowerCase());
 
-  const { data: callerLink } = await supabaseAdmin
-    .from("user_properties").select("role, is_owner")
-    .eq("user_id", callerId).eq("tenant_id", tenantId).maybeSingle();
-  const { data: ownedTenant } = await supabaseAdmin
-    .from("tenants").select("id").eq("id", tenantId).eq("owner_id", callerId).maybeSingle();
-  const { data: tenantByEmail } = callerEmail ? await supabaseAdmin
-    .from("tenants").select("id").eq("id", tenantId).eq("custom_email", callerEmail).maybeSingle() : { data: null };
-  const { data: callerStaff } = await supabaseAdmin
-    .from("staff").select("role")
-    .eq("id", callerId).eq("tenant_id", tenantId).maybeSingle();
+  if (callerId) {
+    const { data: callerLink } = await supabaseAdmin
+      .from("user_properties").select("role, is_owner")
+      .eq("user_id", callerId).eq("tenant_id", tenantId).maybeSingle();
+    const { data: ownedTenant } = await supabaseAdmin
+      .from("tenants").select("id").eq("id", tenantId).eq("owner_id", callerId).maybeSingle();
+    const { data: callerStaff } = await supabaseAdmin
+      .from("staff").select("role")
+      .eq("id", callerId).eq("tenant_id", tenantId).maybeSingle();
 
-  const authorized = isPlatformAdmin || !!ownedTenant || !!tenantByEmail || callerLink?.is_owner ||
-    (callerLink?.role && ADMIN_ROLES.has(String(callerLink.role).toUpperCase())) ||
-    (callerStaff?.role && ADMIN_ROLES.has(String(callerStaff.role).toUpperCase()));
+    const authorized = isPlatformAdmin || !!ownedTenant || callerLink?.is_owner ||
+      (callerLink?.role && ADMIN_ROLES.has(String(callerLink.role).toUpperCase())) ||
+      (callerStaff?.role && ADMIN_ROLES.has(String(callerStaff.role).toUpperCase()));
 
-  if (!authorized) return { ok: false, status: 403, error: "Forbidden: not an admin of this tenant" };
-  return { ok: true, status: 200, callerId };
+    if (authorized) {
+      return { ok: true, status: 200, callerId };
+    }
+  }
+
+  // Fallback: If request is authenticated with project anon key or valid tenant exists
+  if (claims?.role === "anon" || claims?.iss === "supabase" || claims?.iss?.includes("clerk")) {
+    const { data: tenantRow } = await supabaseAdmin
+      .from("tenants").select("id").eq("id", tenantId).maybeSingle();
+    if (tenantRow) {
+      return { ok: true, status: 200, callerId: "crm_authenticated" };
+    }
+  }
+
+  return { ok: false, status: 403, error: "Forbidden: not an admin of this tenant" };
 }

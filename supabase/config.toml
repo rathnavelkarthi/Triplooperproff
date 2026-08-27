@@ -32,14 +32,14 @@ entrypoint = "./functions/send-whatsapp/index.ts"
 # Aiosell channel manager: authenticated CRM push (rates/inventory/restrictions).
 [functions.aiosell-push]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/aiosell-push/deno.json"
 entrypoint = "./functions/aiosell-push/index.ts"
 
 # Aiosell channel manager: authenticated CRM fetch/sync + mapping.
 [functions.aiosell-sync]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/aiosell-sync/deno.json"
 entrypoint = "./functions/aiosell-sync/index.ts"
 
