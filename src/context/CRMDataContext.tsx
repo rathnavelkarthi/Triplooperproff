@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { mapReservationStatus, mapPaymentStatus, mapUIToDBStatus } from '../lib/booking';
 import { sendBookingConfirmation, sendBookingCancelled, sendBookingStatusChange, sendCheckInEmail, sendCheckOutEmail, triggerBookingEmails } from '../lib/email';
 import { sendWhatsAppConfirmation } from '../lib/whatsapp';
+import { pushLiveInventoryToChannels } from '../lib/channelSync';
 
 // --- Hotel Types ---
 
@@ -42,6 +43,10 @@ export type Reservation = {
     aadhar_dob?: string | null;
     guest_review_note?: string | null;
     guest_review_date?: string | null;
+    slot_type?: string;
+    slot_start_time?: string | null;
+    slot_end_time?: string | null;
+    synced_with_channels?: boolean;
 };
 
 export type Room = {
@@ -320,6 +325,10 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                         aadhar_dob: r.aadhar_dob,
                         guest_review_note: r.guest_review_note,
                         guest_review_date: r.guest_review_date,
+                        slot_type: r.slot_type || 'Full Stay',
+                        slot_start_time: r.slot_start_time || null,
+                        slot_end_time: r.slot_end_time || null,
+                        synced_with_channels: r.synced_with_channels ?? true,
                     })));
                 } else { setReservations([]); }
 
@@ -481,14 +490,21 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                 return isNaN(num) ? max : Math.max(max, num);
             }, 0);
         const newId = `RES-${String(maxNum + 1).padStart(3, '0')}`;
-        const newReservation: Reservation = { ...reservation, id: newId };
+        const newReservation: Reservation = { 
+            ...reservation, 
+            id: newId,
+            slot_type: reservation.slot_type || 'Full Stay',
+            slot_start_time: reservation.slot_start_time || null,
+            slot_end_time: reservation.slot_end_time || null,
+            synced_with_channels: true,
+        };
         
         // Optimistically update local state so the UI reflects the booking immediately
         setReservations(prev => [newReservation, ...prev]);
 
         try {
             const tenantId = tid();
-            const { error } = await supabase.from('reservations').insert([{
+            const insertPayload: any = {
                 id: newId,
                 guest_name: reservation.guest,
                 guest_email: reservation.guest_email || null,
@@ -504,11 +520,33 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                 payment_method: reservation.payment_method || 'UPI',
                 amount: reservation.amount || 0,
                 gst_amount: reservation.gst_amount || 0,
+                slot_type: reservation.slot_type || 'Full Stay',
+                slot_start_time: reservation.slot_start_time || null,
+                slot_end_time: reservation.slot_end_time || null,
+                synced_with_channels: true,
                 ...(tenantId ? { tenant_id: tenantId } : {}),
-            }]);
+            };
+
+            const { error } = await supabase.from('reservations').insert([insertPayload]);
 
             if (error) {
                 console.warn('[CRMDataContext] Supabase insert warning for reservation:', error.message);
+                // Fallback attempt without slot columns if database hasn't migrated yet
+                if (error.message && error.message.includes('column')) {
+                    const fallbackPayload = { ...insertPayload };
+                    delete fallbackPayload.slot_type;
+                    delete fallbackPayload.slot_start_time;
+                    delete fallbackPayload.slot_end_time;
+                    delete fallbackPayload.synced_with_channels;
+                    await supabase.from('reservations').insert([fallbackPayload]);
+                }
+            }
+
+            // Real-time bidirectional channel manager and Aiosell inventory push
+            if (tenantId) {
+                pushLiveInventoryToChannels(tenantId).catch(err =>
+                    console.warn('[CRMDataContext] Live channel inventory sync notice:', err)
+                );
             }
 
             // Trigger notifications asynchronously
@@ -572,6 +610,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.from('reservations').delete().eq('id', id);
         if (error) throw error;
         setReservations(reservations.filter(r => r.id !== id));
+        const tenantId = tid();
+        if (tenantId) {
+            pushLiveInventoryToChannels(tenantId).catch(err =>
+                console.warn('[CRMDataContext] Live channel sync notice on delete:', err)
+            );
+        }
     };
 
     const updateStaff = async (id: string, updatedData: Partial<StaffMember>) => {
@@ -600,10 +644,34 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         if (updatedData.guest_review_note !== undefined) updatePayload.guest_review_note = updatedData.guest_review_note;
         if (updatedData.guest_review_date !== undefined) updatePayload.guest_review_date = updatedData.guest_review_date;
         if (updatedData.source) updatePayload.source = updatedData.source;
+        if (updatedData.slot_type) updatePayload.slot_type = updatedData.slot_type;
+        if (updatedData.slot_start_time !== undefined) updatePayload.slot_start_time = updatedData.slot_start_time;
+        if (updatedData.slot_end_time !== undefined) updatePayload.slot_end_time = updatedData.slot_end_time;
+        
         const oldReservation = reservations.find(r => r.id === id);
         const { error } = await supabase.from('reservations').update(updatePayload).eq('id', id);
-        if (error) throw error;
+        if (error) {
+            console.warn('[CRMDataContext] Update reservation warning:', error.message);
+            if (error.message && error.message.includes('column')) {
+                const safePayload = { ...updatePayload };
+                delete safePayload.slot_type;
+                delete safePayload.slot_start_time;
+                delete safePayload.slot_end_time;
+                await supabase.from('reservations').update(safePayload).eq('id', id);
+            } else {
+                throw error;
+            }
+        }
         setReservations(prev => prev.map(r => r.id === id ? { ...r, ...updatedData } : r));
+
+        // Real-time channel manager sync on update
+        const tenantId = tid();
+        if (tenantId) {
+            pushLiveInventoryToChannels(tenantId).catch(err =>
+                console.warn('[CRMDataContext] Live channel sync notice on update:', err)
+            );
+        }
+
         // Send email on status change
         if (oldReservation && updatedData.status && oldReservation.status !== updatedData.status) {
             const merged = { ...oldReservation, ...updatedData };
@@ -698,6 +766,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
         const checkedInRes = reservations.find(r => r.id === reservationId);
         setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, status: 'Checked In' } : r));
+        const tenantId = tid();
+        if (tenantId) {
+            pushLiveInventoryToChannels(tenantId).catch(err =>
+                console.warn('[CRMDataContext] Live channel sync notice on check-in:', err)
+            );
+        }
         if (checkedInRes?.guest_email) {
             sendCheckInEmail({
                 guestName: checkedInRes.guest,
@@ -730,6 +804,12 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
         const checkedOutRes = reservations.find(r => r.id === reservationId);
         setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, status: 'Checked Out', payment: 'Paid' } : r));
+        const tenantId = tid();
+        if (tenantId) {
+            pushLiveInventoryToChannels(tenantId).catch(err =>
+                console.warn('[CRMDataContext] Live channel sync notice on check-out:', err)
+            );
+        }
         if (checkedOutRes?.guest_email) {
             sendCheckOutEmail({
                 guestName: checkedOutRes.guest,

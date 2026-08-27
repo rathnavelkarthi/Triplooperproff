@@ -23,6 +23,9 @@ type CalendarBooking = {
   end: Date;
   status: Reservation['status'];
   payment: Reservation['payment'];
+  slot_type?: string;
+  slot_start_time?: string | null;
+  slot_end_time?: string | null;
 };
 
 type FilterState = {
@@ -96,6 +99,9 @@ export default function Calendar() {
       end: new Date(res.checkOut),
       status: res.status,
       payment: res.payment,
+      slot_type: res.slot_type || 'Full Stay',
+      slot_start_time: res.slot_start_time || null,
+      slot_end_time: res.slot_end_time || null,
     }));
   }, [rawReservations, roomIdToNumber]);
 
@@ -428,6 +434,11 @@ export default function Calendar() {
                                 <div className="relative z-10">
                                   <p className="text-xs font-bold text-white tracking-wide truncate drop-shadow-md flex items-center gap-1.5">
                                     {booking.status === 'Checked In' as string && <CheckCircle2 size={12} className="text-white/80" />}
+                                    {booking.slot_type && booking.slot_type !== 'Full Stay' && (
+                                      <span className="text-[9px] bg-black/30 px-1.5 py-0.5 rounded font-mono font-medium tracking-tight">
+                                        {booking.slot_type.includes('3-Hour') ? '⚡3h' : booking.slot_type.includes('6-Hour') ? '☀️6h' : booking.slot_type.includes('12-Hour') ? '🌙12h' : '⏱️Slot'}
+                                      </span>
+                                    )}
                                     {booking.guest}
                                   </p>
                                 </div>
@@ -510,7 +521,7 @@ export default function Calendar() {
                   <div className="bg-[#0E2A38] rounded-2xl p-5 text-white relative overflow-hidden shadow-lg">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl pointer-events-none" />
 
-                    <div className="flex justify-between items-center mb-6 relative z-10">
+                    <div className="flex justify-between items-center mb-4 relative z-10">
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1">Check In</p>
                         <p className="font-bold text-lg">{format(selectedBooking.start, 'MMM dd, yyyy')}</p>
@@ -532,6 +543,24 @@ export default function Calendar() {
                         <p className="font-bold text-emerald-400">{selectedBooking.status}</p>
                       </div>
                     </div>
+
+                    {/* Slot / Stay Package Details */}
+                    {selectedBooking.slot_type && (
+                      <div className="mt-3 bg-white/10 rounded-xl p-3 flex items-center justify-between backdrop-blur-sm relative z-10 border border-white/10 text-xs">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#C9A646]">Stay Package</p>
+                          <p className="font-semibold text-white mt-0.5">{selectedBooking.slot_type}</p>
+                        </div>
+                        {selectedBooking.slot_start_time && selectedBooking.slot_end_time && (
+                          <div className="text-right">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">Time Slot</p>
+                            <p className="font-mono text-emerald-300 font-bold mt-0.5">
+                              {selectedBooking.slot_start_time} &bull; {selectedBooking.slot_end_time}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

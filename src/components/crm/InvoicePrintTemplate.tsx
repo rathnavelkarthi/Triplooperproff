@@ -11,6 +11,9 @@ export interface InvoiceData {
     room: string;
     checkIn: string;
     checkOut: string;
+    slotType?: string;
+    slotStartTime?: string;
+    slotEndTime?: string;
     nights: number;
     ratePerNight: number;
     subtotal: number;
@@ -76,13 +79,39 @@ const InvoicePrintTemplate = forwardRef<HTMLDivElement, Props>(({ data, mode = '
                 </div>
             </div>
 
-            {/* Bill To */}
-            <div className="mb-8">
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Bill To</p>
-                <h3 className="text-lg font-bold text-gray-900">{data.guestName}</h3>
-                {data.guestLocation && <p className="text-gray-600 text-sm mt-1">{data.guestLocation}</p>}
-                {data.guestPhone && <p className="text-gray-600 text-sm">{data.guestPhone}</p>}
-                {data.guestEmail && <p className="text-gray-600 text-sm">{data.guestEmail}</p>}
+            {/* Bill To & Stay Summary */}
+            <div className="mb-6">
+                <div className="flex justify-between items-start mb-4">
+                    <div>
+                        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Bill To</p>
+                        <h3 className="text-lg font-bold text-gray-900">{data.guestName}</h3>
+                        {data.guestLocation && <p className="text-gray-600 text-sm mt-0.5">{data.guestLocation}</p>}
+                        {data.guestPhone && <p className="text-gray-600 text-sm">{data.guestPhone}</p>}
+                        {data.guestEmail && <p className="text-gray-600 text-sm">{data.guestEmail}</p>}
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200/80 text-xs">
+                    <div>
+                        <span className="text-gray-400 font-bold uppercase block text-[10px]">Room</span>
+                        <span className="font-semibold text-gray-900 mt-0.5 block truncate">{data.room}</span>
+                    </div>
+                    <div>
+                        <span className="text-gray-400 font-bold uppercase block text-[10px]">Package / Slot</span>
+                        <span className="font-bold text-[#0c4a6e] mt-0.5 block">
+                            {data.slotType || 'Full Stay'}
+                            {data.slotStartTime && data.slotEndTime ? ` (${data.slotStartTime}-${data.slotEndTime})` : ''}
+                        </span>
+                    </div>
+                    <div>
+                        <span className="text-gray-400 font-bold uppercase block text-[10px]">Check-In</span>
+                        <span className="font-semibold text-gray-900 mt-0.5 block">{data.checkIn}</span>
+                    </div>
+                    <div>
+                        <span className="text-gray-400 font-bold uppercase block text-[10px]">Check-Out</span>
+                        <span className="font-semibold text-gray-900 mt-0.5 block">{data.checkOut}</span>
+                    </div>
+                </div>
             </div>
 
             {/* 1. Customer Tax Bill */}

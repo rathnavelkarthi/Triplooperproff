@@ -10,6 +10,9 @@ export interface WhatsAppConfirmationData {
   reservationId: string;
   businessName: string;
   guestToken?: string;
+  slotType?: string;
+  slotStartTime?: string;
+  slotEndTime?: string;
 }
 
 /**

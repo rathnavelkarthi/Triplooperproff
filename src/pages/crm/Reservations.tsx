@@ -90,6 +90,9 @@ export default function Reservations() {
       room: res.room,
       checkIn: res.checkIn,
       checkOut: res.checkOut,
+      slotType: res.slot_type || 'Full Stay',
+      slotStartTime: res.slot_start_time || undefined,
+      slotEndTime: res.slot_end_time || undefined,
       nights,
       ratePerNight,
       subtotal: taxableValue,
@@ -302,8 +305,14 @@ export default function Reservations() {
                     </td>
                     <td className="p-4 text-gray-600">
                       <div className="flex flex-col">
-                        <span>{res.checkIn}</span>
+                        <span className="font-medium text-gray-900">{res.checkIn}</span>
                         <span className="text-xs text-gray-400">to {res.checkOut}</span>
+                        {res.slot_type && res.slot_type !== 'Full Stay' && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200/60 mt-1 w-fit">
+                            ⚡ {res.slot_type}
+                            {res.slot_start_time && res.slot_end_time && ` (${res.slot_start_time}-${res.slot_end_time})`}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="p-4">
