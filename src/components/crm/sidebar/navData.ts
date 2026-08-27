@@ -60,8 +60,8 @@ export const navItems: NavItem[] = [
   // Restaurant
   { name: 'Server Orders', path: '/admin/server-orders', icon: ListTodo, roles: ['SUPER_ADMIN', 'MANAGER', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'server_orders' },
   { name: 'Point of Sale', path: '/admin/pos', icon: Calculator, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'pos' },
-  { name: 'Menu Manager', path: '/admin/menu', icon: UtensilsCrossed, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'menu_manager' },
-  { name: 'Food Orders', path: '/admin/food-orders', icon: ClipboardList, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'food_orders' },
+  { name: 'Menu Manager', path: '/admin/menu', icon: UtensilsCrossed, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Restaurant', featureKey: 'menu_manager' },
+  { name: 'Food Orders', path: '/admin/food-orders', icon: ClipboardList, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['hotel', 'restaurant', 'combined'], group: 'Restaurant', featureKey: 'food_orders' },
   { name: 'Tables', path: '/admin/tables', icon: Armchair, roles: ['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'tables' },
   { name: 'Inventory', path: '/admin/inventory', icon: Package, roles: ['SUPER_ADMIN', 'MANAGER'], businessTypes: ['restaurant', 'combined'], group: 'Restaurant', featureKey: 'inventory' },
 
