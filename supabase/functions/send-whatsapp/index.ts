@@ -32,8 +32,8 @@ function corsFor(req: Request): Record<string, string> {
 //     tenant's own number + rate limited), OR
 //   * Add per-tenant/per-IP rate limiting + recipient allowlist for the public path.
 
-const DEFAULT_EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "";
-const DEFAULT_EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") || "";
+const DEFAULT_EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "https://evolution-evolution-api.tn0bwj.easypanel.host";
+const DEFAULT_EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") || "Desmond@123";
 
 // Set per-request in serve() so json() emits the correct CORS origin.
 let activeCors: Record<string, string> = {};

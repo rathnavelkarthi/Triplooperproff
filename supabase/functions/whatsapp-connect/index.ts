@@ -21,8 +21,8 @@ function corsFor(req: Request) {
 }
 
 // Shared Evolution server credentials live server-side only (never shipped in the frontend bundle).
-const DEFAULT_EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "";
-const DEFAULT_EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") || "";
+const DEFAULT_EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "https://evolution-evolution-api.tn0bwj.easypanel.host";
+const DEFAULT_EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") || "Desmond@123";
 
 let activeCors: Record<string, string> = {};
 

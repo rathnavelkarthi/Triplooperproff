@@ -30,8 +30,8 @@ function corsFor(req: Request): Record<string, string> {
   };
 }
 
-const DEFAULT_EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "";
-const DEFAULT_EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") || "";
+const DEFAULT_EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") || "https://evolution-evolution-api.tn0bwj.easypanel.host";
+const DEFAULT_EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") || "Desmond@123";
 const OTP_TTL_MS = 5 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 const MAX_ACTIVE_PER_PHONE = 5; // rate limit: new requests per phone within TTL
