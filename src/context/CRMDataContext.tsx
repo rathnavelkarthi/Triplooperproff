@@ -542,6 +542,10 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                 }
             }
 
+            // Synchronously ensure guest token exists for magic link access
+            const generatedToken = crypto.randomUUID();
+            await supabase.from('guest_tokens').insert([{ reservation_id: newId, token: generatedToken }]).catch(() => {});
+
             // Real-time bidirectional channel manager and Aiosell inventory push
             if (tenantId) {
                 pushLiveInventoryToChannels(tenantId).catch(err =>
@@ -551,9 +555,8 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
             // Trigger notifications asynchronously
             (async () => {
-                let token = '';
+                let token = generatedToken;
                 try {
-                    await new Promise(resolve => setTimeout(resolve, 500));
                     const { data: tData } = await supabase
                         .from('guest_tokens')
                         .select('token')
@@ -598,6 +601,9 @@ export function CRMProvider({ children }: { children: ReactNode }) {
                         reservationId: newId,
                         businessName: tenant?.business_name || 'Our Hotel',
                         guestToken: token || undefined,
+                        slotType: reservation.slot_type || 'Full Stay',
+                        slotStartTime: reservation.slot_start_time || undefined,
+                        slotEndTime: reservation.slot_end_time || undefined,
                     }, tenantId);
                 }
             })();

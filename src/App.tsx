@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { ClerkProvider } from '@clerk/react';
 import SaaSNavbar from './components/saas/SaaSNavbar';
@@ -244,6 +244,8 @@ export default function App() {
                     <Route path="/room/:roomId" element={<RoomDetail />} />
                     
                     {/* Guest Portal on subdomain */}
+                    <Route path="/guest/portal" element={<Navigate to="/my-stays" replace />} />
+                    <Route path="/guest" element={<Navigate to="/my-stays" replace />} />
                     <Route path="/guest/:token" element={<GuestLayout />}>
                       <Route index element={<GuestPortal />} />
                       <Route path="food" element={<GuestFoodOrder />} />
@@ -294,14 +296,16 @@ export default function App() {
                   <Route path="/site/:subdomain" element={<TenantSite />} />
                   <Route path="/site/:subdomain/room/:roomId" element={<RoomDetail />} />
 
-                  {/* Guest Portal on main domain */}
-                  <Route path="/guest/:token" element={<GuestLayout />}>
-                    <Route index element={<GuestPortal />} />
-                    <Route path="food" element={<GuestFoodOrder />} />
-                    <Route path="services" element={<GuestServices />} />
-                    <Route path="bill" element={<GuestBill />} />
-                    <Route path="chat" element={<GuestChat />} />
-                  </Route>
+                    {/* Guest Portal on main domain */}
+                    <Route path="/guest/portal" element={<Navigate to="/my-stays" replace />} />
+                    <Route path="/guest" element={<Navigate to="/my-stays" replace />} />
+                    <Route path="/guest/:token" element={<GuestLayout />}>
+                      <Route index element={<GuestPortal />} />
+                      <Route path="food" element={<GuestFoodOrder />} />
+                      <Route path="services" element={<GuestServices />} />
+                      <Route path="bill" element={<GuestBill />} />
+                      <Route path="chat" element={<GuestChat />} />
+                    </Route>
 
                   {/* Guest Account — booking history and invoice download */}
                   <Route path="/my-stays" element={<GuestAccount />} />

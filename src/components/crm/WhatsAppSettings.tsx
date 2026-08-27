@@ -584,8 +584,8 @@ export default function WhatsAppSettings() {
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-2">
                                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${msg.message_type === 'confirmation' ? 'bg-blue-100 text-blue-700' :
-                                                            msg.message_type === 'reminder' ? 'bg-amber-100 text-amber-700' :
-                                                                'bg-purple-100 text-purple-700'
+                                                        msg.message_type === 'reminder' ? 'bg-amber-100 text-amber-700' :
+                                                            'bg-purple-100 text-purple-700'
                                                         }`}>
                                                         {msg.message_type}
                                                     </span>

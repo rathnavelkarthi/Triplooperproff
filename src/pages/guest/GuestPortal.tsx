@@ -320,15 +320,28 @@ export default function GuestPortal() {
             <div className="space-y-1">
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Check In</span>
               <p className="text-sm font-semibold text-white">{formatDateStr(session.check_in)}</p>
-              <p className="text-xs text-zinc-400">After 2:00 PM</p>
+              <p className="text-xs text-zinc-400">
+                {session.slot_start_time ? `Slot Time: ${session.slot_start_time}` : 'After 2:00 PM'}
+              </p>
             </div>
 
             <div className="space-y-1 col-span-2 md:col-span-1">
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Check Out</span>
               <p className="text-sm font-semibold text-white">{formatDateStr(session.check_out)}</p>
-              <p className="text-xs text-zinc-400">Before {checkoutTime}</p>
+              <p className="text-xs text-zinc-400">
+                {session.slot_end_time ? `Slot Time: ${session.slot_end_time}` : `Before ${checkoutTime}`}
+              </p>
             </div>
           </div>
+
+          {session.slot_type && session.slot_type !== 'Full Stay' && (
+            <div className="mt-4 pt-3 border-t border-zinc-800 flex items-center justify-between text-xs">
+              <span className="text-zinc-400">Stay Package:</span>
+              <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 font-semibold px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                ⚡ {session.slot_type} ({session.slot_start_time || '09:00'} - {session.slot_end_time || '12:00'})
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -29,6 +29,9 @@ export interface GuestSession {
   aadhar_extracted_address?: string | null;
   aadhar_extracted_name?: string | null;
   aadhar_dob?: string | null;
+  slot_type?: string | null;
+  slot_start_time?: string | null;
+  slot_end_time?: string | null;
 }
 
 const GuestContext = createContext<{

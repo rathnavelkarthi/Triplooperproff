@@ -7,7 +7,7 @@ const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ||
 
 function corsFor(req: Request) {
   const origin = req.headers.get("Origin") || "";
-  const isAllowed = 
+  const isAllowed =
     origin === "https://triplooper.com" ||
     origin === "https://www.triplooper.com" ||
     origin.endsWith(".triplooper.com") ||
@@ -94,8 +94,8 @@ serve(async (req) => {
     // Stable per-tenant instance name derived from subdomain + id fragment (lowercased for Evolution API compatibility).
     const instanceName =
       (tenant.evolution_instance_name ||
-      `${(tenant.subdomain || "tenant").replace(/[^a-z0-9]/gi, "")}-${String(tenant.id).slice(0, 8)}`)
-      .toLowerCase();
+        `${(tenant.subdomain || "tenant").replace(/[^a-z0-9]/gi, "")}-${String(tenant.id).slice(0, 8)}`)
+        .toLowerCase();
 
     switch (action) {
       case "create": {
