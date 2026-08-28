@@ -260,22 +260,14 @@ export default function CRMApp() {
               )
             } />
             <Route path="menu" element={
-              tenant?.plan === 'commission' ? (
-                <Navigate to="/admin/dashboard" replace />
-              ) : (
-                <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER']}>
-                  <MenuManager />
-                </RoleGuard>
-              )
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'BUSINESS_ADMIN']}>
+                <MenuManager />
+              </RoleGuard>
             } />
             <Route path="food-orders" element={
-              tenant?.plan === 'commission' ? (
-                <Navigate to="/admin/dashboard" replace />
-              ) : (
-                <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER']}>
-                  <FoodOrders />
-                </RoleGuard>
-              )
+              <RoleGuard allowedRoles={['SUPER_ADMIN', 'MANAGER', 'RECEPTION', 'SERVER', 'BUSINESS_ADMIN']}>
+                <FoodOrders />
+              </RoleGuard>
             } />
             <Route path="tables" element={
               tenant?.plan === 'commission' ? (
