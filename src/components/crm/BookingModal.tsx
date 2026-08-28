@@ -84,6 +84,7 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
     guest_email: '',
     room: 'Executive Double AC',
     room_id: null as number | null,
+    base_rate: '4000',
     checkIn: '',
     checkOut: '',
     slot_type: 'Full Stay' as SlotPackage,
@@ -99,12 +100,14 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
     if (reservationId && isOpen) {
       const res = reservations.find(r => r.id === reservationId);
       if (res) {
+        const roomObj = rooms.find(r => r.id === res.room_id) || rooms.find(r => r.name === res.room);
         setFormData({
           guest: res.guest,
           guest_phone: res.guest_phone || '',
           guest_email: res.guest_email || '',
           room: res.room,
           room_id: res.room_id || null,
+          base_rate: roomObj?.price_per_night ? String(roomObj.price_per_night) : '4000',
           checkIn: res.checkIn,
           checkOut: res.checkOut,
           slot_type: (res.slot_type as SlotPackage) || 'Full Stay',
@@ -127,6 +130,7 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
         guest_email: '',
         room: firstRoom ? (firstRoom.room_number ? `Room ${firstRoom.room_number} - ${firstRoom.name}` : firstRoom.name) : 'Executive Double AC',
         room_id: firstRoom ? firstRoom.id : null,
+        base_rate: firstRoom?.price_per_night ? String(firstRoom.price_per_night) : '4000',
         checkIn: today,
         checkOut: tomorrow,
         slot_type: 'Full Stay',
@@ -147,7 +151,8 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
       setFormData(prev => ({
         ...prev,
         room: roomObj.room_number ? `Room ${roomObj.room_number} - ${roomObj.name}` : roomObj.name,
-        room_id: roomObj.id
+        room_id: roomObj.id,
+        base_rate: roomObj.price_per_night ? String(roomObj.price_per_night) : prev.base_rate,
       }));
     } else {
       setFormData(prev => ({
@@ -175,7 +180,7 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
 
   // Compute calculated amounts dynamically
   const selectedRoomObj = rooms.find(r => r.id === formData.room_id) || rooms[0];
-  const baseDailyRate = selectedRoomObj?.price_per_night || 2500;
+  const effectiveDailyRate = Number(formData.base_rate) > 0 ? Number(formData.base_rate) : (selectedRoomObj?.price_per_night || 4000);
   const currentSlotPackage = SLOT_PACKAGES.find(p => p.id === formData.slot_type) || SLOT_PACKAGES[0];
 
   const calculatedAmount = (() => {
@@ -187,9 +192,9 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
     const nights = Math.max(1, Math.floor((checkOutDate.getTime() - checkInDate.getTime()) / 86400000));
     
     if (formData.slot_type === 'Full Stay') {
-      return baseDailyRate * nights;
+      return effectiveDailyRate * nights;
     } else {
-      return Math.round(baseDailyRate * currentSlotPackage.priceRatio);
+      return Math.round(effectiveDailyRate * currentSlotPackage.priceRatio);
     }
   })();
 
@@ -302,11 +307,36 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
               >
                 {rooms.map(r => (
                   <option key={r.id} value={r.id}>
-                    {r.room_number ? `Room ${r.room_number} - ${r.name}` : r.name} (₹{r.price_per_night}/night)
+                    {r.room_number ? `Room ${r.room_number} - ${r.name}` : r.name} (₹{Number(r.price_per_night).toLocaleString('en-IN')}/night)
                   </option>
                 ))}
                 {rooms.length === 0 && <option value="">No rooms added yet</option>}
               </select>
+            </div>
+          </div>
+
+          {/* Base Daily Rate & Rate Sync Indicator */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50/70 p-3.5 rounded-2xl border border-gray-150">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
+                Base Nightly Rate (₹)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-2.5 text-gray-500 font-bold text-sm">₹</span>
+                <input
+                  type="number"
+                  value={formData.base_rate}
+                  onChange={(e) => setFormData({ ...formData, base_rate: e.target.value })}
+                  className="w-full pl-8 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-900 focus:border-[#0E2A38] focus:ring-2 focus:ring-[#0E2A38]/10 outline-none"
+                  placeholder="4000"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col justify-center">
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Channel & Slot Calculation</span>
+              <p className="text-xs text-gray-600 mt-0.5">
+                Hourly slot prices calculate automatically based on this base rate.
+              </p>
             </div>
           </div>
 
@@ -347,6 +377,7 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {SLOT_PACKAGES.map((pkg) => {
                 const isSelected = formData.slot_type === pkg.id;
+                const pkgAmount = Math.round(effectiveDailyRate * pkg.priceRatio);
                 return (
                   <button
                     key={pkg.id}
@@ -368,6 +399,9 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
                         </span>
                       </div>
                       <p className="text-xs font-bold truncate leading-tight">{pkg.label}</p>
+                      <p className={`text-[11px] font-extrabold mt-0.5 ${isSelected ? 'text-[#C9A646]' : 'text-gray-900'}`}>
+                        ₹{pkgAmount.toLocaleString('en-IN')}
+                      </p>
                     </div>
                     <p className={`text-[10px] mt-1.5 leading-tight line-clamp-1 ${
                       isSelected ? 'text-gray-300' : 'text-gray-400'
@@ -503,7 +537,7 @@ export default function BookingModal({ isOpen, onClose, reservationId }: Booking
                   </span>
                 </div>
                 <p className="text-sm text-gray-300 mt-0.5">
-                  Base Rate: ₹{baseDailyRate}/day &bull; Taxable: ₹{calculatedAmount.toLocaleString('en-IN')} &bull; GST (12%): ₹{gstAmount.toLocaleString('en-IN')}
+                  Base Rate: ₹{effectiveDailyRate.toLocaleString('en-IN')}/day &bull; Taxable: ₹{calculatedAmount.toLocaleString('en-IN')} &bull; GST (12%): ₹{gstAmount.toLocaleString('en-IN')}
                 </p>
               </div>
 
