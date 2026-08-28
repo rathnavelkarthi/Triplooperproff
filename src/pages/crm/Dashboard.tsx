@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../components/ui/table';
+import LiveGuestChatCard from '../../components/crm/LiveGuestChatCard';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CHART_COLORS = ['#000000', '#52525b', '#71717a', '#a1a1aa', '#d4d4d8', '#e4e4e7'];
@@ -635,6 +636,13 @@ export default function Dashboard() {
               </Card>
             </motion.div>
           </div>
+
+          {/* Live Guest Helpdesk & Chat Section */}
+          {isHotel && (
+            <motion.div variants={itemVariants} className="mt-2">
+              <LiveGuestChatCard />
+            </motion.div>
+          )}
 
         </motion.div>
       )}
