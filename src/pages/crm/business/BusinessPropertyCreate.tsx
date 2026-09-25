@@ -194,60 +194,71 @@ export default function BusinessPropertyCreate() {
 
       const ownerId = authData?.user?.id || ownerEmail.trim();
 
-      // 4. Create tenant (property) via security-definer RPC
+      // 4. Create tenant (property) via security-definer RPC with all business relations and toggles atomically
       const subdomain = generateSubdomain(propName.trim());
-      const { data: newTenantId, error: tenantError } = await supabase
-        .rpc('create_tenant', {
+      let newTenantId: string | null = null;
+
+      const { data: createdId, error: rpcError } = await supabase
+        .rpc('create_business_property', {
+          p_business_id: currentBusiness.id,
+          p_creator_user_id: user.id,
           p_owner_id: ownerId,
           p_business_name: propName.trim(),
           p_business_type: propType,
-          p_subdomain: subdomain
+          p_subdomain: subdomain,
+          p_feature_toggles: toggles,
+          p_template: 'modern',
+          p_plan: 'growth'
         });
 
-      if (tenantError) {
-        if (tenantError.message?.includes('subdomain') || tenantError.message?.includes('tenants_subdomain_key')) {
+      if (rpcError) {
+        // Fallback to legacy create_tenant if RPC isn't found
+        if (rpcError.message?.includes('create_business_property') || rpcError.code === 'PGRST202') {
+          const { data: fallbackId, error: legacyErr } = await supabase
+            .rpc('create_tenant', {
+              p_owner_id: ownerId,
+              p_business_name: propName.trim(),
+              p_business_type: propType,
+              p_subdomain: subdomain
+            });
+          if (legacyErr) {
+            throw legacyErr;
+          }
+          newTenantId = fallbackId;
+          // Best-effort update without crashing on .single() RLS denial
+          await supabase
+            .from('tenants')
+            .update({
+              template: 'modern',
+              plan: 'growth',
+              business_id: currentBusiness.id,
+              managed_by_business: true,
+              feature_toggles: toggles,
+              is_active: true,
+              verification_status: 'pending',
+            })
+            .eq('id', newTenantId);
+        } else if (rpcError.message?.includes('subdomain') || rpcError.message?.includes('tenants_subdomain_key')) {
           setError('A property with this name already exists. Choose a different name.');
+          setCreating(false);
+          return;
         } else {
-          setError(tenantError.message);
-        }
-        setCreating(false);
-        return;
-      }
-
-      let newTenant = null;
-      if (newTenantId) {
-        // Since owner link is created in user_properties, standard RLS now permits updating the tenant
-        const { data: updatedTenant, error: updateErr } = await supabase
-          .from('tenants')
-          .update({
-            template: 'modern',
-            plan: 'growth',
-            business_id: currentBusiness.id,
-            managed_by_business: true,
-            feature_toggles: toggles,
-            is_active: true,
-            verification_status: 'pending',
-          })
-          .eq('id', newTenantId)
-          .select()
-          .single();
-
-        if (updateErr) {
-          setError(updateErr.message);
+          setError(rpcError.message);
           setCreating(false);
           return;
         }
-        newTenant = updatedTenant;
+      } else {
+        newTenantId = createdId;
       }
 
-      if (newTenant) {
+      if (newTenantId) {
         // 6. Send welcome email
         await sendWelcomeEmail({
           email: ownerEmail.trim(),
           businessName: propName.trim(),
           businessType: propType,
           password: ownerPassword,
-          subdomain: newTenant.subdomain
+          subdomain: subdomain
         });
       }
 

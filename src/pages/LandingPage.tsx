@@ -213,7 +213,7 @@ export default function LandingPage() {
     };
   }, []);
 
-  const [propertiesList, setPropertiesList] = useState<any[]>([]);
+  const [propertiesList, setPropertiesList] = useState<any[]>(REGISTERED_SHOWCASE_PROPERTIES);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState("All Stays");
   const [activeDestinationFilter, setActiveDestinationFilter] = useState("All Destinations");
   const [searchDestination, setSearchDestination] = useState("");
@@ -246,7 +246,7 @@ export default function LandingPage() {
         tenantsData = tenantsData.filter(t => t.business_name && !t.business_name.toLowerCase().includes('ganesh'));
 
         if (!tenantsData || tenantsData.length === 0) {
-          setPropertiesList([]);
+          setPropertiesList(REGISTERED_SHOWCASE_PROPERTIES.filter(p => !p.name.toLowerCase().includes('ganesh')));
           return;
         }
 
@@ -301,11 +301,15 @@ export default function LandingPage() {
           };
         });
 
-        realProps.sort((a, b) => Number(b.rating) - Number(a.rating));
-        setPropertiesList(realProps);
+        const liveSubdomains = new Set(realProps.map(p => (p.subdomain || p.name).toLowerCase()));
+        const uniqueShowcase = REGISTERED_SHOWCASE_PROPERTIES.filter(c => !liveSubdomains.has((c.subdomain || c.name).toLowerCase()));
+
+        const combined = [...realProps, ...uniqueShowcase].filter(p => !p.name.toLowerCase().includes('ganesh'));
+        combined.sort((a, b) => Number(b.rating) - Number(a.rating));
+        setPropertiesList(combined);
       } catch (err) {
         console.error('Failed to load real properties:', err);
-        setPropertiesList([]);
+        setPropertiesList(REGISTERED_SHOWCASE_PROPERTIES.filter(p => !p.name.toLowerCase().includes('ganesh')));
       }
     }
     loadRealProperties();
