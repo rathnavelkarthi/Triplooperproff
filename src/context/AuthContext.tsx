@@ -46,6 +46,12 @@ export type Tenant = {
   verification_reason?: string | null;
   verified_at?: string | null;
   phone?: string | null;
+  payment_setup?: boolean;
+  subscription_plan?: string | null;
+  subscription_expires_at?: string | null;
+  manual_override?: boolean | null;
+  grace_period_days?: number;
+  created_at?: string | null;
 };
 
 export interface User {

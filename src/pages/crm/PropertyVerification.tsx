@@ -177,9 +177,20 @@ export default function PropertyVerification() {
             <div className="flex items-center gap-3">
               <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
               <div>
-                <p className="font-bold text-emerald-700 text-sm">Verified</p>
-                <p className="text-sm text-emerald-600">Your property is live. Reload to enter your dashboard.</p>
+                <p className="font-bold text-emerald-700 text-sm">Verified & Approved</p>
+                <p className="text-sm text-emerald-600">Your property has been approved by the platform team.</p>
               </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-emerald-200/60 flex items-center justify-between">
+              <span className="text-xs text-emerald-700">
+                {tenant?.payment_setup ? 'Your property is active.' : 'Next step: Complete plan activation & billing setup.'}
+              </span>
+              <a
+                href={tenant?.payment_setup ? '/admin/dashboard' : '/admin/billing-setup'}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#0E2A38] text-white text-xs font-bold hover:bg-[#1a3d4f] transition-all shadow-sm"
+              >
+                {tenant?.payment_setup ? 'Go to Dashboard' : 'Proceed to Payment Setup'} →
+              </a>
             </div>
           </motion.div>
         )}
