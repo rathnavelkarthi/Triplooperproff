@@ -44,7 +44,7 @@ export default function LiveGuestChatCard() {
   }, [messages]);
 
   const conversationList = React.useMemo(() => {
-    return Object.entries(conversations).map(([resId, msgs]) => {
+    return (Object.entries(conversations) as [string, DashboardGuestMessage[]][]).map(([resId, msgs]) => {
       const lastMsg = msgs[msgs.length - 1];
       const res = reservations.find(r => r.id === resId);
       const room = res ? rooms.find(rm => rm.id === res.room_id) : null;

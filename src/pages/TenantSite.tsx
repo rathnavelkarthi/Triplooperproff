@@ -657,7 +657,10 @@ export default function TenantSite() {
         );
     }
 
-    const { tenant, rooms, testimonials, settings, chef_specials = [], gallery = [] } = siteData;
+    const { tenant, rooms: rawRooms, testimonials: rawTestimonials, settings: rawSettings, chef_specials = [], gallery = [] } = siteData;
+    const rooms = rawRooms || [];
+    const testimonials = rawTestimonials || [];
+    const settings = rawSettings || {};
 
     const isApple = tenant.template === 'apple';
 
@@ -701,7 +704,7 @@ export default function TenantSite() {
     const operatingHoursOpen = settings.operatingHoursOpen || '12:00 PM';
     const operatingHoursClose = settings.operatingHoursClose || '11:00 PM';
     const externalBookingUrl = settings.externalBookingUrl || '';
-    const avgRating = testimonials.length > 0 ? (testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length).toFixed(1) : null;
+    const avgRating = testimonials.length > 0 ? (testimonials.reduce((s, t) => s + (t?.rating || 0), 0) / testimonials.length).toFixed(1) : null;
 
     const whatsappNumberOverride = getContent('contact', 'whatsapp') || settings.whatsappNumber;
     const whatsappBase = whatsappNumberOverride || contactPhone;

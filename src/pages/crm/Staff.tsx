@@ -71,7 +71,9 @@ export default function Staff() {
       });
 
       if (error || !data?.success) {
-        toast.error('Staff created, but WhatsApp notification failed to send.');
+        const reason = data?.reason || data?.error || 'WhatsApp is not connected for this property';
+        console.warn('WhatsApp notification skipped/failed:', reason);
+        toast.warning(`Staff created, but WhatsApp message skipped: ${reason}`);
         return;
       }
       toast.success('Login credentials sent via WhatsApp!');
@@ -89,7 +91,18 @@ export default function Staff() {
 
     try {
       if (editingStaffId) {
-        await toast.promise(updateStaff(editingStaffId, formData), {
+        const updatePayload: any = {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          role: formData.role,
+          status: formData.status,
+        };
+        if (formData.password && formData.password.trim().length > 0) {
+          updatePayload.password = formData.password.trim();
+        }
+
+        await toast.promise(updateStaff(editingStaffId, updatePayload), {
           loading: 'Updating staff...',
           success: 'Staff updated successfully',
           error: (err) => err.message || 'Failed to update staff'
@@ -337,28 +350,33 @@ export default function Staff() {
                 </div>
               </div>
 
-              {!editingStaffId && (
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all pr-10"
-                      placeholder="Enter a secure password for this staff member"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    {editingStaffId ? 'New Password' : 'Password'}
+                  </label>
+                  {editingStaffId && (
+                    <span className="text-[11px] text-gray-500">Leave blank to keep current</span>
+                  )}
                 </div>
-              )}
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required={!editingStaffId}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-[var(--color-ocean-500)] focus:ring-2 focus:ring-[var(--color-ocean-100)] outline-none transition-all pr-10"
+                    placeholder={editingStaffId ? "Enter new password (optional)" : "Enter a secure password for this staff member"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>

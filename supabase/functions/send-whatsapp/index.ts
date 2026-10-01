@@ -108,7 +108,7 @@ serve(async (req) => {
     const connState = (stateData as any)?.instance?.state || (stateData as any)?.state;
 
     if (connState !== "open") {
-      return json({ success: false, reason: "WhatsApp not connected for this tenant" }, 400);
+      return json({ success: false, reason: "WhatsApp not connected for this tenant" }, 200);
     }
 
     if (!tenant.evolution_instance_name || !tenant.whatsapp_enabled) {
@@ -146,9 +146,9 @@ serve(async (req) => {
     }]);
 
     if (!sent) {
-      return json({ success: false, error: errMsg });
+      return json({ success: false, error: errMsg }, 200);
     }
-    return json({ success: true });
+    return json({ success: true }, 200);
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     // Attempt to log a failed send if we have enough context.
@@ -163,6 +163,6 @@ serve(async (req) => {
         }]);
       } catch { /* ignore */ }
     }
-    return json({ success: false, error: errMsg }, 400);
+    return json({ success: false, error: errMsg }, 200);
   }
 });

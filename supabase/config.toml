@@ -5,6 +5,13 @@ verify_jwt = false
 import_map = "./functions/create-staff/deno.json"
 entrypoint = "./functions/create-staff/index.ts"
 
+[functions.update-staff]
+enabled = true
+verify_jwt = false
+import_map = "./functions/update-staff/deno.json"
+entrypoint = "./functions/update-staff/index.ts"
+
+
 [functions.delete-staff]
 enabled = true
 verify_jwt = false

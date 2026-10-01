@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { ClerkProvider } from '@clerk/react';
@@ -266,6 +266,11 @@ export default function App() {
                     {/* Tenant Site Routes */}
                     <Route path="/" element={<TenantSite />} />
                     <Route path="/room/:roomId" element={<RoomDetail />} />
+
+                    {/* Explicit preview and order routes */}
+                    <Route path="/site/:subdomain" element={<TenantSite />} />
+                    <Route path="/site/:subdomain/room/:roomId" element={<RoomDetail />} />
+                    <Route path="/order/:subdomain/:tableId" element={<TableOrder />} />
                     
                     {/* Guest Portal on subdomain */}
                     <Route path="/guest/portal" element={<Navigate to="/my-stays" replace />} />

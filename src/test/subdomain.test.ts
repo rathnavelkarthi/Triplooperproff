@@ -54,4 +54,20 @@ describe('getSubdomain', () => {
     mockHostname('admin.superstay.com');
     expect(getSubdomain()).toBe(null);
   });
+
+  it('ignores platform domains on vercel.app (triplooper, triplooper-lams)', () => {
+    mockHostname('triplooper.vercel.app');
+    expect(getSubdomain()).toBe(null);
+
+    mockHostname('triplooper-lams.vercel.app');
+    expect(getSubdomain()).toBe(null);
+  });
+
+  it('ignores preview and staging subdomains', () => {
+    mockHostname('preview.superstay.com');
+    expect(getSubdomain()).toBe(null);
+
+    mockHostname('staging.triplooper.com');
+    expect(getSubdomain()).toBe(null);
+  });
 });

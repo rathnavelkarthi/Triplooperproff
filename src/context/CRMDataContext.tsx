@@ -181,7 +181,7 @@ interface CRMContextType {
     deleteStaff: (id: string) => Promise<void>;
     addReservation: (reservation: Omit<Reservation, 'id'>) => Promise<void>;
     deleteReservation: (id: string) => Promise<void>;
-    updateStaff: (id: string, updatedData: Partial<StaffMember>) => Promise<void>;
+    updateStaff: (id: string, updatedData: Partial<StaffMember> & { password?: string }) => Promise<void>;
     updateReservation: (id: string, updatedData: Partial<Reservation>) => Promise<void>;
     updateCMSSetting: (key: keyof CMSSettings, value: string) => Promise<void>;
     addRoom: (room: Omit<Room, 'id'>) => Promise<void>;
@@ -384,6 +384,33 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
     // ==================== HOTEL CRUD ====================
 
+    const extractEdgeFunctionError = async (error: any, data: any, fallbackMessage: string): Promise<string> => {
+        if (data?.error && typeof data.error === 'string') return data.error;
+        if (data?.message && typeof data.message === 'string') return data.message;
+        if (data?.reason && typeof data.reason === 'string') return data.reason;
+
+        if (error) {
+            if (error.context) {
+                try {
+                    const cloned = typeof error.context.clone === 'function' ? error.context.clone() : error.context;
+                    const errBody = await cloned.json();
+                    if (errBody?.error) return typeof errBody.error === 'string' ? errBody.error : JSON.stringify(errBody.error);
+                    if (errBody?.message) return typeof errBody.message === 'string' ? errBody.message : JSON.stringify(errBody.message);
+                    if (errBody?.reason) return typeof errBody.reason === 'string' ? errBody.reason : JSON.stringify(errBody.reason);
+                } catch (_) {
+                    try {
+                        const text = await error.context.text();
+                        if (text && text.trim().length > 0) return text;
+                    } catch (_) {}
+                }
+            }
+            if (error.message && !error.message.includes('non-2xx status code')) {
+                return error.message;
+            }
+        }
+        return fallbackMessage;
+    };
+
     const addStaff = async (member: Omit<StaffMember, 'id'> & { password?: string }) => {
         if (!member.password) {
             throw new Error("Password is required for new staff members.");
@@ -420,17 +447,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
         // Edge function returns { error } in the body for handled failures.
         if (error || (data && data.error)) {
-            let msg = data?.error;
-            if (!msg && error) {
-                if ('context' in error && (error as any).context) {
-                    try {
-                        const errBody = await (error as any).context.clone().json();
-                        if (errBody?.error) msg = errBody.error;
-                    } catch (_) {}
-                }
-                if (!msg) msg = error.message;
-            }
-            if (!msg) msg = "Failed to create staff member.";
+            const msg = await extractEdgeFunctionError(error, data, "Failed to create staff member. Check credentials and role permissions.");
             console.error("Error creating staff:", msg);
             throw new Error(msg);
         }
@@ -465,17 +482,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
             headers,
         });
         if (error || (data && data.error)) {
-            let msg = data?.error;
-            if (!msg && error) {
-                if ('context' in error && (error as any).context) {
-                    try {
-                        const errBody = await (error as any).context.clone().json();
-                        if (errBody?.error) msg = errBody.error;
-                    } catch (_) {}
-                }
-                if (!msg) msg = error.message;
-            }
-            if (!msg) msg = "Failed to remove staff member.";
+            const msg = await extractEdgeFunctionError(error, data, "Failed to remove staff member.");
             console.error("Error deleting staff:", msg);
             throw new Error(msg);
         }
@@ -544,7 +551,9 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
             // Synchronously ensure guest token exists for magic link access
             const generatedToken = crypto.randomUUID();
-            await supabase.from('guest_tokens').insert([{ reservation_id: newId, token: generatedToken }]).catch(() => {});
+            try {
+                await supabase.from('guest_tokens').insert([{ reservation_id: newId, token: generatedToken }]);
+            } catch (_) {}
 
             // Real-time bidirectional channel manager and Aiosell inventory push
             if (tenantId) {
@@ -624,12 +633,55 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const updateStaff = async (id: string, updatedData: Partial<StaffMember>) => {
-        const updatePayload: any = { ...updatedData };
-        if (updatedData.status) updatePayload.status = updatedData.status.toUpperCase();
+    const updateStaff = async (id: string, updatedData: Partial<StaffMember> & { password?: string }) => {
+        const tenantId = tid();
+        const token = await getSupabaseToken();
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // 1. Invoke update-staff Edge Function if tenantId is available
+        if (tenantId) {
+            const { data, error } = await supabase.functions.invoke('update-staff', {
+                body: {
+                    staff_id: id,
+                    tenant_id: tenantId,
+                    name: updatedData.name,
+                    email: updatedData.email,
+                    phone: updatedData.phone,
+                    role: updatedData.role,
+                    status: updatedData.status,
+                    ...(updatedData.password ? { password: updatedData.password } : {}),
+                },
+                headers,
+            });
+
+            if (error || (data && data.error)) {
+                const msg = await extractEdgeFunctionError(error, data, "Failed to update staff member.");
+                console.error("Error updating staff via edge function:", msg);
+                throw new Error(msg);
+            }
+
+            const cleanUpdate: Partial<StaffMember> = { ...updatedData };
+            delete (cleanUpdate as any).password;
+            setStaff(prev => prev.map(s => s.id === id ? { ...s, ...cleanUpdate } : s));
+            return;
+        }
+
+        // 2. Direct DB fallback: whitelist columns ONLY (NEVER send password to staff table)
+        const updatePayload: Record<string, any> = {};
+        if (updatedData.name !== undefined) updatePayload.name = updatedData.name;
+        if (updatedData.email !== undefined) updatePayload.email = updatedData.email.toLowerCase().trim();
+        if (updatedData.phone !== undefined) updatePayload.phone = updatedData.phone;
+        if (updatedData.role !== undefined) updatePayload.role = updatedData.role;
+        if (updatedData.status !== undefined) updatePayload.status = updatedData.status.toUpperCase();
+
         const { error } = await supabase.from('staff').update(updatePayload).eq('id', id);
         if (error) throw error;
-        setStaff(prev => prev.map(s => s.id === id ? { ...s, ...updatedData } : s));
+        const cleanUpdate: Partial<StaffMember> = { ...updatedData };
+        delete (cleanUpdate as any).password;
+        setStaff(prev => prev.map(s => s.id === id ? { ...s, ...cleanUpdate } : s));
     };
 
     const updateReservation = async (id: string, updatedData: Partial<Reservation>) => {

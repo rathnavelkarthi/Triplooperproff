@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { ClipboardList, MessageSquare, Play, CheckCircle2, XCircle, Clock, Shield, AlertTriangle, User, RefreshCw, Send, ArrowLeft } from 'lucide-react';
@@ -267,7 +267,7 @@ export default function ServiceRequests() {
     return statusMatch && prioMatch;
   });
 
-  const totalUnreadMessages = Object.values(conversations).reduce((acc, msgs) => {
+  const totalUnreadMessages = (Object.values(conversations) as GuestMessage[][]).reduce((acc: number, msgs: GuestMessage[]) => {
     return acc + msgs.filter(m => m.sender_type === 'guest').length;
   }, 0);
 
@@ -453,7 +453,7 @@ export default function ServiceRequests() {
                   No guest messages received yet.
                 </div>
               ) : (
-                Object.entries(conversations).map(([resId, msgs]) => {
+                (Object.entries(conversations) as [string, GuestMessage[]][]).map(([resId, msgs]) => {
                   const lastMsg = msgs[msgs.length - 1];
                   const guestName = lastMsg?.reservations?.guest_name || lastMsg?.sender_name || 'Guest';
                   const roomNum = lastMsg?.reservations?.rooms?.room_number || '';

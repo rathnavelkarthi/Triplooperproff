@@ -93,13 +93,18 @@ export async function sendWhatsAppConfirmation(data: WhatsAppConfirmationData, t
     });
 
     if (invokeError) {
-      console.error('[WhatsApp] Edge function invocation error:', invokeError);
-      return { success: false, error: invokeError };
+      console.warn('[WhatsApp] Edge function invocation notice:', invokeError);
+      return { success: false, error: invokeError.message || invokeError };
+    }
+
+    if (resData && resData.success === false) {
+      console.info('[WhatsApp] Message dispatch status:', resData.reason || resData.error);
+      return resData;
     }
 
     return resData || { success: true };
-  } catch (error) {
-    console.error('[WhatsApp] Exception in sendWhatsAppConfirmation:', error);
-    return { success: false, error };
+  } catch (error: any) {
+    console.warn('[WhatsApp] Exception in sendWhatsAppConfirmation:', error);
+    return { success: false, error: error?.message || error };
   }
 }
